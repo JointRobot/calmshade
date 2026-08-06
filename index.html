@@ -871,7 +871,7 @@ ${kb()}`;}
   async function askAI(t){
     chatHistory.push({role:'user',content:t});
     try{
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      const r=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:sysPrompt(P(chat.propId).name),messages:chatHistory})});
       const d=await r.json();
       let x=(d.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
@@ -1089,7 +1089,7 @@ ${kb()}`;}
     const pool=PROPS.filter(p=>p.live&&availOf(p).okCap&&!availOf(p).none);
     if(!stops){
       try{
-        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+        const r=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
             system:'You are the Calm Shade trip curator. Choose ONLY from these available properties: '+pool.map(p=>p.name).join('; ')+'\n'+kb(),
             messages:[{role:'user',content:`Pick the best stops for a ${days.length}-night trip (${trLabel()}) for ${cur.heads} guests — at most ${Math.min(days.length,4)} distinct properties, in travel order, from the available list only. Respond ONLY with JSON: {"stops":["<exact property name>",...]}`}]})});
@@ -1117,7 +1117,7 @@ ${kb()}`;}
     const seq=[];blocks.forEach((bl,si)=>bl.forEach((d,k)=>seq.push({prop:stops[si],date:d,note:k===0?'Arrive by afternoon, settle in, eat well.':'Full day here — slow morning, explore nearby.'})));
     try{
       const dayList=seq.map((d,i)=>`Day ${i+1} (${dowOf(d.date)} ${d.date} Jul): ${P(d.prop).name}`).join('; ');
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      const r=await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,
           system:'You are the Calm Shade trip curator for a homestay collective.\n'+kb(),
           messages:[{role:'user',content:`This itinerary is fixed: ${dayList}. For ${cur.heads} guests in July (monsoon), write one short line (max 14 words) for each day. Respond ONLY with JSON: {"notes":["...","..."]} — exactly ${seq.length} notes in order.`}]})});
