@@ -40,7 +40,7 @@ export const COPY = {
   tickets: TICKETS,
   intro: { eyebrow: '25 Jan to 25 Feb 2027', h1: 'APPA Art Fest 2027', tag: 'When minds co-create',
     text: 'A festival of festivals: a month of art, people, nature and a better tomorrow, where every venue curates its own festival. One lake, seven venues, a living ecosystem. Drag to look around, scroll or pinch to zoom, and tap any venue to see what happens there.',
-    enter: 'Enter the festival', loading: 'Loading the festival…', credit: 'A concept by Nolabel Immersive · drawn entirely in code' },
+    enter: 'Enter the festival', loading: 'Loading the festival…' },
   tourLabel: 'Guided tour', tourStop: 'Stop the tour',
   overview: { eyebrow: 'The festival at a glance', h2: 'One lake. Seven venues. A living ecosystem.', text: 'Each venue runs its own festival inside the big one: film, theatre, voice, fashion, forums and music. The two big farms take the largest gatherings.',
     controls: [

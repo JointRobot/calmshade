@@ -22,7 +22,7 @@ const q = new URLSearchParams(location.search); const $ = s => document.querySel
 const U = LOOK.ui; for (const k of ['paper', 'card', 'ink', 'muted', 'rule', 'accent', 'accent2', 'gold', 'bg']) if (U[k]) document.documentElement.style.setProperty('--' + k, U[k]);
 document.documentElement.style.setProperty('--font', `'${U.font}'`); document.documentElement.style.setProperty('--display', `'${U.display}'`);
 document.title = COPY.title; $('#brand').textContent = COPY.brand; $('#tourbtn').textContent = COPY.tourLabel;
-$('#i-eyebrow').textContent = COPY.intro.eyebrow; $('#i-h1').textContent = COPY.intro.h1; $('#i-tag').textContent = COPY.intro.tag; $('#i-text').textContent = COPY.intro.text; $('#i-credit').textContent = COPY.intro.credit; $('#enter').textContent = COPY.intro.loading;
+$('#i-eyebrow').textContent = COPY.intro.eyebrow; $('#i-h1').textContent = COPY.intro.h1; $('#i-tag').textContent = COPY.intro.tag; $('#i-text').textContent = COPY.intro.text; $('#enter').textContent = COPY.intro.loading;
 
 // ---- renderer: real-time settings (direct render, no screen-space AO or bloom, soft PCF shadows)
 const touch = matchMedia('(pointer: coarse)').matches; const low = q.get('q') === 'low' || (touch && q.get('q') !== 'high');
