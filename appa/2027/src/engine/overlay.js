@@ -12,14 +12,18 @@ export function makeCamera(keys) {
 }
 
 // TOUR: { title: [t0, t1, big, small, line], end: [t0, t1, big, small, line], captions: [[t0, t1, eyebrow, name, tagline]], subs: [[t0, t1, text]] }
-// wCss (optional): the canvas's CSS (logical) width, i.e. independent of devicePixelRatio. Font sizes here are
-// tuned for a ~1920px-wide desktop frame; on a narrow phone (small wCss) that reads as illegibly small text, so
-// below MOBILE_FLOOR we scale k up (capped) as if the phone were MOBILE_FLOOR px wide. Video rendering (which
-// doesn't pass wCss) is unaffected.
-const MOBILE_FLOOR = 900, MOBILE_BOOST_CAP = 1.85;
-export function drawOverlay(O, t, W, H, TOUR, C, logo, wCss) {
+// wCss/hCss (optional): the canvas's CSS (logical) size, i.e. independent of devicePixelRatio. Font sizes here
+// are tuned for a ~1920px-wide desktop frame; below MOBILE_BP that reads as illegibly small text (the smallest
+// lines, like a venue's tagline, land around 6px), so a flat MOBILE_BOOST multiplies k on any narrower screen.
+// Box sizes scale with the same k, so nothing clips inside its own box — but the lowest caption line sits
+// CAPTION_BOTTOM_V px from the top of the fixed 1080-tall virtual frame, so on a short phone a big boost can
+// push it below the visible viewport; hCss clamps k so that line always stays on screen. Video rendering
+// (no wCss/hCss) is unaffected.
+const MOBILE_BP = 700, MOBILE_BOOST = 4.0, CAPTION_BOTTOM_V = 1048;
+export function drawOverlay(O, t, W, H, TOUR, C, logo, wCss, hCss) {
   const kBase = W / 1920;
-  const k = (wCss && wCss < MOBILE_FLOOR) ? kBase * Math.min(MOBILE_FLOOR / wCss, MOBILE_BOOST_CAP) : kBase;
+  let k = (wCss && wCss < MOBILE_BP) ? kBase * MOBILE_BOOST : kBase;
+  if (wCss && wCss < MOBILE_BP && hCss) k = Math.min(k, hCss / CAPTION_BOTTOM_V);
   O.save(); O.scale(k, k); const w = 1920, h = 1080; O.textBaseline = 'alphabetic';
   const F = C.display || 'Fraunces', G = C.font || 'Mukta';
   const box = (x, y, bw, bh) => { O.fillStyle = C.box; O.fillRect(x, y, bw, bh); O.fillStyle = C.rule; O.fillRect(x, y, 4, bh); };

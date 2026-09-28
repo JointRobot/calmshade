@@ -83,7 +83,10 @@
   @media (max-width: 900px) {
     #panel { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 46vh; border-radius: 16px 16px 12px 12px; padding: 14px 16px; }
     #panel h2 { font-size: 22px; } .pin .l { display: none; } .areapin .l { display: inline; font-size: 13px; }
-    header { padding: 8px; gap: 6px; } #brand { font-size: 18px; } .seg button, #tourbtn, #ticketsbtn { font-size: 13px; padding: 6px 8px; }
+    header { padding: 8px; gap: 6px; } #brand { font-size: 18px; }
+    /* keep APPA + Tickets + Guided tour together on the header's first row; the venue-number chips drop to their own row below, since all three plus seven chips don't fit one line on a phone */
+    #chips { order: 3; flex-basis: 100%; margin-top: 2px; } .seg button { font-size: 13px; padding: 6px 8px; }
+    #tourbtn, #ticketsbtn { font-size: 12px; padding: 5px 9px; min-height: 34px; }
     .introbox h1 { font-size: 46px; }
   }
 </style>

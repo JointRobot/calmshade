@@ -180,7 +180,7 @@ function tick(now) {
   else { S.step(dt); t = S.clock; const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
   world.setCamIso(cam.px, cam.py, cam.S);
   const t0 = performance.now(); site.update(t); const t1 = performance.now(); crowd.update(t, inView); placeBlobs(); shadowCheck(); const t2 = performance.now(); world.render(); const t3 = performance.now();
-  if (tour) { O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); TOURM.overlay(O, t, ov2.width, ov2.height, VW); } else placePins();
+  if (tour) { O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); TOURM.overlay(O, t, ov2.width, ov2.height, VW, VH); } else placePins();
   if (perfOn) { PERF.dt.push(rawDt * 1000); if (PERF.dt.length > 600) PERF.dt.shift(); if (rawDt * 1000 > 24) PERF.log.push([+t.toFixed(2), +(rawDt * 1000).toFixed(1), +(t1 - t0).toFixed(1), +(t2 - t1).toFixed(1), +(t3 - t2).toFixed(1)]);
     if (frames % 15 === 0) { const d = PERF.dt.slice(-120).sort((a, b) => a - b); hud.textContent = `fps ${(1000 / (d.reduce((a, b) => a + b, 0) / d.length)).toFixed(0)}  p95 ${d[Math.floor(d.length * 0.95)].toFixed(1)}  max ${d[d.length - 1].toFixed(1)} ms\nupdate ${(t1 - t0).toFixed(1)}  crowd ${(t2 - t1).toFixed(1)}  render ${(t3 - t2).toFixed(1)} ms  gpu ${world.gpuMs ? world.gpuMs.toFixed(1) : '-'}\npr ${prCur}  calls ${world.renderer.info.render.calls}`; } }
   world.renderer.info.reset();
