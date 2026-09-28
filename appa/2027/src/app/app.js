@@ -133,11 +133,11 @@ function renderPanel() {
     if (o.journey) { pBody.appendChild(el('div', 'label', 'Your festival journey')); const ol = el('ol', 'journey'); o.journey.forEach(s => ol.appendChild(el('li', '', s))); pBody.appendChild(ol); }
     pBody.appendChild(row(btn(COPY.tourLabel, startTour, 'primary'))); return; }
   if (A.spot) { const sp = COPY.spots[A.spot]; const a = sp.area ? COPY.areas[sp.area] : null;
-    pBody.append(el('div', 'eyebrow', a ? a.name : COPY.title), el('h2', '', sp.title), el('p', 'note', sp.text)); controls(sp.controls, pBody);
+    pBody.append(el('div', 'eyebrow', a ? a.name : COPY.title), el('h2', '', sp.title), el('p', 'note', sp.text)); if (sp.programme) { pBody.appendChild(el('div', 'label', 'On the programme here')); const ul = el('ul', 'offer'); sp.programme.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); } controls(sp.controls, pBody);
     pBody.appendChild(row(btn('← ' + (a ? a.name : 'The map'), () => (sp.area ? goArea(sp.area) : goOverview()), 'ghost'))); return; }
   const c = COPY.areas[A.area]; pBody.append(el('div', 'eyebrow', c.n ? `Venue ${c.n}` : 'Around the festival'), el('h2', '', c.name), el('p', 'tag', c.tagline));
   if (c.text) pBody.appendChild(el('p', 'note', c.text));
-  if (c.offerings) { pBody.appendChild(el('div', 'label', 'What happens here')); const ul = el('ul', 'offer'); c.offerings.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); }
+  if (c.offerings) { pBody.appendChild(el('div', 'label', 'What happens here')); const ul = el('ul', 'offer'); c.offerings.forEach(s => { const [txt, key] = Array.isArray(s) ? s : [s]; const li = el('li', key ? 'go' : '', txt); if (key && COPY.spots[key]) { li.tabIndex = 0; li.title = 'Show it on the map'; li.onclick = () => goSpot(key); li.onkeydown = e => { if (e.key === 'Enter') goSpot(key); }; } ul.appendChild(li); }); pBody.appendChild(ul); }
   if (c.website) pBody.appendChild(row(linkBtn(c.website.label, c.website.url)));
   if (COPY.weeks) { const w = COPY.weeks[Math.round(S.value('week'))]; if (w) { pBody.appendChild(el('div', 'label', 'This week')); pBody.appendChild(el('div', 'readout', `${w.dates} · ${w.label}`)); } }
   const spots = Object.keys(COPY.spots).filter(k => COPY.spots[k].area === A.area);
