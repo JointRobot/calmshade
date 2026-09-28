@@ -40,8 +40,8 @@ export const SITE = {
     { id: 'raiker', n: 1, name: 'Raiker Farms', center: C.raiker, rect: [5, 48, 27, 68], floor: '#CDBA8A', structures: [
       at(C.raiker, -2, -6, { type: 'stage', w: 10, d: 5, glow: '#FFB45A' }),
       at(C.raiker, -2, -2.8, { type: 'audience', area: 'raiker', face: Math.PI / 2, r0: 2, r1: 8, count: 60 }),
-      at(C.raiker, 8, -1, { type: 'house', w: 4, d: 2.6, h: 1.9, color: '#E3F0E6', roof: '#BFE0CF' }),
-      at(C.raiker, 8, 2.5, { type: 'house', w: 4, d: 2.6, h: 1.9, color: '#E3F0E6', roof: '#BFE0CF' }),
+      // the ochre farmhouse, with its own spiral staircases up to the balcony on both sides
+      at(C.raiker, 8, 0.5, { type: 'villa', w: 6, d: 4, floors: 2, color: '#D9A24A', roof: '#8A4A2E', rail: '#F6ECD8', stair: 'both' }),
       at(C.raiker, 8, -6, { type: 'pavilion', w: 4, d: 2.6, roof: '#7A5A3A' }),
       at(C.raiker, 3, 7, { type: 'sculpture', kind: 'head', h: 5 }),
       at(C.raiker, -6, 6, { type: 'pavilion', w: 5, d: 3.2, tables: 3, roof: '#8A6A3A' }),
@@ -49,7 +49,8 @@ export const SITE = {
       at(C.raiker, -10, -6, { type: 'cars', count: 5, rot: Math.PI / 2 }) ] },
     // LE FARM: 15 acres on the Vadivali backwaters; a two-storey main house with balconies. Political forums and big events with parking.
     { id: 'lefarm', n: 2, name: 'Le Farm', center: C.lefarm, rect: [20, 15, 44, 37], floor: '#D3C193', structures: [
-      at(C.lefarm, -7.5, -8, { type: 'house', w: 7, d: 4.5, h: 5, color: '#EFE3CC', roof: '#A94F32' }),
+      // the lake-touch main house: a modern curved standing-seam roof over the cream-walled farmhouse
+      at(C.lefarm, -7.5, -8, { type: 'house', w: 7, d: 4.5, h: 5, color: '#F2ECDD', roof: '#4A4038', roofType: 'barrel' }),
       at(C.lefarm, 5, -4, { type: 'stage', w: 10, d: 5, glow: '#FFB45A' }),
       at(C.lefarm, 5, -1, { type: 'audience', area: 'lefarm', face: Math.PI / 2, r0: 2, r1: 7, count: 60 }),
       at(C.lefarm, -8, 2, { type: 'bigtop', r: 3.5, color: '#C8412F' }), at(C.lefarm, -2, 7, { type: 'bigtop', r: 3.3, h: 4.4, color: '#D9953F', color2: '#F7EAD0' }),
@@ -58,7 +59,8 @@ export const SITE = {
       at(C.lefarm, 6, -10.5, { type: 'cars', count: 5, rot: 0 }) ] },
     // SHAMBHALA BY THE LAKE: lake-touch homestay, main house and dormitories, jetty, paragliding base. Intimate music.
     { id: 'shambhala', n: 3, name: 'Shambhala by the Lake', center: C.shambhala, rect: [60, 16, 84, 32], floor: '#D8C8A0', structures: [
-      at(C.shambhala, -6, -3, { type: 'house', w: 6, d: 3.6, h: 3, color: '#E8D7B6', roof: '#7A4A2E' }),
+      // the lakeside homestay: an open, tiled-roof pavilion up a short run of stone steps
+      at(C.shambhala, -6, -3, { type: 'pavilion', w: 6, d: 4, h: 2.6, roof: '#8A4A2E', post: '#6B4A2E', raised: 0.5, steps: 3, stone: '#C9B48A' }),
       at(C.shambhala, -6, 2, { type: 'house', w: 5, d: 2.6, h: 2.4, color: '#DCC9A3', roof: '#7A4A2E' }),
       at(C.shambhala, 4, -3, { type: 'dome', r: 2.4, glow: '#FFC8E8' }),
       at(C.shambhala, 3, 0, { type: 'stage', w: 5, d: 3, h: 0.6, truss: 3.6, glow: '#FFC9E0', beam: '#FFD0E8' }),
@@ -66,7 +68,8 @@ export const SITE = {
       at(C.shambhala, -10.5, -6, { type: 'tent', r: 1.4 }), at(C.shambhala, -8.5, -8.5, { type: 'tent', r: 1.4, color: '#E8D7B6' }) ] },
     // PURROM: eco retreat facing the Sahyadri: solo domes (Mango, Labernum), the Glass House (Peepal), Chickoo house, the MotherShip. Horror film festival.
     { id: 'purrom', n: 4, name: 'Purrom', center: C.purrom, rect: [95, 31, 121, 53], floor: '#D6C49A', structures: [
-      at(C.purrom, -7, -5, { type: 'dome', r: 2.2, glow: '#FFE08A', color: '#EDE4D0' }), at(C.purrom, -2.5, -6, { type: 'dome', r: 2.2, glow: '#FFE08A', color: '#DCE8D2' }),
+      // two red-roofed clay huts for the solo domes, and the Glass House kept as an actual glass dome
+      at(C.purrom, -7, -5, { type: 'hut', r: 2, h: 1.8, roofH: 1.5, color: '#E3C9A0', roof: '#A9432B' }), at(C.purrom, -2.5, -6, { type: 'hut', r: 2, h: 1.8, roofH: 1.5, color: '#E8D4B0', roof: '#B8543A' }),
       at(C.purrom, 6, -6, { type: 'dome', r: 3.4, glow: '#B8FFD8', color: '#EDE4D0' }),
       at(C.purrom, -9, -1, { type: 'house', w: 3.6, d: 3, h: 2.4, color: '#CFE8EA', roof: '#8FBFC8' }),
       at(C.purrom, -9, 3.5, { type: 'house', w: 4.6, d: 3.4, h: 2.4, color: '#EBDDBE', roof: '#8A4A2E' }),
@@ -75,13 +78,16 @@ export const SITE = {
       ...[0, 1, 2].map(i => at(C.purrom, 3 + i * 3, 8, { type: 'stall', color: ['#2F7F7A', '#B5523B', '#D9953F'][i], seed: i })) ] },
     // THE COMPANY THEATER: their own theatre festival inside the festival.
     { id: 'company', n: 6, name: 'The Company Theatre', center: C.company, rect: [98, 66, 124, 90], floor: '#D1BE92', structures: [
-      at(C.company, 2, -5, { type: 'theatre', w: 9, d: 6 }),
+      // the white colonial theatre house, with a covered veranda facing the orchard slope
+      at(C.company, 2, -5, { type: 'theatre', w: 9, d: 6, color: '#F2EDE0', roof: '#7A5A46', rail: '#FFFFFF', veranda: true }),
       at(C.company, -8, -3, { type: 'stage', w: 5, d: 3, h: 0.7, truss: 3.6, glow: '#E8C8FF', beam: '#E8D8FF' }),
       at(C.company, -8, -0.5, { type: 'audience', area: 'company', face: Math.PI / 2, r0: 1.5, r1: 5, count: 20 }),
       at(C.company, -4, 6, { type: 'screen', w: 7, h: 3.6, rot: -Math.PI / 2 + 0.1, rows: 3 }),
       at(C.company, 7, 6, { type: 'pavilion', w: 4, d: 3, tables: 2, roof: '#6A3A2E' }) ] },
     // KAMSHET: the festival hub. Archive of the last two years' events and their formats, the fashion runway, art and installations.
     { id: 'calmshet', n: 5, name: 'Calmshet (Main Venue)', center: C.calmshet, rect: [68, 96, 102, 124], floor: '#D9C597', structures: [
+      // the main house: a grand 3-storey villa with wraparound balconies on every floor, the hub of the festival
+      at(C.calmshet, -2, -7, { type: 'villa', w: 9, d: 6, floors: 3, color: '#F3E8D2', roof: '#B8543A', rail: '#F7EFDE' }),
       at(C.calmshet, 2, -1.5, { type: 'stage', w: 11, d: 6, h: 1.2, truss: 7, glow: '#FF9A4A' }),
       at(C.calmshet, 2, 2.5, { type: 'audience', area: 'calmshet', face: Math.PI / 2, r0: 2.5, r1: 10, a0: -1.0, a1: 1.0, count: 80 }),
       at(C.calmshet, -12, -3, { type: 'tower', h: 13, glow: '#FF7FD0' }), at(C.calmshet, 14, -2, { type: 'tower', h: 11, glow: '#7FE7FF' }),
@@ -92,7 +98,8 @@ export const SITE = {
       ...[0, 1, 2].map(i => at(C.calmshet, 14, 4 + i * 3, { type: 'stall', rot: -Math.PI / 2, color: ['#B5523B', '#D9953F', '#3E6AA0'][i], seed: i + 1 })) ] },
     // THEEYA CREATION VILLAGE: run by a singer, so a vocal stage under the trees.
     { id: 'theeya', n: 7, name: 'Theeya Creation Village', center: C.theeya, rect: [18, 86, 44, 110], floor: '#CFB98C', structures: [
-      at(C.theeya, -6, -4, { type: 'house', w: 4, d: 3, color: '#E8D2A8' }), at(C.theeya, 1, -6, { type: 'house', w: 3.4, d: 3, rot: 0.3, color: '#E1C49A', roof: '#8A4A2E' }),
+      // open, red-roofed wooden decks tucked among the trees
+      at(C.theeya, -6, -4, { type: 'pavilion', w: 4, d: 3, h: 2.2, roof: '#A9432B', post: '#6B4A2E' }), at(C.theeya, 1, -6, { type: 'pavilion', w: 3.6, d: 3, h: 2.2, rot: 0.3, roof: '#8A4A2E', post: '#6B4A2E' }),
       at(C.theeya, 7, -4, { type: 'stage', w: 6, d: 3.4, h: 0.8, truss: 4, glow: '#FFC08A', beam: '#FFE0B8' }),
       at(C.theeya, 7, -1.5, { type: 'audience', area: 'theeya', face: Math.PI / 2, r0: 1.5, r1: 5, count: 22 }),
       at(C.theeya, 7, 7, { type: 'pavilion', w: 5.5, d: 3.6, tables: 3, roof: '#A94F32' }),
