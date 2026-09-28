@@ -76,10 +76,10 @@ export const SITE = {
       A(7, 72, { type: 'bigtop', r: 3.3, color: '#C8412F' }), A(23.5, 59.5, { type: 'bigtop', r: 3.2, h: 4.4, color: '#D9953F', color2: '#F7EAD0' }),
       A(26, 65.5, { type: 'sculpture', kind: 'crystal', h: 3.2, color: '#C8412F', glow: '#FF6A4A' }),
       A(12, 77, { type: 'stall', rot: 0.1, color: '#6E9A4B' }), A(8.8, 77.2, { type: 'stall', rot: 0.1, color: '#B5523B', seed: 2 }) ] },
-    // 4 · CALMSHET: a cream three-storey timber-and-stone hill lodge with wraparound verandas on a stone terrace, the main
+    // 4 · CALMSHET: a cream two-storey timber-and-stone hill lodge with wraparound verandas on a stone terrace, the main
     // stage on the lawn, the archive of the last two years' events and formats, the fashion runway, art and installations.
     { id: 'calmshet', n: 4, name: 'Calmshet', center: C.calmshet, rect: [10, 24, 38, 53], floor: '#D9C597', structures: [
-      A(24, 31, { type: 'lodge', w: 9, d: 6, floors: 3, color: '#F2D58E', roof: '#7A4A2C', rail: '#FFFFFF', wood: '#8A5A34', plinth: 0.8, stone: '#B9A583' }),
+      A(24, 31, { type: 'lodge', w: 5, d: 6, floors: 2, color: '#F2D58E', roof: '#7A4A2C', rail: '#FFFFFF', wood: '#8A5A34', plinth: 0.8, stone: '#B9A583' }),
       A(17, 28, { type: 'bush', r: 2.2, color: '#3F7A3A' }), A(31.5, 27.5, { type: 'bush', r: 2.4, color: '#356F35' }), A(13, 34, { type: 'bush', r: 1.8, color: '#4B8440' }), A(34.5, 34, { type: 'bush', r: 2, color: '#3F7A3A' }), A(24, 26.2, { type: 'bush', r: 2.6, color: '#2F6A34' }),
       A(14, 31, { type: 'pavilion', w: 7, d: 3, tables: 3, roof: '#3E6AA0' }),
       A(20, 41, { type: 'stage', w: 11, d: 6, h: 1.2, truss: 7, glow: '#FF9A4A' }),
