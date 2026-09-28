@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>/* every file loads relative to this page, so a folder address must end in a slash (…/fest becomes …/fest/) */ if (!/\/$|\.html$/.test(location.pathname)) location.replace(location.pathname + '/' + location.search + location.hash);</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>APPA Art Fest 2027</title>
+<meta name="description" content="Explore APPA Art Fest 2027: one lake, seven venues. Tap any venue to see what happens there.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }</script>
+<style>
+  :root { --paper: #F6EEDD; --card: #FFF9EE; --ink: #23202A; --muted: #6A6258; --rule: #E2D3BA; --accent: #D9502F; --accent2: #2F7F7A; --gold: #E2A33A; --bg: #EDE0CC; --font: 'Mukta'; --display: 'Fraunces'; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font), system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  #gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  #ov { position: fixed; inset: 0; pointer-events: none; }
+  #pins { position: fixed; inset: 0; pointer-events: none; }
+  .pin { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--ink); display: flex; align-items: center; gap: 6px; margin: -14px 0 0 -14px; }
+  .pin.hidden { display: none; }
+  .pin .dot { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle, #FFF1C2 0 30%, var(--gold) 32% 55%, rgba(226,163,58,0.35) 57%); animation: pulse 2s infinite; flex: none; }
+  .pin .n { min-width: 34px; height: 34px; border-radius: 17px; padding: 0 8px; background: var(--accent); color: #FFF6EA; font-weight: 600; font-size: 16px; display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.25); flex: none; }
+  .pin .l { background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px 2px; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .areapin { margin: -17px 0 0 -17px; }
+  .areapin .l { font-family: var(--display), Georgia, serif; font-style: italic; font-size: 16px; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,210,120,0.7); } 70% { box-shadow: 0 0 0 12px rgba(255,210,120,0); } 100% { box-shadow: 0 0 0 0 rgba(255,210,120,0); } }
+  header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: 12px 16px; pointer-events: none; flex-wrap: wrap; }
+  header > * { pointer-events: auto; }
+  #brand { font-family: var(--font), sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 22px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 5px 14px; cursor: pointer; color: var(--ink); }
+  .seg { display: flex; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  .seg button, #tourbtn { border: 0; background: none; font: 500 15px var(--font), sans-serif; padding: 7px 12px; cursor: pointer; color: var(--ink); min-height: 40px; }
+  .seg button.on { background: var(--ink); color: var(--paper); }
+  #chips button { min-width: 40px; }
+  #tourbtn { background: var(--accent); color: #FFF6EA; border-radius: 10px; }
+  .spacer { flex: 1; }
+  #panel { position: fixed; right: 16px; top: 72px; bottom: 16px; width: 380px; background: var(--card); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.18); overflow: auto; padding: 20px 20px 16px; }
+  #panel.hidden { display: none; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  #panel h2 { font-family: var(--display), Georgia, serif; font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.1; margin: 6px 0 10px; }
+  #panel h3 { font-family: var(--display), Georgia, serif; font-style: italic; font-weight: 500; font-size: 22px; margin: 4px 0 10px; }
+  .tag { font-family: var(--display), Georgia, serif; font-style: italic; color: var(--muted); margin: 0 0 12px; font-size: 17px; }
+  .note { font-size: 16px; line-height: 1.45; margin: 0 0 12px; }
+  .small { font-size: 13.5px; color: var(--muted); line-height: 1.4; margin: 8px 0; }
+  .label { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); margin: 14px 0 6px; }
+  ul.offer { margin: 4px 0 8px; padding-left: 18px; line-height: 1.5; font-size: 15px; }
+  ol.journey { margin: 4px 0 8px; padding-left: 20px; line-height: 1.5; font-size: 15px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .cbtn { border: 1px solid var(--rule); background: var(--paper); color: var(--ink); font: 500 15px var(--font), sans-serif; border-radius: 10px; padding: 8px 12px; cursor: pointer; min-height: 44px; text-align: left; line-height: 1.2; }
+  .cbtn:hover { border-color: var(--gold); }
+  .cbtn.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .cbtn.primary { background: var(--accent); color: #FFF6EA; border-color: var(--accent); }
+  .cbtn.ghost { background: none; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .readout { background: var(--paper); border-radius: 10px; padding: 10px 12px; font-size: 15px; line-height: 1.4; min-height: 44px; margin: 8px 0; border-left: 3px solid var(--gold); }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 36px; }
+  .alist { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+  .abtn { display: flex; gap: 10px; align-items: center; text-align: left; border: 1px solid var(--rule); background: var(--paper); border-radius: 12px; padding: 8px 10px; cursor: pointer; font: 15px var(--font), sans-serif; color: var(--ink); }
+  .abtn .n { min-width: 30px; height: 30px; border-radius: 15px; background: var(--accent); color: #FFF6EA; display: grid; place-items: center; font-weight: 600; flex: none; padding: 0 6px; }
+  .abtn.done .n { background: var(--accent2); }
+  .abtn i { color: var(--muted); }
+  #intro { position: fixed; inset: 0; background: rgba(246,238,221,0.9); display: grid; place-items: center; z-index: 6; padding: 16px; }
+  #intro.hidden { display: none; }
+  .introbox { max-width: 580px; text-align: center; }
+  .introbox h1 { font-family: var(--font), sans-serif; font-weight: 700; font-size: 64px; margin: 4px 0 0; color: var(--ink); line-height: 1; }
+  .introbox .tagline { font-family: var(--display), Georgia, serif; font-style: italic; font-size: 26px; color: var(--accent); margin: 6px 0 12px; }
+  .introbox p { font-size: 18px; color: #3A3A48; line-height: 1.45; }
+  body.touring #panel, body.touring #pins { display: none; }
+  @media (max-width: 900px) {
+    #panel { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 46vh; border-radius: 16px 16px 12px 12px; padding: 14px 16px; }
+    #panel h2 { font-size: 22px; } .pin .l { display: none; } .areapin .l { display: inline; font-size: 13px; }
+    header { padding: 8px; gap: 6px; } #brand { font-size: 18px; } .seg button, #tourbtn { font-size: 13px; padding: 6px 8px; }
+    .introbox h1 { font-size: 46px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+<div id="pins"></div>
+<header>
+  <button id="brand" title="Back to the map">APPA</button>
+  <div class="seg" id="chips" aria-label="Venues"></div>
+  <div class="spacer"></div>
+  <button id="tourbtn">Guided tour</button>
+</header>
+<aside id="panel"><div id="pbody"></div></aside>
+<div id="intro"><div class="introbox">
+  <div class="eyebrow" id="i-eyebrow"></div>
+  <h1 id="i-h1"></h1>
+  <div class="tagline" id="i-tag"></div>
+  <p id="i-text"></p>
+  <div class="row" style="justify-content:center"><button class="cbtn primary" id="enter" disabled>Loading…</button></div>
+  <p class="small" id="i-credit"></p>
+</div></div>
+<audio id="score" preload="none"></audio>
+<script type="module" src="./src/app/app.js"></script>
+</body>
+</html>
