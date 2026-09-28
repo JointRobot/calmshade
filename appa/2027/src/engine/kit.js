@@ -182,6 +182,41 @@ export const KIT = {
     const [cx, cy] = W(0, extra / 2); addORect(cx, cy, w + (s.stair ? 3.6 : 1.6), d + ov + 1.2 + extra, rot, `${s.id} villa`);
     return { group: grp };
   },
+  // hill lodge (Calmshet): a cream three-storey timber-and-stone house on a stone terrace, a wooden veranda with white
+  // railings wrapping every floor on all four sides, a steep gabled roof with a dormer, stone steps up the front.
+  lodge(ctx, s) {
+    const { grp, add, W, rot } = place(s); const w = s.w || 9, d = s.d || 6, floors = s.floors || 3, fh = s.floorH || 2.5, pl = s.plinth || 0.8, b = 1.0;
+    const wallM = ctx.mat(s.color || '#F2D58E'), railM = ctx.mat(s.rail || '#FFFFFF'), wood = ctx.mat(s.wood || '#8A5A34'), stone = ctx.mat(s.stone || '#B9A583');
+    const roofM = ctx.mat(s.roof || '#7A4A2C', { side: THREE.DoubleSide });
+    const winM = ctx.glow('window', { on: '#FFCB70', off: '#4A5560', channel: 'night', day: 0 });
+    add(box(ctx, -w / 2 - 2.2, -d / 2 - 1.8, w / 2 + 2.2, d / 2 + 1.8, 0, pl, stone));
+    // stone steps down the south side
+    const n = 4, sw = 3; for (let i = 0; i < n; i++) add(box(ctx, -sw / 2, d / 2 + 1.8 + i * 0.32, sw / 2, d / 2 + 1.8 + (i + 1) * 0.32, 0, pl * (n - 1 - i) / n + 0.02, stone, { round: 0 }));
+    let z = pl;
+    for (let f = 0; f < floors; f++) {
+      add(box(ctx, -w / 2, -d / 2, w / 2, d / 2, z, z + fh, wallM));
+      add(box(ctx, -w / 2 - b, -d / 2 - b, w / 2 + b, d / 2 + b, z - 0.02, z + 0.12, wood));
+      // windows on all four faces, and a door on the ground floor
+      const nw = Math.max(2, Math.round(w / 2.4)), nd = Math.max(1, Math.round(d / 2.6));
+      for (let i = 0; i < nw; i++) { const u = -w / 2 + (i + 0.5) * w / nw; if (f === 0 && Math.abs(u) < 0.9) continue; for (const v of [-d / 2 - 0.03, d / 2 + 0.03]) add(box(ctx, u - 0.33, v - 0.03, u + 0.33, v + 0.03, z + fh * 0.3, z + fh * 0.82, winM, { round: 0 })); }
+      for (let i = 0; i < nd; i++) { const v = -d / 2 + (i + 0.5) * d / nd; for (const u of [-w / 2 - 0.03, w / 2 + 0.03]) add(box(ctx, u - 0.03, v - 0.33, u + 0.03, v + 0.33, z + fh * 0.3, z + fh * 0.82, winM, { round: 0 })); }
+      if (f === 0) add(box(ctx, -0.5, d / 2 - 0.02, 0.5, d / 2 + 0.05, z, z + 1.9, ctx.mat('#4A2E1E'), { round: 0 }));
+      // white railing all round the veranda
+      const x0 = -w / 2 - b + 0.06, x1 = w / 2 + b - 0.06, y0 = -d / 2 - b + 0.06, y1 = d / 2 + b - 0.06, rz = z + 0.12;
+      for (const v of [y0, y1]) { add(box(ctx, x0, v - 0.04, x1, v + 0.04, rz + 0.86, rz + 0.96, railM, { round: 0 })); for (let i = 0; i <= Math.round((x1 - x0) / 0.55); i++) { const u = x0 + i * (x1 - x0) / Math.round((x1 - x0) / 0.55); add(box(ctx, u - 0.03, v - 0.03, u + 0.03, v + 0.03, rz, rz + 0.86, railM, { round: 0 })); } }
+      for (const u of [x0, x1]) { add(box(ctx, u - 0.04, y0, u + 0.04, y1, rz + 0.86, rz + 0.96, railM, { round: 0 })); for (let i = 1; i < Math.round((y1 - y0) / 0.55); i++) { const v = y0 + i * (y1 - y0) / Math.round((y1 - y0) / 0.55); add(box(ctx, u - 0.03, v - 0.03, u + 0.03, v + 0.03, rz, rz + 0.86, railM, { round: 0 })); } }
+      z += fh;
+    }
+    // timber veranda columns rising to the roof eaves
+    for (const u of [w / 2 + b - 0.15, -w / 2 - b + 0.15, 0]) for (const v of [-d / 2 - b + 0.15, d / 2 + b - 0.15]) add(ctx.g.cyl(u, v, 0.1, pl, z, wood, { seg: 8 }));
+    for (const v of [0]) for (const u of [-w / 2 - b + 0.15, w / 2 + b - 0.15]) add(ctx.g.cyl(u, v, 0.1, pl, z, wood, { seg: 8 }));
+    add(gable(w + 2 * b, d + 2 * b, s.roofH || 2.8, z, 0.35, roofM));
+    // dormer window in the front roof
+    add(box(ctx, -0.8, 0.4, 0.8, d / 2 + b - 0.4, z, z + 1.7, wallM)); add(box(ctx, -0.45, d / 2 + b - 0.44, 0.45, d / 2 + b - 0.36, z + 0.5, z + 1.4, winM, { round: 0 }));
+    const dg = gable(1.9, d / 2 + b - 0.2, 0.8, z + 1.7, 0.15, roofM); dg.rotation.y = Math.PI / 2; dg.position.z = (0.4 + d / 2 + b - 0.4) / 2; add(dg);
+    const [cx, cy] = W(0, 0.6); addORect(cx, cy, w + 4.6, d + 3.6 + 1.8, rot, `${s.id} lodge`);
+    return { group: grp };
+  },
   // modern two-storey house with flat roof slabs, big glass fronts, a rounded front veranda and a carport (Le Farm)
   modern(ctx, s) {
     const { grp, add, W, rot } = place(s); const w = s.w || 8, d = s.d || 6, h1 = s.h || 2.8, h2 = s.h2 || 2.5;

@@ -25,7 +25,7 @@ export const TOUR = {
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
     [18, 25.5, 'Venue 1', 'Raiker Farms', 'The biggest gatherings, forums and large-scale art'],
     [27, 33.5, 'Venue 2', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
-    [35, 41.5, 'Venue 3', 'Le Farm', 'Big events and open debate on 15 acres'],
+    [35, 41.5, 'Venue 3', 'Le Farm', 'Big events and open debate'],
     [43, 49.5, 'Venue 5', 'Purrom', 'A horror film festival in a healing retreat'],
     [51, 57.5, 'Venue 6', 'The Company Theatre', 'Their own theatre festival'],
     [59.5, 64, 'Venue 7', 'Theeya Creation Village', 'Voice, craft and community'],
@@ -36,7 +36,7 @@ export const TOUR = {
     [78.1, 81.5, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
     [81.7, 85.1, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
     [85.3, 88.4, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [89.2, 100.5, 'Venue 4 · the main venue', 'Calmshet', 'The past two years, fashion, art, opening night'],
+    [89.2, 100.5, 'Venue 4', 'Calmshet', 'The past two years, fashion, art, opening night'],
     [104, 109.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
   ],
   subs: [

@@ -67,7 +67,7 @@ export const SITE = {
       A(26, 94, { type: 'house', w: 5, d: 2.6, h: 2.4, color: '#DCC9A3', roof: '#B8432F' }),
       A(47, 95, { type: 'tent', r: 1.4 }), A(43.5, 96, { type: 'tent', r: 1.4, color: '#E8D7B6' }),
       A(37, 91, { type: 'bush', r: 0.9, color: '#E0457B' }) ] },
-    // 3 · LE FARM: 15 acres on the backwaters. A two-storey modern house with flat roofs, big glass and a carport.
+    // 3 · LE FARM: On the backwaters. A two-storey modern house with flat roofs, big glass and a carport.
     // Political forums and big events under the big tops, with parking.
     { id: 'lefarm', n: 3, name: 'Le Farm', center: C.lefarm, rect: [3, 55, 28, 78], floor: '#D3C193', structures: [
       A(12, 60, { type: 'modern', w: 8, d: 5.5, h: 2.8, h2: 2.4, color: '#F2D58E', trim: '#F8EFDC', car: '#3A3A42' }),
@@ -76,10 +76,11 @@ export const SITE = {
       A(7, 72, { type: 'bigtop', r: 3.3, color: '#C8412F' }), A(23.5, 59.5, { type: 'bigtop', r: 3.2, h: 4.4, color: '#D9953F', color2: '#F7EAD0' }),
       A(26, 65.5, { type: 'sculpture', kind: 'crystal', h: 3.2, color: '#C8412F', glow: '#FF6A4A' }),
       A(12, 77, { type: 'stall', rot: 0.1, color: '#6E9A4B' }), A(8.8, 77.2, { type: 'stall', rot: 0.1, color: '#B5523B', seed: 2 }) ] },
-    // 4 · CALMSHET: the main venue and festival hub. A grand three-storey villa with balconies on a stone plinth, the main
+    // 4 · CALMSHET: a cream three-storey timber-and-stone hill lodge with wraparound verandas on a stone terrace, the main
     // stage on the lawn, the archive of the last two years' events and formats, the fashion runway, art and installations.
-    { id: 'calmshet', n: 4, name: 'Calmshet (Main Venue)', center: C.calmshet, rect: [10, 24, 38, 53], floor: '#D9C597', structures: [
-      A(24, 31, { type: 'villa', w: 9, d: 6, floors: 3, color: '#F2D58E', roof: '#A86A3A', rail: '#FFFFFF', plinth: 0.7, frontStairs: 'straight', stone: '#B9A583' }),
+    { id: 'calmshet', n: 4, name: 'Calmshet', center: C.calmshet, rect: [10, 24, 38, 53], floor: '#D9C597', structures: [
+      A(24, 31, { type: 'lodge', w: 9, d: 6, floors: 3, color: '#F2D58E', roof: '#7A4A2C', rail: '#FFFFFF', wood: '#8A5A34', plinth: 0.8, stone: '#B9A583' }),
+      A(17, 28, { type: 'bush', r: 2.2, color: '#3F7A3A' }), A(31.5, 27.5, { type: 'bush', r: 2.4, color: '#356F35' }), A(13, 34, { type: 'bush', r: 1.8, color: '#4B8440' }), A(34.5, 34, { type: 'bush', r: 2, color: '#3F7A3A' }), A(24, 26.2, { type: 'bush', r: 2.6, color: '#2F6A34' }),
       A(14, 31, { type: 'pavilion', w: 7, d: 3, tables: 3, roof: '#3E6AA0' }),
       A(20, 41, { type: 'stage', w: 11, d: 6, h: 1.2, truss: 7, glow: '#FF9A4A' }),
       A(20, 44.5, { type: 'audience', area: 'calmshet', face: Math.PI / 2, r0: 2.5, r1: 8, a0: -1.0, a1: 1.0, count: 70 }),
