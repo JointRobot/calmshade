@@ -67,14 +67,15 @@ const setCamT = v => Object.assign(camT, v);
 Object.assign(cam, fitOverview()); setCamT(fitOverview());
 
 // ---- navigation state
-const A = { visited: new Set(), revealed: new Set(), area: null, spot: null };
+const A = { visited: new Set(), revealed: new Set(), area: null, spot: null, tickets: false };
 const areaList = SITE.areas.filter(a => COPY.areas[a.id]);
 const shownArea = a => !a.hidden || A.revealed.has(a.id);
-function goOverview() { A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); }
-function goArea(id) { A.area = id; A.spot = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
-function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
+function goOverview() { A.area = null; A.spot = null; A.tickets = false; setCamT(fitOverview()); renderPanel(); }
+function goArea(id) { A.area = id; A.spot = null; A.tickets = false; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
+function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
+function goTickets() { A.tickets = true; renderPanel(); }
 function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.set, a.arg, a.value); if (a.pulse) S.pulse(a.pulse, a.arg, a.dur || 8, a.peak || 1); if (a.reveal) { A.revealed.add(a.reveal); buildChips(); } if (a.say && out) out.textContent = a.say;
-  if (a.go) { const [k, v] = a.go.split(':'); if (k === 'area') goArea(v); else if (k === 'spot') goSpot(v); else goOverview(); } } }
+  if (a.go) { const [k, v] = a.go.split(':'); if (k === 'area') goArea(v); else if (k === 'spot') goSpot(v); else if (k === 'tickets') goTickets(); else goOverview(); } } }
 
 // ---- pins
 const pinLayer = $('#pins'); const pins = [];
@@ -93,6 +94,8 @@ function placePins() {
 const panel = $('#panel'), pBody = $('#pbody');
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const btn = (label, fn, cls = '') => { const b = el('button', 'cbtn ' + cls, label); b.onclick = fn; return b; };
+// a venue's own site: opens in a new tab (noopener) so this app keeps running behind it, never navigates away from it
+const linkBtn = (label, href, cls = '') => { const a = el('a', 'cbtn link ' + cls, label); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a; };
 const row = (...els) => { const d = el('div', 'row'); els.forEach(e => d.appendChild(e)); return d; };
 function controls(list = [], box) {
   for (const c of list) {
@@ -107,6 +110,18 @@ function controls(list = [], box) {
 let soon = 0; const renderPanelSoon = () => { clearTimeout(soon); soon = setTimeout(renderPanel, 60); };
 function renderPanel() {
   pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
+  if (A.tickets) { const T = COPY.tickets;
+    pBody.append(el('div', 'eyebrow', T.eyebrow), el('h2', '', T.title), el('p', 'note', T.intro));
+    const tl = el('div', 'tierlist');
+    for (const t of T.tiers) { const card = el('div', 'tier');
+      card.append(el('div', 'tiername', t.name), el('div', 'tierprice', t.price), el('div', 'tierunit', t.unit), el('p', 'tierblurb', t.blurb));
+      const ul = el('ul', 'offer'); t.bullets.forEach(s => ul.appendChild(el('li', '', s))); card.appendChild(ul); tl.appendChild(card); }
+    pBody.appendChild(tl);
+    if (T.note) pBody.appendChild(el('p', 'small', T.note));
+    if (T.qr) { const qb = el('div', 'qrbox'); const img = el('img', 'qrimg'); img.src = T.qr.image; img.alt = T.qr.caption; qb.appendChild(img);
+      qb.appendChild(el('div', 'qrcaption', T.qr.caption)); if (T.qr.payee) qb.appendChild(el('div', 'qrpayee', T.qr.payee)); pBody.appendChild(qb); }
+    if (T.contact) pBody.appendChild(el('p', 'small', T.contact));
+    pBody.appendChild(row(btn('← The map', goOverview, 'ghost'))); return; }
   if (!A.area && !A.spot) { const o = COPY.overview;
     pBody.append(el('div', 'eyebrow', o.eyebrow), el('h2', '', o.h2), el('p', 'note', o.text));
     const list = el('div', 'alist'); for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { if (!shownArea(a)) continue; const c = COPY.areas[a.id]; const b = el('button', 'abtn' + (A.visited.has(a.id) ? ' done' : '')); b.innerHTML = `<span class="n">${c.n || '•'}</span><span><b>${c.name}</b><br><i>${c.tagline}</i></span>`; b.onclick = () => goArea(a.id); list.appendChild(b); }
@@ -119,6 +134,7 @@ function renderPanel() {
   const c = COPY.areas[A.area]; pBody.append(el('div', 'eyebrow', c.n ? `Venue ${c.n}` : 'Around the festival'), el('h2', '', c.name), el('p', 'tag', c.tagline));
   if (c.text) pBody.appendChild(el('p', 'note', c.text));
   if (c.offerings) { pBody.appendChild(el('div', 'label', 'What happens here')); const ul = el('ul', 'offer'); c.offerings.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); }
+  if (c.website) pBody.appendChild(row(linkBtn(c.website.label, c.website.url)));
   if (COPY.weeks) { const w = COPY.weeks[Math.round(S.value('week'))]; if (w) { pBody.appendChild(el('div', 'label', 'This week')); pBody.appendChild(el('div', 'readout', `${w.dates} · ${w.label}`)); } }
   const spots = Object.keys(COPY.spots).filter(k => COPY.spots[k].area === A.area);
   if (spots.length) { pBody.appendChild(el('div', 'label', 'Try it')); const list = el('div', 'alist'); for (const k of spots) list.appendChild(btn(COPY.spots[k].title, () => goSpot(k))); pBody.appendChild(list); }
@@ -128,6 +144,7 @@ function renderPanel() {
 // ---- header chips
 function buildChips() { const zc = $('#chips'); zc.innerHTML = ''; for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { const c = COPY.areas[a.id]; if (!c.n || !shownArea(a)) continue; const b = el('button', '', String(c.n)); b.title = c.name; b.onclick = () => goArea(a.id); zc.appendChild(b); } }
 buildChips(); $('#brand').onclick = goOverview; $('#tourbtn').onclick = () => (tour ? stopTour() : startTour());
+$('#ticketsbtn').onclick = goTickets;
 
 // ---- guided tour: the video's walk, live
 let tour = false, tourT0 = 0; const audio = $('#score'); if (LOOK.audio) audio.src = LOOK.audio;
@@ -163,7 +180,7 @@ function tick(now) {
   else { S.step(dt); t = S.clock; const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
   world.setCamIso(cam.px, cam.py, cam.S);
   const t0 = performance.now(); site.update(t); const t1 = performance.now(); crowd.update(t, inView); placeBlobs(); shadowCheck(); const t2 = performance.now(); world.render(); const t3 = performance.now();
-  if (tour) { O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); TOURM.overlay(O, t, ov2.width, ov2.height); } else placePins();
+  if (tour) { O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); TOURM.overlay(O, t, ov2.width, ov2.height, VW); } else placePins();
   if (perfOn) { PERF.dt.push(rawDt * 1000); if (PERF.dt.length > 600) PERF.dt.shift(); if (rawDt * 1000 > 24) PERF.log.push([+t.toFixed(2), +(rawDt * 1000).toFixed(1), +(t1 - t0).toFixed(1), +(t2 - t1).toFixed(1), +(t3 - t2).toFixed(1)]);
     if (frames % 15 === 0) { const d = PERF.dt.slice(-120).sort((a, b) => a - b); hud.textContent = `fps ${(1000 / (d.reduce((a, b) => a + b, 0) / d.length)).toFixed(0)}  p95 ${d[Math.floor(d.length * 0.95)].toFixed(1)}  max ${d[d.length - 1].toFixed(1)} ms\nupdate ${(t1 - t0).toFixed(1)}  crowd ${(t2 - t1).toFixed(1)}  render ${(t3 - t2).toFixed(1)} ms  gpu ${world.gpuMs ? world.gpuMs.toFixed(1) : '-'}\npr ${prCur}  calls ${world.renderer.info.render.calls}`; } }
   world.renderer.info.reset();

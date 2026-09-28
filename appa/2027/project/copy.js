@@ -15,9 +15,29 @@ const WEEKS = [
 const weekOptions = WEEKS.map(w => ({ label: w.label, value: w.value, text: `${w.dates}. ${w.text}`, actions: [{ set: 'dronesOn', value: w.value === 2 ? 1 : 0 }] }));
 const showToggle = (area, label, labelOn) => ({ type: 'toggle', label, labelOn, channel: 'stageOn', arg: area, on: 1, off: 0, also: [{ channel: 'crowd', arg: area, on: 1, off: 0.45 }] });
 const dusk = { type: 'button', label: 'Let the evening come', actions: [{ set: 'timeOfDay', value: 0.86 }] };
+// a venue's own site, opened in a new tab so the festival app keeps running behind it.
+// venues with no official website of their own get a plain search link instead of a made-up address.
+const site = (label, url) => ({ label, url });
+const search = q => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+
+// ticket tiers for the ticket counter (subject to change as the plan firms up)
+const TICKETS = {
+  title: 'Tickets & stays', eyebrow: 'The ticket counter',
+  intro: 'Everything to come to APPA Art Fest 2027, from a single day to the whole month. Prices are early plans and may change.',
+  tiers: [
+    { name: 'Day pass', price: '₹2,000', unit: 'per person, per day', blurb: 'Entry to the festival for one day: every venue, every open show.', bullets: ['Access to all open venues for the day', 'Exhibitions, art walks and open workshops', 'No stay included'] },
+    { name: 'Stay + festival, for 2', price: '₹10,000', unit: 'per night (a 24-hour stay)', blurb: 'A night’s stay for two, with festival tickets for two included.', bullets: ['One night’s stay for 2 guests at a partner venue', 'Festival tickets for 2 people, for that day', 'Cycle or e-bike pickup at check-in', 'Kids under 10: free entry with a paying adult'] },
+    { name: 'VIP · 1 week', price: 'On request', unit: 'a 7-day booking', blurb: 'A week at the festival with full access to every show and experience.', bullets: ['All shows and experiences for 7 days', 'Priority entry at every venue', 'A stay for the week (partner venue, subject to availability)'] },
+    { name: 'VVIP · 30 days', price: 'On request', unit: 'the full month, stay + experience', blurb: 'The whole festival, start to finish: full access plus a few things nobody else gets.', bullets: ['All access, all 30 days, every venue', 'A few special-access moments across the month', 'Personal meet-ups with resident artists', 'Stay for the full run (partner venue, subject to availability)'] }
+  ],
+  note: 'Kids under 10 always enter free, on every ticket type. Exact stay partner is assigned at booking, based on availability.',
+  qr: { image: './assets/tickets_qr.png', caption: 'Scan to pay by UPI', payee: 'Karthikeyan Ramachandran', upi: 'xtrathindesign@okicici' },
+  contact: 'To book, scan the QR to pay, then share the payment screenshot along with your dates and headcount on WhatsApp.'
+};
 
 export const COPY = {
   brand: 'APPA', title: 'APPA Art Fest 2027',
+  tickets: TICKETS,
   intro: { eyebrow: '25 Jan to 25 Feb 2027', h1: 'APPA Art Fest 2027', tag: 'When minds co-create',
     text: 'A festival of festivals: a month of art, people, nature and a better tomorrow, where every venue curates its own festival. One lake, seven venues, a living ecosystem. Drag to look around, scroll or pinch to zoom, and tap any venue to see what happens there.',
     enter: 'Enter the festival', loading: 'Loading the festival…', credit: 'A concept by Nolabel Immersive · drawn entirely in code' },
@@ -33,18 +53,25 @@ export const COPY = {
   weeks: WEEKS,
   areas: {
     raiker: { n: 1, name: 'Raiker Farms', tagline: 'The biggest gatherings, with parking on site',
+      website: site('Search Raiker Farms, Kamshet ↗', search('Raiker Farms Kamshet')),
       offerings: ['Public forums, town halls and politically inclined gatherings', 'Large-scale performances and open-air installations', 'Farm to table under the fruit trees', 'On-site parking for the big crowds', 'Curated 1 to 2 day festival takeovers', 'Flower polyhouses, buffalo stables, lotus pond: the working farm stays part of the show'] },
     lefarm: { n: 2, name: 'Le Farm', tagline: 'Big events and open debate on 15 acres',
+      website: site('lefarm.in ↗', 'https://lefarm.in'),
       offerings: ['Political forums, debates and rallies (all voices, curated)', 'Large-scale art and music under the big tops', 'Major outdoor installations', 'Local food and workshops', 'On-site parking for the big crowds', 'The lake-touch main house as the green room'] },
     shambhala: { n: 3, name: 'Shambhala by the Lake', tagline: 'Intimate music by the water',
+      website: site('shambalabythelake.com ↗', 'https://shambalabythelake.com'),
       offerings: ['Intimate music experiences on the lakeside stage', 'Artist residencies in the main house and dormitories', 'Jetty sessions and lakeside reflections', 'Paragliding base for the brave', 'Homely food and weekend barbecue'] },
     purrom: { n: 4, name: 'Purrom', tagline: 'Horror film festival in a healing retreat',
+      website: site('purrom.com ↗', 'https://purrom.com'),
       offerings: ['Horror film festival, curated by Purrom', 'Late-night screenings under the Sahyadri sky', 'Stays in the solo domes, the Glass House and the Chickoo house', 'Sound baths, silence and nature walks by day', 'Flea and local food'] },
     company: { n: 6, name: 'The Company Theatre', tagline: 'Their own theatre festival',
+      website: site('thecompanytheatre.net ↗', 'https://thecompanytheatre.net'),
       offerings: ['The Company Theatre festival, curated by the company', 'Stage plays, new work and workshops', 'Open-air staging beside the theatre', 'Film screenings and talks', 'Artist residencies'] },
     theeya: { n: 7, name: 'Theeya Creation Village', tagline: 'Voice, craft and community',
+      website: site('Search Theeya Creation Village, Kamshet ↗', search('Theeya The Creation Village Kamshet')),
       offerings: ['Vocal stage: singing, choirs and voice workshops', 'Sing-along evenings by the village fire', 'Art, craft and community', 'Workshops with local makers', 'Sustainable living and food'] },
     calmshet: { n: 5, name: 'Calmshet (Main Venue)', tagline: 'The hub: the past two years, fashion and art',
+      website: site('calmshet.com ↗', 'https://calmshet.com'),
       offerings: ['Opening night and major performances', 'The archive: every event of the last two years and the formats they ran in', 'Fashion segment with a runway', 'Art and large-scale installations', 'Exhibitions, food and flea', 'The festival hub'] },
     checkin: { name: 'Check-in', tagline: 'Where the journey starts', offerings: ['Park your car', 'Pick up a cycle or an e-bike', 'Your APPA passport and itinerary'] },
     camp: { name: 'Stay & Unwind', tagline: 'More than a festival, a place to belong', offerings: ['Camping and eco-stays', 'Homestays and local stays', 'Quiet zones, wellness and retreats', 'Stay for a night or the whole month'] },

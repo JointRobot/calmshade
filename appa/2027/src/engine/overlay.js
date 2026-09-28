@@ -12,8 +12,15 @@ export function makeCamera(keys) {
 }
 
 // TOUR: { title: [t0, t1, big, small, line], end: [t0, t1, big, small, line], captions: [[t0, t1, eyebrow, name, tagline]], subs: [[t0, t1, text]] }
-export function drawOverlay(O, t, W, H, TOUR, C, logo) {
-  const k = W / 1920; O.save(); O.scale(k, k); const w = 1920, h = 1080; O.textBaseline = 'alphabetic';
+// wCss (optional): the canvas's CSS (logical) width, i.e. independent of devicePixelRatio. Font sizes here are
+// tuned for a ~1920px-wide desktop frame; on a narrow phone (small wCss) that reads as illegibly small text, so
+// below MOBILE_FLOOR we scale k up (capped) as if the phone were MOBILE_FLOOR px wide. Video rendering (which
+// doesn't pass wCss) is unaffected.
+const MOBILE_FLOOR = 900, MOBILE_BOOST_CAP = 1.85;
+export function drawOverlay(O, t, W, H, TOUR, C, logo, wCss) {
+  const kBase = W / 1920;
+  const k = (wCss && wCss < MOBILE_FLOOR) ? kBase * Math.min(MOBILE_FLOOR / wCss, MOBILE_BOOST_CAP) : kBase;
+  O.save(); O.scale(k, k); const w = 1920, h = 1080; O.textBaseline = 'alphabetic';
   const F = C.display || 'Fraunces', G = C.font || 'Mukta';
   const box = (x, y, bw, bh) => { O.fillStyle = C.box; O.fillRect(x, y, bw, bh); O.fillStyle = C.rule; O.fillRect(x, y, 4, bh); };
   for (const c of TOUR.captions || []) { const a = env(t, c[0], c[0] + 0.6, c[1] - 0.6, c[1]); if (a < 0.01) continue; O.globalAlpha = a;
