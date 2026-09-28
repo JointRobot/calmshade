@@ -15,11 +15,12 @@ export const KEYS = [
   [58.5, 70, 90, 0, 12], [60.5, 31, 98, 0, 27], [63, 30, 97, 0, 29],
   [65, 75, 104, 0, 12], [67, 113, 107, 0, 26], [68.5, 112, 106, 0, 27],
   [71, 70, 70, 0, 17], [73, 66, 66, 0, 18],
-  [76, 86, 106, 0, 22], [82, 87, 107, 1, 32], [84.5, 86, 106, 1, 29], [88.5, 65, 67, 0, 7.2], [90, 65, 67, 0, 7.1]
+  [88.5, 86, 106, 0, 22], [94.5, 87, 107, 1, 32], [97, 86, 106, 1, 29], [101, 65, 67, 0, 7.2], [102.5, 65, 67, 0, 7.1],
+  [114, 65, 67, 0, 7.1]
 ];
 export const TOUR = {
   title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Seven venues. A living ecosystem.'],
-  end: [86.2, 90, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
+  end: [110.2, 114, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
     [9, 16, 'Your festival journey', 'Check-in', 'Park your car, pick your ride, get your itinerary'],
     [18, 25.5, 'Venue 1', 'Raiker Farms', 'The biggest gatherings, forums and large-scale art'],
@@ -29,12 +30,18 @@ export const TOUR = {
     [51, 57.5, 'Venue 6', 'The Company Theatre', 'Their own theatre festival'],
     [59.5, 64, 'Venue 7', 'Theeya Creation Village', 'Voice, craft and community'],
     [66, 69.5, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
-    [75, 85.5, 'Venue 5 · the main venue', 'Calmshet', 'The past two years, fashion, art, opening night']
+    // the four festival weeks, recapped over a wide hold before the finale zooms into Calmshet
+    [74.5, 77.9, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
+    [78.1, 81.5, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
+    [81.7, 85.1, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
+    [85.3, 88.4, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
+    [89.2, 100.5, 'Venue 5 · the main venue', 'Calmshet', 'The past two years, fashion, art, opening night'],
+    [104, 109.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
   ],
   subs: [
     [11, 14.8, 'Park the car. Pick a cycle.'], [19.5, 23.5, 'Villages, fields, forests, hills.'], [28.5, 32.5, 'Different scales. Different experiences.'],
     [36.5, 40.5, 'Music by the water.'], [44.5, 48.5, 'Horror films after dark.'], [52.5, 56.5, 'Theatre, and stories after dark.'],
-    [60, 63.5, 'Sing together.'], [70.5, 74, 'The lake lights up at dusk.'], [77, 80.5, 'Four weeks. Four vibes.'], [80.8, 84.8, 'Roots & Raga · Keeping it Real · Tech, Electronica & AI · All forms']
+    [60, 63.5, 'Sing together.'], [70.5, 74, 'The lake lights up at dusk.']
   ]
 };
 export const camAt = makeCamera(KEYS);

@@ -10,7 +10,8 @@ const WEEKS = [
   { label: 'Roots & Raga', dates: 'Week 1 · 25 Jan to 1 Feb', text: 'Classical, Maharashtra culture, fusion, desi cool and global artists. The festival opens on 25 January, the eve of Republic Day.', value: 0 },
   { label: 'Keeping it Real', dates: 'Week 2 · 2 to 8 Feb', text: 'Hip-hop, rap, spoken word, poetry, rock and youth culture.', value: 1 },
   { label: 'Tech, Electronica & AI', dates: 'Week 3 · 9 to 15 Feb', text: 'Electronic music, digital art, AI, immersive installations and tech-driven creativity.', value: 2 },
-  { label: 'All forms, together', dates: 'Weeks 4 and 5 · 16 to 25 Feb', text: 'A grand culmination of everything: music, art, workshops, community creations and special collaborations.', value: 3 }
+  { label: 'All forms, together', dates: 'Weeks 4 and 5 · 16 to 25 Feb', text: 'A grand culmination of everything: music, art, workshops, community creations and special collaborations.', value: 3 },
+  { label: 'The Encore · VVIP/VIP only', dates: 'Bonus · 26 to 28 Feb', text: 'Three extra days after the festival closes, open only to VVIP and VIP guests: special access and personal meet-ups with resident artists.', value: 4, restricted: true }
 ];
 const weekOptions = WEEKS.map(w => ({ label: w.label, value: w.value, text: `${w.dates}. ${w.text}`, actions: [{ set: 'dronesOn', value: w.value === 2 ? 1 : 0 }] }));
 const showToggle = (area, label, labelOn) => ({ type: 'toggle', label, labelOn, channel: 'stageOn', arg: area, on: 1, off: 0, also: [{ channel: 'crowd', arg: area, on: 1, off: 0.45 }] });
@@ -44,7 +45,7 @@ export const COPY = {
   tourLabel: 'Guided tour', tourStop: 'Stop the tour',
   overview: { eyebrow: 'The festival at a glance', h2: 'One lake. Seven venues. A living ecosystem.', text: 'Each venue runs its own festival inside the big one: film, theatre, voice, fashion, forums and music. The two big farms take the largest gatherings.',
     controls: [
-      { type: 'choice', label: '4 weeks · 4 vibes', channel: 'week', options: weekOptions },
+      { type: 'choice', label: '4 weeks, plus the Encore', channel: 'week', options: weekOptions },
       { type: 'slider', label: 'Time of day', channel: 'timeOfDay', min: 0.1, max: 1, step: 0.01, readout: v => (v < 0.3 ? 'Morning' : v < 0.45 ? 'Afternoon' : v < 0.62 ? 'Golden hour' : v < 0.8 ? 'Dusk' : 'Night') },
       { type: 'button', label: 'Light the lotus on the lake', actions: [{ pulse: 'lotusGlow', dur: 16 }, { go: 'spot:lotus' }] },
       { type: 'button', label: 'Find Hidden APPA', actions: [{ reveal: 'hidden' }, { go: 'area:hidden' }] }
@@ -54,25 +55,25 @@ export const COPY = {
   areas: {
     raiker: { n: 1, name: 'Raiker Farms', tagline: 'The biggest gatherings, with parking on site',
       website: site('Search Raiker Farms, Kamshet ↗', search('Raiker Farms Kamshet')),
-      offerings: ['Public forums, town halls and politically inclined gatherings', 'Large-scale performances and open-air installations', 'Farm to table under the fruit trees', 'On-site parking for the big crowds', 'Curated 1 to 2 day festival takeovers', 'Flower polyhouses, buffalo stables, lotus pond: the working farm stays part of the show'] },
+      offerings: ['Public forums, town halls and politically inclined gatherings', 'Large-scale performances and open-air installations', 'Farm to table under the fruit trees', 'On-site parking for the big crowds', 'Curated 1 to 2 day festival takeovers', 'Flower polyhouses, buffalo stables, lotus pond: the working farm stays part of the show', '15 to 18 resident artists working on site', '2 workshops running daily, across mediums', '4 to 5 exhibitions through the farm', '1 to 2 large outdoor installations', 'Facing the sunset: sound healing and meditation circles at dusk'] },
     lefarm: { n: 2, name: 'Le Farm', tagline: 'Big events and open debate on 15 acres',
       website: site('lefarm.in ↗', 'https://lefarm.in'),
-      offerings: ['Political forums, debates and rallies (all voices, curated)', 'Large-scale art and music under the big tops', 'Major outdoor installations', 'Local food and workshops', 'On-site parking for the big crowds', 'The lake-touch main house as the green room'] },
+      offerings: ['Political forums, debates and rallies (all voices, curated)', 'Large-scale art and music under the big tops', 'Major outdoor installations', 'Local food and workshops', 'On-site parking for the big crowds', 'The lake-touch main house as the green room', '15 to 18 resident artists working on site', '2 workshops running daily, across mediums', '4 to 5 exhibitions across the grounds', '1 to 2 large outdoor installations', 'Facing the sunrise: yoga and meditation on the lawns at first light'] },
     shambhala: { n: 3, name: 'Shambhala by the Lake', tagline: 'Intimate music by the water',
       website: site('shambalabythelake.com ↗', 'https://shambalabythelake.com'),
-      offerings: ['Intimate music experiences on the lakeside stage', 'Artist residencies in the main house and dormitories', 'Jetty sessions and lakeside reflections', 'Paragliding base for the brave', 'Homely food and weekend barbecue'] },
+      offerings: ['Intimate music experiences on the lakeside stage', 'Artist residencies in the main house and dormitories', 'Jetty sessions and lakeside reflections', 'Paragliding base for the brave', 'Homely food and weekend barbecue', '3 to 4 resident artists, the smallest and most intimate venue', 'One exhibit: a single artist’s show, any medium from clay to painting', 'One workshop, hands-on with the resident artist', 'Facing the sunrise: yoga on the jetty at first light'] },
     purrom: { n: 4, name: 'Purrom', tagline: 'Horror film festival in a healing retreat',
       website: site('purrom.com ↗', 'https://purrom.com'),
-      offerings: ['Horror film festival, curated by Purrom', 'Late-night screenings under the Sahyadri sky', 'Stays in the solo domes, the Glass House and the Chickoo house', 'Sound baths, silence and nature walks by day', 'Flea and local food'] },
+      offerings: ['Horror film festival, curated by Purrom', 'Late-night screenings under the Sahyadri sky', 'Stays in the solo domes, the Glass House and the Chickoo house', 'Sound baths, silence and nature walks by day', 'Flea and local food', '6 to 8 resident artists working on site', 'One workshop, hands-on with the residents', '2 to 3 exhibitions across the retreat', 'Facing the sunrise: sunrise yoga and meditation alongside the sound baths'] },
     company: { n: 6, name: 'The Company Theatre', tagline: 'Their own theatre festival',
       website: site('thecompanytheatre.net ↗', 'https://thecompanytheatre.net'),
-      offerings: ['The Company Theatre festival, curated by the company', 'Stage plays, new work and workshops', 'Open-air staging beside the theatre', 'Film screenings and talks', 'Artist residencies'] },
+      offerings: ['The Company Theatre festival, curated by the company', 'Stage plays, new work and workshops', 'Open-air staging beside the theatre', 'Film screenings and talks', 'Artist residencies', '6 to 8 resident artists working on site', 'One workshop, alongside the theatre’s own', '2 to 3 exhibitions in and around the theatre', 'Facing the sunset: sound healing and meditation at dusk'] },
     theeya: { n: 7, name: 'Theeya Creation Village', tagline: 'Voice, craft and community',
       website: site('Search Theeya Creation Village, Kamshet ↗', search('Theeya The Creation Village Kamshet')),
-      offerings: ['Vocal stage: singing, choirs and voice workshops', 'Sing-along evenings by the village fire', 'Art, craft and community', 'Workshops with local makers', 'Sustainable living and food'] },
+      offerings: ['Vocal stage: singing, choirs and voice workshops', 'Sing-along evenings by the village fire', 'Art, craft and community', 'Workshops with local makers', 'Sustainable living and food', '6 to 8 resident artists working on site', 'One workshop daily with local makers', '2 to 3 exhibitions through the village', 'Facing the sunrise: sunrise yoga and a morning voice circle'] },
     calmshet: { n: 5, name: 'Calmshet (Main Venue)', tagline: 'The hub: the past two years, fashion and art',
       website: site('calmshet.com ↗', 'https://calmshet.com'),
-      offerings: ['Opening night and major performances', 'The archive: every event of the last two years and the formats they ran in', 'Fashion segment with a runway', 'Art and large-scale installations', 'Exhibitions, food and flea', 'The festival hub'] },
+      offerings: ['Opening night and major performances', 'The archive: every event of the last two years and the formats they ran in', 'Fashion segment with a runway', 'Art and large-scale installations', 'Exhibitions, food and flea', 'The festival hub', '10 to 12 resident artists working on site', 'One workshop running daily', '2 to 3 exhibitions across the hub', 'One interactive installation', '1 to 2 outdoor installations', 'Facing the sunset: sound healing and meditation at dusk'] },
     checkin: { name: 'Check-in', tagline: 'Where the journey starts', offerings: ['Park your car', 'Pick up a cycle or an e-bike', 'Your APPA passport and itinerary'] },
     camp: { name: 'Stay & Unwind', tagline: 'More than a festival, a place to belong', offerings: ['Camping and eco-stays', 'Homestays and local stays', 'Quiet zones, wellness and retreats', 'Stay for a night or the whole month'] },
     hidden: { name: 'Hidden APPA', tagline: 'Offbeat acts in fields, forests and villages', offerings: ['Pop-up performances', 'Reached by cycle or on foot', 'Ask at any venue where tonight’s act is'] }
