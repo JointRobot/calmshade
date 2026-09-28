@@ -60,7 +60,11 @@ const cam = { px: 0, py: 0, S: 8 }, camT = { px: 0, py: 0, S: 8 };
 const scr = (x, y, z = 0) => [(x - y) * C30, (x + y) / 2 - z];
 const side = () => (VW < 900 ? { w: VW, h: VH * 0.5, dx: 0, dy: VH * 0.22 } : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
 const [BX0, BY0, BX1, BY1] = SITE.bounds;
-function fitOverview() { const f = side(); const [px, py] = scr((BX0 + BX1) / 2, (BY0 + BY1) / 2, 2); const dw = (BX1 - BX0 + BY1 - BY0) * C30, dh = (BX1 - BX0 + BY1 - BY0) / 2 + 14; const S2 = Math.min(f.w / dw, f.h / dh) * 0.98; return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
+function fitOverview() { const f = side(); const o = SITE.view && SITE.view.overview;
+  // optional: frame just the listed areas (their rect corners, projected to the screen) instead of the whole board
+  if (o && o.fit) { const pts = []; for (const a of SITE.areas) if (o.fit.includes(a.id)) { const [x0, y0, x1, y1] = a.rect; for (const [x, y] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) pts.push(scr(x, y, 0)); }
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys) + 8; const S2 = Math.min(f.w / w, f.h / h) * 0.97;
+    return { px: (Math.max(...xs) + Math.min(...xs)) / 2 + f.dx / S2, py: (Math.max(...ys) + Math.min(...ys)) / 2 - 3 + f.dy / S2, S: S2 }; } const [px, py] = scr((BX0 + BX1) / 2, (BY0 + BY1) / 2, 2); const dw = (BX1 - BX0 + BY1 - BY0) * C30, dh = (BX1 - BX0 + BY1 - BY0) / 2 + 14; const S2 = Math.min(f.w / dw, f.h / dh) * 0.98; return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function areaView(id) { const a = SITE.areas.find(x => x.id === id); const f = side(); const [x0, y0, x1, y1] = a.rect; const [px, py] = scr((x0 + x1) / 2, (y0 + y1) / 2, 2); const size = Math.max(x1 - x0, y1 - y0); const S2 = Math.min(f.w / (size * 1.75), f.h / (size * 1.05)); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function spotView(key) { const sp = COPY.spots[key]; const f = side(); const c = sp.cam || sp.pos; const [px, py] = scr(c[0], c[1], c[2] || 0); const S2 = Math.min(f.w / 30, f.h / 19) * (sp.zoom || 1); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 const setCamT = v => Object.assign(camT, v);

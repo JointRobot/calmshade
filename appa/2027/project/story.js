@@ -5,11 +5,13 @@ import { env, smooth, ramp, lerp } from '../src/engine/util.js';
 
 export const TOUR_LENGTH = 114;
 // the order venues rise in during the opening, and when the tour's camera visits each one (seconds)
-const ORDER = ['checkin', 'theeya', 'camp', 'raiker', 'lefarm', 'shambhala', 'purrom', 'company', 'calmshet', 'hidden'];
+const ORDER = ['checkin', 'island', 'raiker', 'camp', 'shambhala', 'lefarm', 'calmshet', 'purrom', 'company', 'theeya', 'hidden'];
+// the tour goes round the lake clockwise on screen from the festival square: Raiker, Shambhala, Le Farm, (Calmshet is
+// saved for the finale) Purrom, The Company Theatre, Theeya, Hidden APPA, then dusk over the island cinema.
 // t=74 to 88.5: a wide, unhurried hold over the whole lake while the tour recaps all four festival weeks
 // (see project/tour.js captions). The calmshet finale camera move, and the finale channels below, then run
 // 88.5 to 102.5; a final overview hold from 102.5 to 114 carries the Encore caption and the end card.
-export const VISIT = { checkin: [9, 16], raiker: [17, 25], lefarm: [26, 33], shambhala: [34, 41], purrom: [42, 49], company: [50, 57], theeya: [58, 63], hidden: [64, 68], calmshet: [88.5, 114] };
+export const VISIT = { checkin: [9, 16], raiker: [17, 25], shambhala: [26, 33], lefarm: [34, 41], purrom: [42, 49], company: [50, 57], theeya: [58, 63], hidden: [64, 68], island: [69, 74], calmshet: [88.5, 114] };
 
 export const CHANNELS = {
   timeOfDay: { film: t => lerp(0.2, 0.5, smooth(ramp(t, 8, 56))) + 0.42 * smooth(ramp(t, 60, 71)), app: 0.4, ease: 1.2 },

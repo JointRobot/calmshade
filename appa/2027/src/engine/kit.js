@@ -125,7 +125,8 @@ export const KIT = {
     const { grp, add, W, rot } = place(s); const w = s.w || 4, d = s.d || 3, H = s.h || 2.4;
     add(box(ctx, -w / 2, -d / 2, w / 2, d / 2, 0, H, ctx.mat(s.color || '#E7D6B8')));
     const roofM = ctx.mat(s.roof || '#A94F32', { side: THREE.DoubleSide });
-    if (s.roofType === 'barrel') {
+    if (s.pitch !== undefined) add(gable(w, d, s.pitch, H, 0.45, roofM));
+    else if (s.roofType === 'barrel') {
       const rr = d / 2 + 0.4; const half = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, w + 0.7, 20, 1, true, 0, Math.PI), roofM);
       half.rotation.z = Math.PI / 2; half.rotation.y = Math.PI / 2; half.position.copy(P(0, 0, H)); half.castShadow = half.receiveShadow = true; add(half);
       for (const side of [-1, 1]) { const cap = new THREE.Mesh(new THREE.CircleGeometry(rr, 20, 0, Math.PI), roofM); cap.position.copy(P(side * (w / 2 + 0.35), 0, H)); cap.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2; add(cap); }
@@ -136,46 +137,129 @@ export const KIT = {
     const [cx, cy] = W(0, 0); addORect(cx, cy, w + 0.2, d + 0.2, rot, `${s.id} house`);
     return { group: grp };
   },
-  // multi-floor villa with wraparound balconies at each level, and an optional exterior spiral staircase (s.stair: true | 'both')
+  // multi-floor villa with balconies at each level. Options: s.plinth (stone base height), s.frontStairs ('straight' up to the
+  // plinth | 'double': two curved masonry staircases meeting the first-floor balcony), s.twin (two gables facing the front),
+  // s.stair (exterior spiral staircase: true | 'both').
   villa(ctx, s) {
-    const { grp, add, W, rot } = place(s); const w = s.w || 7, d = s.d || 5, floors = s.floors || 2, fh = s.floorH || 2.6, taper = s.taper || 0;
-    const wallM = ctx.mat(s.color || '#EFE3CC'), railM = ctx.mat(s.rail || '#F4EADD'), roofM = ctx.mat(s.roof || '#A94F32', { side: THREE.DoubleSide });
+    const { grp, add, W, rot } = place(s); const w = s.w || 7, d = s.d || 5, floors = s.floors || 2, fh = s.floorH || 2.6, taper = s.taper || 0, pl = s.plinth || 0;
+    const wallM = ctx.mat(s.color || '#EFE3CC'), railM = ctx.mat(s.rail || '#F4EADD'), roofM = ctx.mat(s.roof || '#A94F32', { side: THREE.DoubleSide }), stone = ctx.mat(s.stone || '#B9A583');
     const winM = ctx.glow('window', { on: '#FFCB70', off: '#4A5560', channel: 'night', day: 0 });
-    let z = 0, fw = w, fd = d;
+    const ov = s.overhang ?? 0.75;
+    if (pl > 0) add(box(ctx, -w / 2 - 0.7, -d / 2 - 0.6, w / 2 + 0.7, d / 2 + ov + 0.5, 0, pl, stone));
+    let z = pl, fw = w, fd = d;
     for (let f = 0; f < floors; f++) {
       fw = w - f * taper; fd = d - f * taper;
       add(box(ctx, -fw / 2, -fd / 2, fw / 2, fd / 2, z, z + fh, wallM));
-      for (const u of [-fw / 4, fw / 4]) add(box(ctx, u - 0.32, fd / 2 - 0.02, u + 0.32, fd / 2 + 0.04, z + fh * 0.32, z + fh * 0.8, winM, { round: 0 }));
-      const ov = s.overhang ?? 0.75;
+      const nw = Math.max(2, Math.round(fw / 2.2));
+      for (let i = 0; i < nw; i++) { const u = -fw / 2 + (i + 0.5) * fw / nw; add(box(ctx, u - 0.32, fd / 2 - 0.02, u + 0.32, fd / 2 + 0.04, z + fh * 0.3, z + fh * 0.8, winM, { round: 0 })); }
+      for (let i = 0; i < Math.max(1, Math.round(fd / 2.4)); i++) { const v = -fd / 2 + (i + 0.5) * fd / Math.max(1, Math.round(fd / 2.4)); for (const u of [-fw / 2 - 0.03, fw / 2 + 0.03]) add(box(ctx, u - 0.03, v - 0.3, u + 0.03, v + 0.3, z + fh * 0.3, z + fh * 0.8, winM, { round: 0 })); }
       add(box(ctx, -fw / 2 - ov * 0.15, fd / 2, fw / 2 + ov * 0.15, fd / 2 + ov, z + fh - 0.08, z + fh + 0.05, wallM));
-      const np = Math.max(4, Math.round(fw));
+      const np = Math.max(4, Math.round(fw * 1.3));
       for (let i = 0; i <= np; i++) { const u = -fw / 2 + i * fw / np; add(box(ctx, u - 0.04, fd / 2 + ov - 0.06, u + 0.04, fd / 2 + ov, z + fh + 0.05, z + fh + 0.55, railM)); }
       add(box(ctx, -fw / 2 - ov * 0.15, fd / 2 + ov - 0.06, fw / 2 + ov * 0.15, fd / 2 + ov, z + fh + 0.42, z + fh + 0.55, railM, { round: 0 }));
       for (const u of [-fw / 2 + 0.3, 0, fw / 2 - 0.3]) add(ctx.g.cyl(u, fd / 2 + ov - 0.15, 0.09, z, z + fh, railM, { seg: 8 }));
       z += fh;
     }
-    add(gable(fw, fd, s.roofH || 1.5, z, 0.45, roofM));
-    if (s.stair) {
-      const stM = railM, sides = s.stair === 'both' ? [1, -1] : [1];
-      for (const side of sides) {
-        const cx0 = side * (w / 2 + 1.0), N = 14, turns = 1.15, topZ = fh;
-        for (let i = 0; i < N; i++) { const a = i / N * Math.PI * 2 * turns, r = 0.78, zz = topZ * i / N;
-          const px = cx0 + Math.cos(a) * r * side, py = Math.sin(a) * r * 0.6;
-          const b = box(ctx, px - 0.28, py - 0.16, px + 0.28, py + 0.16, zz, zz + 0.08, stM, { round: 0 }); b.rotation.y = -a; add(b); }
-        add(ctx.g.cyl(cx0, 0, 0.06, 0, topZ + 0.35, stM, { seg: 8 }));
-      }
+    if (s.twin) { for (const side of [-1, 1]) { const m = gable(fd + 0.3, fw / 2, s.roofH || 1.6, z, 0.35, roofM); m.rotation.y = Math.PI / 2; m.position.x = side * fw / 4; add(m); } }
+    else add(gable(fw, fd, s.roofH || 1.5, z, 0.45, roofM));
+    const front = d / 2 + ov + (pl > 0 ? 0.5 : 0);
+    if (s.frontStairs === 'straight' && pl > 0) { const n = Math.max(3, Math.round(pl / 0.2)), sw = Math.min(3, w * 0.35); for (let i = 0; i < n; i++) add(box(ctx, -sw / 2, front + i * 0.3, sw / 2, front + (i + 1) * 0.3, 0, pl * (n - i) / n, stone, { round: 0 })); }
+    if (s.frontStairs === 'double') {
+      const top = pl + fh, N = 11, v0 = d / 2 + ov, reach = 2.8;
+      add(box(ctx, -1.1, v0 + reach - 0.2, 1.1, v0 + reach + 0.7, 0, 0.18, stone));
+      for (const side of [-1, 1]) for (let i = 0; i < N; i++) { const a = (i + 0.5) / N * Math.PI / 2; const u = side * (0.7 + 1.9 * (1 - Math.cos(a))), v = v0 + reach * (1 - Math.sin(a)), zz = 0.18 + (top - 0.18) * (i + 1) / N;
+        const b = box(ctx, u - 0.5, v - 0.2, u + 0.5, v + 0.2, 0, zz, railM, { round: 0 }); b.rotation.y = side * a; add(b);
+        if (i % 2 === 0) add(ctx.g.cyl(u + side * 0.45, v, 0.05, zz, zz + 0.6, wallM, { seg: 6 })); }
     }
-    const [cx, cy] = W(0, 0); addORect(cx, cy, w + 1.6, d + 1.8, rot, `${s.id} villa`);
+    if (s.stair) {
+      const sides = s.stair === 'both' ? [1, -1] : [1];
+      for (const side of sides) { const cx0 = side * (w / 2 + 1.0), N = 14, turns = 1.15, topZ = pl + fh;
+        for (let i = 0; i < N; i++) { const a = i / N * Math.PI * 2 * turns, r = 0.78, zz = topZ * i / N; const px = cx0 + Math.cos(a) * r * side, py = Math.sin(a) * r * 0.6;
+          const b = box(ctx, px - 0.28, py - 0.16, px + 0.28, py + 0.16, zz, zz + 0.08, railM, { round: 0 }); b.rotation.y = -a; add(b); }
+        add(ctx.g.cyl(cx0, 0, 0.06, 0, topZ + 0.35, railM, { seg: 8 })); }
+    }
+    const extra = s.frontStairs === 'double' ? 3.6 : s.frontStairs === 'straight' ? 1.4 : 0;
+    const [cx, cy] = W(0, extra / 2); addORect(cx, cy, w + (s.stair ? 3.6 : 1.6), d + ov + 1.2 + extra, rot, `${s.id} villa`);
     return { group: grp };
   },
-  // round clay hut with a conical tiled roof
+  // modern two-storey house with flat roof slabs, big glass fronts, a rounded front veranda and a carport (Le Farm)
+  modern(ctx, s) {
+    const { grp, add, W, rot } = place(s); const w = s.w || 8, d = s.d || 6, h1 = s.h || 2.8, h2 = s.h2 || 2.5;
+    const wall = ctx.mat(s.color || '#F2D58E'), trim = ctx.mat(s.trim || '#F8EFDC'), dark = ctx.mat('#3A2E28');
+    const glass = ctx.glow('window', { on: '#FFCB70', off: '#4A5560', channel: 'night', day: 0 });
+    add(box(ctx, -w / 2, -d / 2, w / 2, d / 2, 0, h1, wall));
+    add(box(ctx, -w / 2 - 0.45, -d / 2 - 0.45, w / 2 + 0.45, d / 2 + 0.45, h1, h1 + 0.25, trim));
+    for (let i = 0; i < 3; i++) { const u = -w / 2 + 0.6 + i * (w - 1.2) / 3; add(box(ctx, u + 0.15, d / 2 - 0.02, u + (w - 1.2) / 3 - 0.15, d / 2 + 0.05, 0.35, h1 - 0.35, glass, { round: 0 })); }
+    const uw = w * 0.62, ud = d * 0.72, u0 = w * 0.14, v0 = -d / 2 + 0.3;
+    add(box(ctx, u0 - uw / 2, v0, u0 + uw / 2, v0 + ud, h1 + 0.25, h1 + 0.25 + h2, wall));
+    add(box(ctx, u0 - uw / 2 - 0.4, v0 - 0.4, u0 + uw / 2 + 0.4, v0 + ud + 0.4, h1 + 0.25 + h2, h1 + 0.5 + h2, trim));
+    for (const f of [-0.25, 0.25]) add(box(ctx, u0 + f * uw - 0.7, v0 + ud - 0.02, u0 + f * uw + 0.7, v0 + ud + 0.05, h1 + 0.6, h1 + h2 - 0.2, glass, { round: 0 }));
+    add(box(ctx, u0 - uw / 2, v0 + ud, u0 + uw / 2, d / 2 + 0.45, h1 + 0.25, h1 + 0.8, trim, { round: 0 }));
+    const r = Math.min(2.2, w * 0.28), cu = -w / 2 + r + 0.2;
+    add(ctx.g.arcSlab(cu, d / 2, 0, r, 0, 180, h1 - 0.02, h1 + 0.22, trim));
+    for (const a of [20, 70, 110, 160]) { const A = a * Math.PI / 180; add(ctx.g.cyl(cu + Math.cos(A) * (r - 0.25), d / 2 + Math.sin(A) * (r - 0.25), 0.1, 0, h1, trim, { seg: 8 })); }
+    add(box(ctx, -0.5, d / 2 - 0.02, 0.5, d / 2 + 0.05, 0, 2.1, dark, { round: 0 }));
+    // carport on the west side
+    const cw = s.carport ?? 3.4; if (cw) { const x0 = -w / 2 - cw, x1 = -w / 2 - 0.1, y0 = -d / 2 + 0.6, y1 = d / 2 + 0.6;
+      for (const u of [x0 + 0.2, x1 - 0.1]) for (const v of [y0 + 0.2, y1 - 0.2]) add(ctx.g.cyl(u, v, 0.08, 0, 2.3, trim, { seg: 8 }));
+      add(box(ctx, x0 - 0.2, y0 - 0.2, x1, y1 + 0.2, 2.3, 2.45, trim));
+      const cu2 = (x0 + x1) / 2; add(box(ctx, cu2 - 0.85, y0 + 0.4, cu2 + 0.85, y1 - 0.4, 0.2, 1.0, ctx.mat(s.car || '#3A3A42'))); add(box(ctx, cu2 - 0.75, y0 + 1.2, cu2 + 0.75, y1 - 1.4, 1.0, 1.55, ctx.mat('#BFD3E0')));
+      const [px, py] = W(cu2, (y0 + y1) / 2); addORect(px, py, cw, y1 - y0 + 0.4, rot, `${s.id} carport`); }
+    const [cx, cy] = W(0, r / 2); addORect(cx, cy, w + 0.9, d + r + 0.9, rot, `${s.id} house`);
+    return { group: grp };
+  },
+  // clay hut: round with a conical roof, or s.square for a square hut with a pyramid tiled roof (Purrom)
   hut(ctx, s) {
-    const { grp, add } = place(s); const r = s.r || 2, H = s.h || 1.9, roofH = s.roofH || 1.55;
+    const { grp, add, W, rot } = place(s); const r = s.r || 2, H = s.h || 1.9, roofH = s.roofH || 1.55;
     const wallM = ctx.mat(s.color || '#E3C9A0'), roofM = ctx.mat(s.roof || '#A9432B', { side: THREE.DoubleSide });
+    if (s.square) {
+      add(box(ctx, -r, -r, r, r, 0, H, wallM));
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(r * 1.62, roofH, 4), roofM); roof.rotation.y = Math.PI / 4; roof.position.copy(P(0, 0, H + roofH / 2)); roof.castShadow = roof.receiveShadow = true; add(roof);
+      add(box(ctx, -0.45, r - 0.02, 0.45, r + 0.08, 0, 1.6, ctx.mat(s.door || '#C9A060'), { round: 0 }));
+      add(box(ctx, -0.8, r, 0.8, r + 0.9, 0, 0.12, ctx.mat('#B9A583'), { round: 0 }));
+      const [cx, cy] = W(0, 0); addORect(cx, cy, 2 * r + 0.3, 2 * r + 0.3, rot, `${s.id} hut`);
+      return { group: grp };
+    }
     add(ctx.g.cyl(0, 0, r, 0, H, wallM, { seg: 16 }));
     const roof = new THREE.Mesh(new THREE.ConeGeometry(r * 1.22, roofH, 16), roofM); roof.position.copy(P(0, 0, H + roofH / 2)); roof.castShadow = roof.receiveShadow = true; add(roof);
     add(box(ctx, -0.35, r - 0.04, 0.35, r + 0.06, 0, 1.4, ctx.mat('#3A2E28'), { round: 0 }));
     addCircle(s.x, s.y, r + 0.15, `${s.id} hut`);
+    return { group: grp };
+  },
+  // timber pergola deck: posts, a slatted roof, a raised deck with tables and a few steps (Theeya)
+  pergola(ctx, s) {
+    const { grp, add, W, rot } = place(s); const w = s.w || 7, d = s.d || 4, H = s.h || 2.5, base = s.raised ?? 0.35;
+    const wood = ctx.mat(s.post || '#6B4A2E'), deck = ctx.mat(s.deck || '#A87A4E'), roofM = ctx.mat(s.roof || '#5A4636');
+    add(box(ctx, -w / 2, -d / 2, w / 2, d / 2, 0, base, deck));
+    for (let i = 0; i <= 3; i++) { const u = -w / 2 + 0.15 + i * (w - 0.3) / 3; for (const v of [-d / 2 + 0.15, d / 2 - 0.15]) add(ctx.g.cyl(u, v, 0.08, base, base + H, wood, { seg: 8 })); }
+    add(box(ctx, -w / 2 - 0.3, -d / 2 - 0.3, w / 2 + 0.3, d / 2 + 0.3, base + H, base + H + 0.12, roofM));
+    for (let i = 0; i < 9; i++) { const u = -w / 2 + (i + 0.5) * w / 9; add(box(ctx, u - 0.06, -d / 2 - 0.5, u + 0.06, d / 2 + 0.5, base + H + 0.12, base + H + 0.28, wood, { round: 0 })); }
+    for (let i = 0; i < (s.tables ?? 3); i++) { const u = -w / 2 + (i + 0.5) * w / (s.tables ?? 3); add(box(ctx, u - 0.55, -0.45, u + 0.55, 0.45, base + 0.7, base + 0.8, wood)); for (const dv of [-0.75, 0.75]) add(box(ctx, u - 0.5, dv - 0.12, u + 0.5, dv + 0.12, base, base + 0.45, wood)); }
+    for (let i = 0; i < 2; i++) add(box(ctx, w / 2 - 1.6, d / 2 + i * 0.3, w / 2 - 0.4, d / 2 + (i + 1) * 0.3, 0, base * (2 - i) / 2, deck, { round: 0 }));
+    const [cx, cy] = W(0, 0.3); addORect(cx, cy, w + 0.2, d + 0.8, rot, `${s.id} pergola`);
+    return { group: grp };
+  },
+  // white event canopy / gazebo tent
+  canopy(ctx, s) {
+    const { grp, add, W, rot } = place(s); const w = s.w || 3, H = s.h || 2.3; const cloth = ctx.mat(s.color || '#F4F0E6', { side: THREE.DoubleSide }), post = ctx.mat('#D8D2C6');
+    for (const u of [-w / 2, w / 2]) for (const v of [-w / 2, w / 2]) { add(ctx.g.cyl(u, v, 0.05, 0, H, post, { seg: 6 })); const [px, py] = W(u, v); addCircle(px, py, 0.1, `${s.id} canopy post`); }
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.78, 1.0, 4, 1, true), cloth); roof.rotation.y = Math.PI / 4; roof.position.copy(P(0, 0, H + 0.5)); roof.castShadow = true; add(roof);
+    add(box(ctx, -w / 2, -w / 2, w / 2, -w / 2 + 0.04, H - 0.3, H, cloth, { round: 0 })); add(box(ctx, -w / 2, w / 2 - 0.04, w / 2, w / 2, H - 0.3, H, cloth, { round: 0 }));
+    if (s.tables !== 0) add(box(ctx, -w * 0.3, -0.35, w * 0.3, 0.35, 0.7, 0.8, ctx.mat('#7A5433')));
+    return { group: grp };
+  },
+  // a cluster of clay pots
+  pots(ctx, s) {
+    const { grp, add } = place(s); const n = s.count || 6, cols = ['#A9542F', '#B8643A', '#8E4A2A'];
+    for (let i = 0; i < n; i++) { const a = hash(i + s.x) * 6.28, r = 0.3 + hash(i * 3 + s.y) * (s.r || 1.4), sc = 0.25 + hash(i * 7) * 0.25; const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      const m = add(ctx.g.sphere(x, y, sc * 0.9, sc, ctx.mat(cols[i % 3]), { seg: 10, seg2: 8 })); m.scale.y = 1.25; addCircle(s.x + x, s.y + y, sc, 'pot'); }
+    return { group: grp };
+  },
+  // a flowering bush (bougainvillea): a mound of green with blossom
+  bush(ctx, s) {
+    const { grp, add } = place(s); const r = s.r || 1.2; const leaf = ctx.mat('#4F7A3E'), bloom = ctx.mat(s.color || '#D8367A');
+    for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28, rr = r * 0.5; add(ctx.g.sphere(Math.cos(a) * rr, Math.sin(a) * rr, r * 0.55, r * 0.55, i % 2 ? bloom : leaf, { seg: 8, seg2: 6 })); }
+    add(ctx.g.sphere(0, 0, r * 0.9, r * 0.6, bloom, { seg: 8, seg2: 6 })); addCircle(s.x, s.y, r, 'bush');
     return { group: grp };
   },
   // flea or food stall: table, posts and a striped canopy
@@ -242,6 +326,7 @@ export const KIT = {
       addCircle(s.x, s.y, 1.0, `${s.id} sculpture`);
       return { group: grp, dyn: true, update: t => { ring.rotation.x = Math.PI / 2 + 0.15 * Math.sin(t * 0.4); ring.rotation.z = t * 0.2; } };
     }
+    if (k === 'crystal') { const gm = ctx.glow(`crystal:${s.id}`, { on: s.glow || '#C9A0FF', off: s.color || '#9A7AC8', channel: 'night', day: 0.25, keepLit: true }); add(box(ctx, -0.7, -0.7, 0.7, 0.7, 0, 0.5, ctx.mat('#5A5048'))); for (const [dx, dy, sc] of [[0, 0, 1], [0.45, 0.25, 0.6], [-0.4, 0.3, 0.55]]) { const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.6 * sc, 0), gm); m.scale.set(1, H * 0.55 / sc * sc, 1); m.position.copy(P(dx, dy, 0.5 + H * 0.33 * sc)); m.rotation.y = dx * 2; m.castShadow = true; add(m); } addCircle(s.x, s.y, 0.8, `${s.id} crystal`); return { group: grp }; }
     if (k === 'ring') { const ring = new THREE.Mesh(new THREE.TorusGeometry(H * 0.5, 0.12, 8, 48), brass); ring.position.copy(P(0, 0, H * 0.5 + 0.1)); ring.castShadow = true; add(ring); const [cx, cy] = W(0, 0); addCircle(cx, cy, 0.25, `${s.id} ring`); return { group: grp }; }
     const cols = ['#B5523B', '#D9953F', '#2F7F7A', '#6E9A4B', '#3E6AA0'];
     for (let i = 0; i < 5; i++) add(box(ctx, -0.35 + hash(i + s.x) * 0.1, -0.35, 0.35, 0.35, i * H / 5, (i + 1) * H / 5 - 0.05, ctx.mat(cols[i % 5])));
@@ -272,19 +357,25 @@ export const KIT = {
   },
   // theatre building with a marquee that lights with the show; s.veranda adds a colonial-style covered porch across the front
   theatre(ctx, s) {
-    const { grp, add, W, rot } = place(s); const w = s.w || 8, d = s.d || 6, H = s.h || 4.5;
-    add(box(ctx, -w / 2, -d / 2, w / 2, d / 2, 0, H, ctx.mat(s.color || '#D9C2A0')));
-    add(gable(w, d, 1.6, H, 0.3, ctx.mat(s.roof || '#6A3A2E', { side: THREE.DoubleSide })));
+    const { grp, add, W, rot } = place(s); const w = s.w || 8, d = s.d || 6, H = s.h || 4.5, b = s.plinth || 0, ov = 1.15;
+    if (b > 0) { const stone = ctx.mat(s.stone || '#B9A583'); add(box(ctx, -w / 2 - 0.5, -d / 2 - 0.5, w / 2 + 0.5, d / 2 + (s.veranda ? ov : 0) + 0.3, 0, b, stone));
+      const n = Math.max(3, Math.round(b / 0.2)); for (let i = 0; i < n; i++) add(box(ctx, -1.3, d / 2 + (s.veranda ? ov : 0) + 0.3 + i * 0.3, 1.3, d / 2 + (s.veranda ? ov : 0) + 0.3 + (i + 1) * 0.3, 0, b * (n - i) / n, stone, { round: 0 })); }
+    add(box(ctx, -w / 2, -d / 2, w / 2, d / 2, b, b + H, ctx.mat(s.color || '#D9C2A0')));
+    add(gable(w, d, s.roofH || 1.6, b + H, 0.45, ctx.mat(s.roof || '#6A3A2E', { side: THREE.DoubleSide })));
+    const win = ctx.glow('window', { on: '#FFCB70', off: '#4A5560', channel: 'night', day: 0 });
+    for (const u of [-w * 0.33, w * 0.33]) add(box(ctx, u - 0.4, d / 2 - 0.02, u + 0.4, d / 2 + 0.05, b + H * 0.3, b + H * 0.72, win, { round: 0 }));
     if (s.veranda) {
-      const postM = ctx.mat(s.rail || '#F4EADD'); const ov = 1.15;
-      add(box(ctx, -w / 2 - ov * 0.1, d / 2, w / 2 + ov * 0.1, d / 2 + ov, H * 0.58, H * 0.66, postM));
+      const postM = ctx.mat(s.rail || '#F4EADD');
+      add(box(ctx, -w / 2 - ov * 0.1, d / 2, w / 2 + ov * 0.1, d / 2 + ov, b + H * 0.72, b + H * 0.8, postM));
       const np = Math.max(2, Math.round(w / 1.7));
-      for (let i = 0; i <= np; i++) { const u = -w / 2 + 0.5 + i * (w - 1.0) / np; add(ctx.g.cyl(u, d / 2 + ov - 0.18, 0.11, 0, H * 0.58, postM, { seg: 10 })); }
+      for (let i = 0; i <= np; i++) { const u = -w / 2 + 0.5 + i * (w - 1.0) / np; add(ctx.g.cyl(u, d / 2 + ov - 0.18, 0.1, b, b + H * 0.72, postM, { seg: 10 })); }
+      for (let i = 0; i <= np * 3; i++) { const u = -w / 2 + 0.5 + i * (w - 1.0) / (np * 3); if (Math.abs(u) < 1.2) continue; add(box(ctx, u - 0.03, d / 2 + ov - 0.2, u + 0.03, d / 2 + ov - 0.16, b, b + 0.7, postM, { round: 0 })); }
+      add(box(ctx, -w / 2 + 0.5, d / 2 + ov - 0.22, -1.2, d / 2 + ov - 0.14, b + 0.62, b + 0.72, postM, { round: 0 })); add(box(ctx, 1.2, d / 2 + ov - 0.22, w / 2 - 0.5, d / 2 + ov - 0.14, b + 0.62, b + 0.72, postM, { round: 0 }));
     }
-    const marq = ctx.glow(`marquee:${s.id}`, { on: '#FFE08A', off: '#B5523B', channel: 'stageOn', arg: s.show ?? s.area ?? s.id, day: 0.5, keepLit: true });
-    add(box(ctx, -w * 0.35, d / 2, w * 0.35, d / 2 + 0.6, H * 0.62, H * 0.78, marq, { round: 0 }));
-    add(box(ctx, -0.9, d / 2 - 0.02, 0.9, d / 2 + 0.05, 0, 2.3, ctx.mat('#2A2226'), { round: 0 }));
-    const [cx, cy] = W(0, 0); addORect(cx, cy, w + 0.2, d + 0.2, rot, `${s.id} theatre`);
+    const marq = ctx.glow(`marquee:${s.id}`, { on: '#FFE08A', off: s.marquee || '#B5523B', channel: 'stageOn', arg: s.show ?? s.area ?? s.id, day: 0.5, keepLit: true });
+    add(box(ctx, -w * 0.2, d / 2, w * 0.2, d / 2 + 0.12, b + H * 0.8, b + H * 0.95, marq, { round: 0 }));
+    add(box(ctx, -0.8, d / 2 - 0.02, 0.8, d / 2 + 0.05, b, b + 2.3, ctx.mat('#5A3A2A'), { round: 0 }));
+    const extra = b > 0 ? 1.5 : 0; const [cx, cy] = W(0, ((s.veranda ? ov : 0) + extra) / 2); addORect(cx, cy, w + 1.2, d + (s.veranda ? ov : 0) + extra + 1.0, rot, `${s.id} theatre`);
     return { group: grp };
   },
   // entrance arch with a painted sign board (s.text)

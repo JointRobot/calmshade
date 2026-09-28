@@ -44,13 +44,16 @@ export function buildSite(world, mat, g, style, SITE) {
 
   // ---------- ground: one slab with a painted top (grass, fields, plazas, shores, paths) ----------
   const G0 = SITE.ground || {}; const ppm = G0.ppm || 12;
-  const water = (SITE.water || []).map(w => ({ ...w, poly: smoothPoly(w.pts, 6) }));
+  const grow = (poly, d) => { let cx = 0, cy = 0; for (const [x, y] of poly) { cx += x; cy += y; } cx /= poly.length; cy /= poly.length; return poly.map(([x, y]) => { const k = Math.hypot(x - cx, y - cy) || 1; return [x + (x - cx) / k * d, y + (y - cy) / k * d]; }); };
+  // a lake may hold islands (w.islands: plan polygons): land shows through holes in the water, ringed by shallows
+  const water = (SITE.water || []).map(w => ({ ...w, poly: smoothPoly(w.pts, 6), isles: (w.islands || []).map(p => smoothPoly(p, 6)) }));
   const areas = SITE.areas || [];
   const ft = floorTex(X0, Y0, W, H, ppm, c => {
     c.fillStyle = G0.color || '#9DB36A'; c.fillRect(X0, Y0, W, H);
     const r = rng(7); for (let i = 0; i < W * H * 0.25; i++) { c.fillStyle = `rgba(${40 + r() * 60 | 0},${70 + r() * 60 | 0},${20 + r() * 40 | 0},${0.08 + r() * 0.1})`; c.beginPath(); c.arc(X0 + r() * W, Y0 + r() * H, 0.2 + r() * 0.9, 0, 7); c.fill(); }
     for (const f of G0.fields || []) { c.save(); c.translate(f.x, f.y); c.rotate(f.rot || 0); c.fillStyle = f.color || '#C9B46A'; c.fillRect(-f.w / 2, -f.d / 2, f.w, f.d); c.strokeStyle = f.rows || 'rgba(90,110,40,0.55)'; c.lineWidth = 0.18; for (let u = -f.w / 2 + 0.4; u < f.w / 2; u += 0.7) { c.beginPath(); c.moveTo(u, -f.d / 2 + 0.2); c.lineTo(u, f.d / 2 - 0.2); c.stroke(); } c.restore(); }
-    for (const w of water) { c.fillStyle = w.shore || '#D9C79A'; c.beginPath(); w.poly.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.lineWidth = w.shoreWidth || 2.4; c.strokeStyle = w.shore || '#D9C79A'; c.stroke(); c.fill(); }
+    for (const w of water) { c.fillStyle = w.shore || '#D9C79A'; c.beginPath(); w.poly.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.lineWidth = w.shoreWidth || 2.4; c.strokeStyle = w.shore || '#D9C79A'; c.stroke(); c.fill();
+      for (const isl of w.isles) { c.beginPath(); isl.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fillStyle = G0.color || '#9DB36A'; c.fill(); c.lineWidth = 1.6; c.strokeStyle = w.shore || '#D9C79A'; c.stroke(); } }
     for (const a of areas) { if (!a.floor) continue; c.fillStyle = a.floor; const [cx, cy] = a.center; c.beginPath(); if (a.rect) { const [x0, y0, x1, y1] = a.rect; const rr = 1.5; c.roundRect(x0, y0, x1 - x0, y1 - y0, rr); } else c.ellipse(cx, cy, a.r || 8, (a.r || 8) * 0.8, 0, 0, 7); c.fill(); }
     for (const p of SITE.paths || []) { c.strokeStyle = p.edge || 'rgba(120,90,50,0.35)'; c.lineWidth = (p.width || 2) + 0.5; c.beginPath(); p.pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); if (p.loop) c.closePath(); c.stroke(); c.strokeStyle = p.color || '#D8C096'; c.lineWidth = p.width || 2; c.stroke(); if (p.dash) { c.setLineDash([0.6, 0.8]); c.strokeStyle = p.dash; c.lineWidth = 0.12; c.stroke(); c.setLineDash([]); } }
   });
@@ -64,12 +67,14 @@ export function buildSite(world, mat, g, style, SITE) {
   let ripple = null;
   for (const w of water) {
     const shape = new THREE.Shape(w.poly.map(([x, y]) => new THREE.Vector2(x, -y)));
+    const hole = p => new THREE.Path(p.map(([x, y]) => new THREE.Vector2(x, -y)));
+    for (const isl of w.isles) shape.holes.push(hole(grow(isl, 1.1)));
     if (!ripple) { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, 256, 256); const r = rng(3); x.strokeStyle = 'rgba(40,70,110,0.16)'; x.lineWidth = 2; for (let i = 0; i < 90; i++) { const y = r() * 256, x0 = r() * 256, L = 12 + r() * 30; x.beginPath(); x.moveTo(x0, y); x.quadraticCurveTo(x0 + L / 2, y - 3, x0 + L, y); x.stroke(); } ripple = new THREE.CanvasTexture(c); ripple.wrapS = ripple.wrapT = THREE.RepeatWrapping; ripple.repeat.set(W / 18, W / 18); ripple.colorSpace = THREE.SRGBColorSpace; }
     const m = mat(w.color || '#6FA8C8', { map: ripple, noCache: true, rough: 0.35 }); waterMats.push({ m, w });
     const geo = new THREE.ShapeGeometry(shape, 8); geo.rotateX(-Math.PI / 2); const uv = geo.attributes.uv, pos = geo.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 20, pos.getZ(i) / 20);
     const mesh = new THREE.Mesh(geo, m); mesh.position.y = 0.035; mesh.receiveShadow = true; root.add(mesh);
     if (w.shallow) { let cx = 0, cy = 0; for (const [x, y] of w.poly) { cx += x; cy += y; } cx /= w.poly.length; cy /= w.poly.length; const rim = w.poly.map(([x, y]) => { const d = Math.hypot(x - cx, y - cy) || 1; return [x + (x - cx) / d * 1.3, y + (y - cy) / d * 1.3]; });
-      const sg = new THREE.ShapeGeometry(new THREE.Shape(rim.map(([x, y]) => new THREE.Vector2(x, -y))), 8); sg.rotateX(-Math.PI / 2); const sm = new THREE.Mesh(sg, mat(w.shallow)); sm.position.y = 0.02; sm.receiveShadow = true; root.add(sm); waterMats.push({ m: sm.material, w: { color: w.shallow, dusk: w.shallowDusk || '#C9B8C8', night: w.shallowNight || '#2A3868' } }); }
+      const rs = new THREE.Shape(rim.map(([x, y]) => new THREE.Vector2(x, -y))); for (const isl of w.isles) rs.holes.push(hole(isl)); const sg = new THREE.ShapeGeometry(rs, 8); sg.rotateX(-Math.PI / 2); const sm = new THREE.Mesh(sg, mat(w.shallow)); sm.position.y = 0.02; sm.receiveShadow = true; root.add(sm); waterMats.push({ m: sm.material, w: { color: w.shallow, dusk: w.shallowDusk || '#C9B8C8', night: w.shallowNight || '#2A3868' } }); }
     addPoly(w.poly, w.id || 'water');
   }
 

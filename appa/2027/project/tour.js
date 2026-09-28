@@ -1,4 +1,4 @@
-// APPA Art Fest 2027 · the 90-second guided tour: the camera path, captions and subtitles.
+// APPA Art Fest 2027 · the guided tour (114 s): the camera path, captions and subtitles.
 // Camera keys: [t, x, y, z, S] = at time t look at plan point (x, y, z) with S pixels per metre (at 1920 px wide).
 // Keep each venue on screen for 5 to 8 seconds; pull back (smaller S) between far-apart venues.
 import { makeCamera, drawOverlay } from '../src/engine/overlay.js';
@@ -6,42 +6,43 @@ import { LOOK } from './look.js';
 
 export const KEYS = [
   [0, 65, 66, 0, 6.9], [7, 65, 68, 0, 7.6],
-  [10.5, 57, 117, 0, 28], [15, 57, 116, 0, 31],
-  [17.5, 36, 92, 0, 14], [19.5, 17, 59, 0, 28], [24.5, 16, 58, 0, 31],
-  [28, 31, 28, 0, 28], [32.5, 32, 26, 0, 31],
-  [36, 71, 27, 0, 28], [40.5, 72, 26, 0, 31],
-  [44, 106, 42, 0, 28], [48.5, 107, 41, 0, 31],
-  [52, 110, 77, 0, 28], [56.5, 110, 78, 0, 31],
-  [58.5, 70, 90, 0, 12], [60.5, 31, 98, 0, 27], [63, 30, 97, 0, 29],
-  [65, 75, 104, 0, 12], [67, 113, 107, 0, 26], [68.5, 112, 106, 0, 27],
-  [71, 70, 70, 0, 17], [73, 66, 66, 0, 18],
-  [88.5, 86, 106, 0, 22], [94.5, 87, 107, 1, 32], [97, 86, 106, 1, 29], [101, 65, 67, 0, 7.2], [102.5, 65, 67, 0, 7.1],
+  [10.5, 90, 94, 0, 28], [15, 90, 93, 0, 31],
+  [17.5, 76, 100, 0, 14], [19.5, 60, 107, 0, 28], [24.5, 60, 108, 0, 31],
+  [28, 34, 87, 0, 28], [32.5, 34, 86, 0, 31],
+  [36, 15, 67, 0, 28], [40.5, 15, 66, 0, 31],
+  [42, 30, 42, 0, 14], [44, 48, 19, 0, 28], [48.5, 48, 18, 0, 31],
+  [52, 74, 17, 0, 28], [56.5, 75, 17, 0, 31],
+  [58.5, 95, 42, 0, 12], [60.5, 112, 68, 0, 27], [63, 113, 68, 0, 29],
+  [65, 116, 92, 0, 12], [67, 118, 113, 0, 26], [68.5, 117, 112, 0, 27],
+  [71, 80, 64, 0, 19], [73, 76, 60, 0, 21],
+  [88.5, 22, 38, 0, 22], [94.5, 22, 39, 1, 32], [97, 22, 38, 1, 29], [101, 65, 67, 0, 7.2], [102.5, 65, 67, 0, 7.1],
   [114, 65, 67, 0, 7.1]
 ];
 export const TOUR = {
   title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Seven venues. A living ecosystem.'],
   end: [110.2, 114, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
-    [9, 16, 'Your festival journey', 'Check-in', 'Park your car, pick your ride, get your itinerary'],
+    [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
     [18, 25.5, 'Venue 1', 'Raiker Farms', 'The biggest gatherings, forums and large-scale art'],
-    [27, 33.5, 'Venue 2', 'Le Farm', 'Big events and open debate on 15 acres'],
-    [35, 41.5, 'Venue 3', 'Shambhala by the Lake', 'Intimate music, lakeside art, artist residencies'],
-    [43, 49.5, 'Venue 4', 'Purrom', 'A horror film festival in a healing retreat'],
+    [27, 33.5, 'Venue 2', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
+    [35, 41.5, 'Venue 3', 'Le Farm', 'Big events and open debate on 15 acres'],
+    [43, 49.5, 'Venue 5', 'Purrom', 'A horror film festival in a healing retreat'],
     [51, 57.5, 'Venue 6', 'The Company Theatre', 'Their own theatre festival'],
     [59.5, 64, 'Venue 7', 'Theeya Creation Village', 'Voice, craft and community'],
     [66, 69.5, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
+    [70, 74.2, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
     // the four festival weeks, recapped over a wide hold before the finale zooms into Calmshet
     [74.5, 77.9, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
     [78.1, 81.5, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
     [81.7, 85.1, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
     [85.3, 88.4, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [89.2, 100.5, 'Venue 5 · the main venue', 'Calmshet', 'The past two years, fashion, art, opening night'],
+    [89.2, 100.5, 'Venue 4 · the main venue', 'Calmshet', 'The past two years, fashion, art, opening night'],
     [104, 109.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
   ],
   subs: [
-    [11, 14.8, 'Park the car. Pick a cycle.'], [19.5, 23.5, 'Villages, fields, forests, hills.'], [28.5, 32.5, 'Different scales. Different experiences.'],
-    [36.5, 40.5, 'Music by the water.'], [44.5, 48.5, 'Horror films after dark.'], [52.5, 56.5, 'Theatre, and stories after dark.'],
-    [60, 63.5, 'Sing together.'], [70.5, 74, 'The lake lights up at dusk.']
+    [11, 14.8, 'Park the car. Pick a cycle.'], [19.5, 23.5, 'Villages, fields, forests, hills.'], [28.5, 32.5, 'Music by the water.'],
+    [36.5, 40.5, 'Different scales. Different experiences.'], [44.5, 48.5, 'Horror films after dark.'], [52.5, 56.5, 'Theatre, and stories after dark.'],
+    [60, 63.5, 'Sing together.'], [70.3, 73.8, 'The lake lights up at dusk.']
   ]
 };
 export const camAt = makeCamera(KEYS);
