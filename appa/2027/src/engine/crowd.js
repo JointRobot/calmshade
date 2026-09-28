@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { P } from './world.js';
 import { lerp, clamp, smooth, env, rng } from './util.js';
 import { makePerson, faceTo, POSES, blendPose, addPose, walkPose } from './rig.js';
-import { hit, pushOut } from './obstacles.js';
+import { hit, pushOut, addCircle } from './obstacles.js';
 import { buildNav } from './nav.js';
 import { S } from './story.js';
 
@@ -46,6 +46,9 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       lookAt(tt, tx, ty) { look.push([tt, tx, ty]); } };
   }
   const finish = (p, r) => { p.path = r.k; p.looks = r.look; p.cum = [0]; for (let j = 1; j < p.path.length; j++) p.cum.push(p.cum[j - 1] + Math.hypot(p.path[j][1] - p.path[j - 1][1], p.path[j][2] - p.path[j - 1][2])); };
+
+  // people who stay put are obstacles too, so nobody walks through them
+  (CAST.stations || []).forEach(st => addCircle(st.at[0], st.at[1], 0.3, `station ${st.id}`));
 
   // ---- named walkers with a plan: [{ at | xy, dx, dy, until, look, acts }]
   (CAST.walkers || []).forEach((w, i) => {
@@ -176,6 +179,7 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       let lookT = null;
       if (act && act[2] === 'dance') { const b = Math.sin(t * 5 + p.spec.seed); pose = addPose(pose, { shL: [-0.3 * w, 0, (1.9 + 0.5 * b) * w], shR: [-0.3 * w, 0, -(1.9 - 0.5 * b) * w], elL: [-0.6 * w, 0, 0], elR: [-0.6 * w, 0, 0], spine: [0, 0.35 * b * w, 0.12 * b * w], pelvisY: 0.05 * Math.abs(b) * w, knL: [0.25 * Math.max(0, b) * w, 0, 0], knR: [0.25 * Math.max(0, -b) * w, 0, 0] }); p.pose(pose); }
       else if (act && act[2] === 'play') { const b = Math.sin(t * 7 + p.spec.seed); pose = addPose(pose, { shL: [-0.9 * w, 0.3 * w, 0.3 * w], elL: [-1.3 * w, 0, 0], shR: [-0.5 * w, -0.2 * w, -0.2 * w], elR: [(-1.1 - 0.25 * b) * w, 0, 0], spine: [0.08 * w, 0.1 * b * w, 0] }); p.pose(pose); }
+      else if (act && act[2] === 'sit') { pose = addPose(pose, { pelvisY: (0.14 - p.D.legLen) * w, spine: [0.06 * w, 0, 0], hipL: [-1.4 * w, 0, 0.7 * w], hipR: [-1.4 * w, 0, -0.7 * w], knL: [2.2 * w, 0, 0], knR: [2.2 * w, 0, 0], shL: [-0.55 * w, 0, 0.15 * w], shR: [-0.55 * w, 0, -0.15 * w], elL: [-1.5 * w, 0, 0], elR: [-1.5 * w, 0, 0] }); p.pose(pose); }
       else if (act) lookT = actPose(p, act, af, w, tl, pose, fwd, yaw, null);
       else p.pose(pose);
       p.root.updateMatrixWorld(true);
@@ -190,7 +194,7 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
   // ---- proof: nobody inside anything, nobody standing in anybody, cyclist lanes clear
   function validate(step = 0.1, T = LOOP) {
     const hits = [], runs = {};
-    for (const p of walkers) { const r = bodyR(p) - 0.01; for (let t = 0; t <= T; t += step) { const s = pos(p, tOf(p, t)); const o = hit(s.x, s.y, r); if (o) { const key = p.id + '|' + o.name; const run = runs[key]; if (run && t - run.t1 < step * 1.5) run.t1 = +t.toFixed(2); else { runs[key] = { id: p.id, what: o.name, t0: +t.toFixed(2), t1: +t.toFixed(2), x: +s.x.toFixed(2), y: +s.y.toFixed(2) }; hits.push(runs[key]); } } } }
+    for (const p of walkers.filter(q => !q.station)) { const r = bodyR(p) - 0.01; for (let t = 0; t <= T; t += step) { const s = pos(p, tOf(p, t)); const o = hit(s.x, s.y, r); if (o) { const key = p.id + '|' + o.name; const run = runs[key]; if (run && t - run.t1 < step * 1.5) run.t1 = +t.toFixed(2); else { runs[key] = { id: p.id, what: o.name, t0: +t.toFixed(2), t1: +t.toFixed(2), x: +s.x.toFixed(2), y: +s.y.toFixed(2) }; hits.push(runs[key]); } } } }
     const lanes = [], seenLane = new Set(); for (const p of cyclists) { const r = p.ride; for (let s = 0; s < r.L; s += 0.5) { const q = rideAt({ ride: { ...r, off: s, v: Math.sign(r.v) * 1e-9 } }, 0); const o = hit(q.x, q.y, 0.3); if (o && o.name !== 'edge' && !seenLane.has(o.name + Math.sign(r.lane))) { seenLane.add(o.name + Math.sign(r.lane)); lanes.push({ id: p.id, what: o.name, x: +q.x.toFixed(1), y: +q.y.toFixed(1) }); } } }
     const pairs = [], pr = {};
     for (let t = 0; t <= T; t += 0.2) { const st = walkers.map(p => { const a = pos(p, tOf(p, t)), b = pos(p, tOf(p, t + 0.2)); return { p, x: a.x, y: a.y, still: Math.hypot(b.x - a.x, b.y - a.y) < 0.01 }; });

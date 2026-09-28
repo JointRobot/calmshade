@@ -233,6 +233,36 @@ export const KIT = {
     }
     return { group: grp };
   },
+  // a lettered sign board on two posts, readable from the south: s.text ('\n' for two lines), s.w, s.h (board bottom), s.board, s.ink
+  sign(ctx, s) {
+    const { grp, add, W } = place(s); const w = s.w || 3.2, H = s.h || 1.5, bh = w / 3.2; const wood = ctx.mat('#5A3A24');
+    for (const u of [-w / 2 + 0.15, w / 2 - 0.15]) { add(ctx.g.cyl(u, 0, 0.07, 0, H + bh, wood, { seg: 6 })); const [px, py] = W(u, 0); addCircle(px, py, 0.12, `${s.id || 'sign'} post`); }
+    const c = document.createElement('canvas'); c.width = 768; c.height = 240; const x = c.getContext('2d'); x.fillStyle = s.board || '#2A2226'; x.fillRect(0, 0, 768, 240); x.strokeStyle = s.ink || '#F4E6CC'; x.lineWidth = 6; x.strokeRect(12, 12, 744, 216);
+    const lines = String(s.text || 'PROGRAMME').split('\n'); x.fillStyle = s.ink || '#F4E6CC'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    const fs = s.size || (lines.length > 1 ? 74 : 92); x.font = `700 ${fs}px Georgia, serif`; lines.forEach((ln, i) => x.fillText(ln, 384, 120 + (i - (lines.length - 1) / 2) * fs * 1.08, 700));
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(w, bh), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide, toneMapped: false })); board.position.copy(P(0, 0.09, H + bh / 2)); add(board);
+    add(box(ctx, -w / 2, 0.02, w / 2, 0.08, H - 0.04, H + bh + 0.04, wood, { round: 0 }));
+    return { group: grp };
+  },
+  // yoga and meditation mats laid in a ring (s.layout 'ring') or in rows: s.count, s.r; flat, so people sit on them
+  mats(ctx, s) {
+    const { grp, add } = place(s); const n = s.count || 6; const cols = ['#C8412F', '#2F7F7A', '#E2A33A', '#7A4A8C', '#3E6AA0', '#6E9A4B'];
+    for (let i = 0; i < n; i++) {
+      let u, v, a; if (s.layout === 'rows') { const per = s.per || 3; u = ((i % per) - (per - 1) / 2) * 1.0; v = (Math.floor(i / per)) * 1.9; a = 0; } else { a = i / n * Math.PI * 2; const r = s.r || 1.6; u = Math.cos(a) * r; v = Math.sin(a) * r; }
+      const m = box(ctx, -0.32, -0.8, 0.32, 0.8, 0, 0.04, ctx.mat(cols[(i + (s.seed || 0)) % cols.length]), { round: 0 }); m.position.x += u; m.position.z += v; m.rotation.y = -a; add(m);
+    }
+    return { group: grp };
+  },
+  // a small stone shrine with a tiered spire, a gold finial and a red flag (a temple stop on the trail)
+  shrine(ctx, s) {
+    const { grp, add, W, rot } = place(s); const stone = ctx.mat('#D8CDB8'), ochre = ctx.mat('#E2A33A'), red = ctx.mat('#C8412F'), dark = ctx.mat('#4A3A2E');
+    add(box(ctx, -1.3, -1.3, 1.3, 1.3, 0, 0.35, stone)); add(box(ctx, -0.8, -0.8, 0.8, 0.8, 0.35, 1.7, ochre)); add(box(ctx, -0.25, 0.78, 0.25, 0.84, 0.35, 1.2, dark, { round: 0 }));
+    add(box(ctx, -0.95, -0.95, 0.95, 0.95, 1.7, 1.85, stone)); add(box(ctx, -0.65, -0.65, 0.65, 0.65, 1.85, 2.5, red)); add(box(ctx, -0.4, -0.4, 0.4, 0.4, 2.5, 3.0, ochre)); add(box(ctx, -0.18, -0.18, 0.18, 0.18, 3.0, 3.35, red));
+    add(ctx.g.sphere(0, 0, 3.5, 0.13, ctx.mat('#E8B848'), { seg: 8, seg2: 6 })); add(ctx.g.cyl(1.05, -1.0, 0.03, 0.35, 3.0, dark, { seg: 6 })); add(box(ctx, 1.05, -1.0, 1.6, -0.98, 2.4, 2.9, red, { round: 0 }));
+    const [cx, cy] = W(0, 0); addORect(cx, cy, 2.8, 2.8, rot, `${s.id || 'shrine'}`);
+    return { group: grp };
+  },
   // modern two-storey house with flat roof slabs, big glass fronts, a rounded front veranda and a carport (Le Farm)
   modern(ctx, s) {
     const { grp, add, W, rot } = place(s); const w = s.w || 8, d = s.d || 6, h1 = s.h || 2.8, h2 = s.h2 || 2.5;

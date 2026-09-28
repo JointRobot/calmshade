@@ -1,0 +1,6 @@
+# Always revalidate the app's own files so a redeploy shows up straight away (no stale cached copies of the festival app).
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|json|html|css)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
