@@ -217,6 +217,22 @@ export const KIT = {
     const [cx, cy] = W(0, 0.6); addORect(cx, cy, w + 4.6, d + 3.6 + 1.8, rot, `${s.id} lodge`);
     return { group: grp };
   },
+  // a row of painters' easels with finished canvases facing local +y (south): s.count, s.gap; s.z lifts them onto a raised floor
+  easels(ctx, s) {
+    const { grp, add, W, rot } = place(s); const n = s.count || 3, gap = s.gap || 1.3, z = s.z || 0; const wood = ctx.mat('#7A5433'), cream = ctx.mat('#F4ECDA');
+    const palettes = [['#C8412F', '#E2A33A', '#3E6AA0'], ['#2F7F7A', '#F2E6CF', '#B5523B'], ['#7A4A8C', '#E2A33A', '#6E9A4B'], ['#3E6AA0', '#D9502F', '#F2E6CF']];
+    for (let i = 0; i < n; i++) {
+      const u = (i - (n - 1) / 2) * gap; const pal = palettes[(i + (s.seed || 0)) % palettes.length];
+      for (const dx of [-0.32, 0.32]) add(box(ctx, u + dx - 0.025, -0.08, u + dx + 0.025, 0.02, z, z + 1.55, wood, { round: 0 }));
+      add(box(ctx, u - 0.02, -0.4, u + 0.02, -0.34, z, z + 1.2, wood, { round: 0 }));
+      add(box(ctx, u - 0.42, 0.02, u + 0.42, 0.07, z + 0.55, z + 1.6, cream, { round: 0 }));
+      add(box(ctx, u - 0.36, 0.07, u + 0.02, 0.09, z + 1.0, z + 1.52, ctx.mat(pal[0]), { round: 0 }));
+      add(box(ctx, u - 0.1, 0.07, u + 0.36, 0.09, z + 0.62, z + 1.1, ctx.mat(pal[1]), { round: 0 }));
+      add(box(ctx, u - 0.3, 0.07, u + 0.2, 0.09, z + 0.62, z + 0.85, ctx.mat(pal[2]), { round: 0 }));
+      if (!z) { const [cx, cy] = W(u, -0.15); addCircle(cx, cy, 0.4, `${s.id || 'easel'} ${i}`); }
+    }
+    return { group: grp };
+  },
   // modern two-storey house with flat roof slabs, big glass fronts, a rounded front veranda and a carport (Le Farm)
   modern(ctx, s) {
     const { grp, add, W, rot } = place(s); const w = s.w || 8, d = s.d || 6, h1 = s.h || 2.8, h2 = s.h2 || 2.5;

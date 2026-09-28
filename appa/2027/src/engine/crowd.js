@@ -79,6 +79,17 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
     }
   });
 
+  // ---- stationed people: stand at a fixed spot facing something, and repeat their acts (a guitarist by the fire,
+  // a visitor touching an installation, someone studying a painting). st: { id, at:[x,y], face:[x,y], acts, prop:'guitar', kind, ... }
+  (CAST.stations || []).forEach((st, i) => {
+    const s = spec({ kind: 'woman', outfit: 'casual', ...(st.look || {}), kind: st.kind || 'woman' }, 300 + i); const p = makePerson(s, mat); p.id = st.id || `station${i}`; p.kind = 'walker'; p.acts = st.acts || [];
+    p.path = [[0, st.at[0], st.at[1]], [LOOP, st.at[0], st.at[1]]]; p.cum = [0, 0]; p.looks = [[0, st.face[0], st.face[1], st.faceZ || 1.3]]; p.loop = LOOP; p.station = true;
+    if (st.prop === 'guitar') { const g = new THREE.Group(); const wood = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.1, 16), mat('#C9773E')); wood.rotation.x = Math.PI / 2; const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.105, 10), mat('#2A1E18')); hole.rotation.x = Math.PI / 2; hole.position.z = 0.005;
+      const neck = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 0.04), mat('#3A2A20')); neck.position.set(0.44, 0, 0); const head = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.07, 0.04), mat('#3A2A20')); head.position.set(0.82, 0, 0);
+      g.add(wood, hole, neck, head); g.position.set(-0.02, -0.3, 0.26); g.rotation.z = 0.6; g.traverse(o => { if (o.isMesh) o.castShadow = false; }); p.j.chest.add(g); }
+    walkers.push(p); all.push(p);
+  });
+
   // ---- cyclists on a path loop (one lane each way)
   const pathById = Object.fromEntries((SITE.paths || []).map(p => [p.id, p]));
   (CAST.cyclists || []).forEach((cy, ci) => {
@@ -161,14 +172,14 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       const fwd = new THREE.Vector3(Math.sin(yaw * Math.PI / 180), 0, Math.cos(yaw * Math.PI / 180));
       let act = null, af = 0, w = 0;
       if (p.kind === 'performer') { const on = S.get('stageOn', t, p.area); if (on > 0.25) { const st = p.stand.style; act = [0, 1, st === 'dance' ? 'dance' : 'play']; w = smooth((on - 0.25) / 0.4); } }
-      else { act = (p.acts || []).find(a => tl >= a[0] && tl <= a[1]) || null; if (act) { af = (tl - act[0]) / (act[1] - act[0]); w = env(af, 0, 0.25, 0.75, 1); } }
+      else { act = (p.acts || []).find(a => tl >= a[0] && tl <= a[1]) || null; if (act) { af = (tl - act[0]) / (act[1] - act[0]); const fd = Math.min(0.25, 1.2 / Math.max(0.1, act[1] - act[0])); w = env(af, 0, fd, 1 - fd, 1); } }
       let lookT = null;
       if (act && act[2] === 'dance') { const b = Math.sin(t * 5 + p.spec.seed); pose = addPose(pose, { shL: [-0.3 * w, 0, (1.9 + 0.5 * b) * w], shR: [-0.3 * w, 0, -(1.9 - 0.5 * b) * w], elL: [-0.6 * w, 0, 0], elR: [-0.6 * w, 0, 0], spine: [0, 0.35 * b * w, 0.12 * b * w], pelvisY: 0.05 * Math.abs(b) * w, knL: [0.25 * Math.max(0, b) * w, 0, 0], knR: [0.25 * Math.max(0, -b) * w, 0, 0] }); p.pose(pose); }
       else if (act && act[2] === 'play') { const b = Math.sin(t * 7 + p.spec.seed); pose = addPose(pose, { shL: [-0.9 * w, 0.3 * w, 0.3 * w], elL: [-1.3 * w, 0, 0], shR: [-0.5 * w, -0.2 * w, -0.2 * w], elR: [(-1.1 - 0.25 * b) * w, 0, 0], spine: [0.08 * w, 0.1 * b * w, 0] }); p.pose(pose); }
       else if (act) lookT = actPose(p, act, af, w, tl, pose, fwd, yaw, null);
       else p.pose(pose);
       p.root.updateMatrixWorld(true);
-      if (!lookT && p.looks) { let lk = null; for (const l of p.looks) if (tl >= l[0]) lk = l; if (lk && moving < 0.5) lookT = P(lk[1], lk[2], 1.3); }
+      if (!lookT && p.looks) { let lk = null; for (const l of p.looks) if (tl >= l[0]) lk = l; if (lk && moving < 0.5) lookT = P(lk[1], lk[2], lk[3] || 1.3); }
       if (lookT) p.look(lookT, 0.8);
       const bl = ((t * 0.31 + p.spec.seed * 0.17) % 1); p.expr(exprOf(p, t, act), bl < 0.035 ? Math.sin(bl / 0.035 * Math.PI) : 0);
       if (p.j.plaits) for (const pl of p.j.plaits) pl.rotation.x = 0.15 * Math.sin(t * 5 + p.spec.seed) * moving + 0.1;
@@ -186,6 +197,6 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) { const A = st[i], B = st[j]; if (!A.still || !B.still) continue; const d = Math.hypot(A.x - B.x, A.y - B.y); if (d < bodyR(A.p) + bodyR(B.p) - 0.03) { const key = A.p.id + '|' + B.p.id; const run = pr[key]; if (run && t - run.t1 < 0.3) run.t1 = +t.toFixed(1); else { pr[key] = { a: A.p.id, b: B.p.id, t0: +t.toFixed(1), t1: +t.toFixed(1), x: +A.x.toFixed(1), y: +A.y.toFixed(1) }; pairs.push(pr[key]); } } } }
     return { hits, pairs: pairs.filter(q => q.t1 - q.t0 >= 0.4), lanes, people: all.length };
   }
-  const exportRoutes = () => Object.fromEntries(walkers.map(p => [p.id, { path: p.path.map(k => k.map(v => +v.toFixed(3))), looks: (p.looks || []).map(k => k.map(v => +v.toFixed(3))) }]));
+  const exportRoutes = () => Object.fromEntries(walkers.filter(p => !p.station).map(p => [p.id, { path: p.path.map(k => k.map(v => +v.toFixed(3))), looks: (p.looks || []).map(k => k.map(v => +v.toFixed(3))) }]));
   return { all, walkers, cyclists, performers, update, validate, exportRoutes, pos, LOOP };
 }
