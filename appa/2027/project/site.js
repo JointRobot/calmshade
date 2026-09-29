@@ -47,7 +47,7 @@ export const SITE = {
   areas: [
     // 1 · RAIKER FARMS (Kamshet): a cream farmhouse with twin red gables and a double curved staircase up to the balcony.
     // Huge, parking inside: forums, town halls and the biggest gatherings. Flower polyhouses, buffalo stables, a lotus pond.
-    { id: 'raiker', n: 1, name: 'Raiker Farms', center: C.raiker, rect: [1, 54, 29, 80], floor: '#CDBA8A', structures: [
+    { id: 'raiker', n: 1, name: 'Secret Farm', center: C.raiker, rect: [1, 54, 29, 80], floor: '#CDBA8A', structures: [
       A(15, 60, { type: 'villa', w: 9, d: 5.5, floors: 2, floorH: 2.7, color: '#F4ECDA', roof: '#B8432F', rail: '#FFFFFF', twin: true, frontStairs: 'double' }),
       A(7, 71, { type: 'stage', w: 10, d: 5, glow: '#FFB45A' }),
       A(7, 74, { type: 'audience', area: 'raiker', face: Math.PI / 2, r0: 2, r1: 6, count: 45 }),

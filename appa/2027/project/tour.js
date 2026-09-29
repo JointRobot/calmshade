@@ -28,7 +28,7 @@ const TOUR0 = {
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
     [18, 25.5, 'Venue 1', 'Le Farm', 'Big events, open debate and long tables'],
     [27, 33.5, 'Venue 2', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
-    [35, 41.5, 'Venue 3', 'Raiker Farms', 'The biggest gatherings, forums and large-scale art'],
+    [35, 41.5, 'Venue 3', 'Secret Farm', 'The biggest gatherings, forums and large-scale art'],
     [43, 49.5, 'Venue 5', 'Purrom', 'A horror film festival in a healing retreat'],
     [51, 57.5, 'Venue 6', 'The Company Theatre', 'Their own theatre festival'],
     [59.5, 64, 'Venue 7', 'Theeya Creation Village', 'Voice, craft and community'],

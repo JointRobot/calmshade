@@ -92,8 +92,8 @@ export const COPY = {
     journey: ['Park your car at check-in', 'Pick your ride: cycles and e-bikes', 'Get your APPA passport and itinerary', 'Explore every venue: performances, exhibitions, workshops, flea, food and more', 'Stay, unwind, connect with nature', 'Be part of a bigger story'] },
   weeks: WEEKS,
   areas: {
-    raiker: { n: 3, name: 'Raiker Farms', tagline: 'The biggest gatherings, with parking on site',
-      website: site('Search Raiker Farms, Kamshet ↗', search('Raiker Farms Kamshet')),
+    raiker: { n: 3, name: 'Secret Farm', tagline: 'The biggest gatherings, with parking on site',
+      website: site('Find it on Google ↗', search('Raiker Farms Kamshet')),
       offerings: [['Big-scale music performances', 'raiker-stage'], ['Public forums, town halls and debates', 'raiker-stage'], ['Theatre performances and award functions', 'raiker-stage'], ['Different acoustic artists', 'raiker-fire'], ['Multiple art installations', 'raiker-head'], ['Multiple interactive installations', 'raiker-crystals'], ['Four exhibitions', 'raiker-gallery'], ['One mega K. N. Ramachandran exhibition', 'raiker-mega'], ['Farm visits, farm treks and permaculture', 'raiker-farm'], ['Farm to table under the fruit trees', 'raiker-table'], 'On-site parking for the big crowds', 'Flower polyhouses, buffalo stables, lotus pond: the working farm stays part of the show', 'Facing the sunset: sound healing and meditation circles at dusk'] },
     lefarm: { n: 1, name: 'Le Farm', tagline: 'Big events and open debate',
       website: site('lefarm.in ↗', 'https://lefarm.in'),
