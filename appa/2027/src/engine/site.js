@@ -23,7 +23,7 @@ export function buildSite(world, mat, g, style, SITE) {
   const glows = [], anims = [], pools = [];
   const glowCache = new Map();
   const ctx = {
-    mat, g, S, world, style, hit, mergeGeometries,
+    mat, g, S, world, style, hit, mergeGeometries, night: () => night,
     // a material that glows with a channel: off colour by day, on colour lit up by the channel (and the night)
     glow(key, o) { if (glowCache.has(key)) return glowCache.get(key); const m = mat(o.map ? '#ffffff' : o.off, { emissive: o.on, emissiveIntensity: 0, noCache: true, map: o.map }); if (o.map) { m.emissiveMap = o.map; m.needsUpdate = true; } glows.push({ m, ...o }); glowCache.set(key, m); return m; },
     // a soft additive light pool on the ground (fake light), strength from a channel
@@ -135,7 +135,8 @@ export function buildSite(world, mat, g, style, SITE) {
     if (bgCan && key !== lastBg) { lastBg = key; const x = bgCan.getContext('2d'); const gr = x.createLinearGradient(0, 0, 0, bgCan.height); gr.addColorStop(0, '#' + top.getHexString()); gr.addColorStop(1, '#' + bot.getHexString()); x.fillStyle = gr; x.fillRect(0, 0, bgCan.width, bgCan.height); world.scene.background.needsUpdate = true; }
     for (const { m, w } of waterMats) { m.color.set(w.color || '#6FA8C8').lerp(col(w.dusk || '#86A9D8'), dusk * 0.55).lerp(col(w.night || '#1E2A50'), night); }
     if (ripple) ripple.offset.set((t * 0.004) % 1, (t * 0.0025) % 1);
-    for (const gl of glows) { const k = gl.channel === 'night' ? night : S.get(gl.channel, t, gl.arg) * lerp(gl.day ?? 0.3, 1, night); gl.m.emissiveIntensity = 1.7 * k; }
+    const Lg = S.channels.lights ? S.get('lights', t) : 1; // installation lights wait for the 'lights' channel (the tour's lake moment); windows and lamps follow the dark on their own
+    for (const gl of glows) { const k = gl.channel === 'night' ? night * (gl.keepLit ? Lg : 1) : S.get(gl.channel, t, gl.arg) * lerp(gl.day ?? 0.3, 1, night); gl.m.emissiveIntensity = 1.7 * k; }
   }
   // venues rising in (channel 'buildIn', arg area id), used by the tour's opening
   function build(t) { for (const id in AREAS) { if (!S.channels.buildIn) return; const k = clamp(S.get('buildIn', t, id), 0, 1); const grp = AREAS[id].group; grp.visible = k > 0.001; const e = easeOutBack(k); grp.scale.set(1, Math.max(0.001, e), 1); } }

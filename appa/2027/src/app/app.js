@@ -144,6 +144,7 @@ function renderPanel() {
   if (!A.area && !A.spot) { const o = COPY.overview;
     pBody.append(el('div', 'eyebrow', o.eyebrow), el('h2', '', o.h2), el('p', 'note', o.text));
     if (o.quote) { const q = el('blockquote', 'pull'); q.append(el('p', '', o.quote.text), el('cite', '', '— ' + o.quote.by)); pBody.appendChild(q); }
+    if (o.badges) { const r = el('div', 'badges'); for (const b of o.badges) { const x = el('span', 'badge'); x.title = b.note ? `${b.label} · ${b.note}` : b.label; x.append(el('span', 'ic', b.icon), el('span', '', b.label)); r.appendChild(x); } pBody.appendChild(r); }
     const list = el('div', 'alist'); for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { if (!shownArea(a)) continue; const c = COPY.areas[a.id]; const b = el('button', 'abtn' + (A.visited.has(a.id) ? ' done' : '')); b.innerHTML = `<span class="n">${c.n || '•'}</span><span><b>${c.name}</b><br><i>${c.tagline}</i></span>`; b.onclick = () => goArea(a.id); list.appendChild(b); }
     pBody.appendChild(list); controls(o.controls, pBody);
     if (o.journey) { pBody.appendChild(el('div', 'label', 'Your festival journey')); const ol = el('ol', 'journey'); o.journey.forEach(s => ol.appendChild(el('li', '', s))); pBody.appendChild(ol); }

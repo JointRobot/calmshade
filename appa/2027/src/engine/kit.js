@@ -49,6 +49,16 @@ export function backdrop(color, art) {
 }
 
 // ---------- the parts ----------
+// a neon glow overlay for a lettered board: lights with the night, and only once the 'lights' channel is up (the tour's lake moment)
+function neonPlane(ctx, s, w, bh, lines, fs, font, y, z, cw, ch) {
+  const c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = font(fs);
+  const col = s.neon; x.strokeStyle = col; x.fillStyle = '#FFFFFF'; x.lineWidth = 3; x.shadowColor = col; x.lineJoin = 'round';
+  lines.forEach((ln, i) => { const yy = ch / 2 + (i - (lines.length - 1) / 2) * fs * 1.08; for (const b of [26, 14, 6]) { x.shadowBlur = b; x.fillStyle = col; x.fillText(ln, cw / 2, yy, cw - 60); } x.shadowBlur = 0; x.fillStyle = '#FFFFFF'; x.globalAlpha = 0.85; x.fillText(ln, cw / 2, yy, cw - 60); x.globalAlpha = 1; });
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, bh), m); mesh.position.copy(P(0, y, z)); mesh.renderOrder = 3; mesh.castShadow = false;
+  return { mesh, update: t => { const on = ctx.night() * (ctx.S.channels.lights ? ctx.S.get('lights', t) : 1); m.opacity = on; mesh.visible = on > 0.01; } };
+}
 export const KIT = {
   // performance stage: platform, truss, backdrop that lights up, speaker stacks, light beams when on
   stage(ctx, s) {
@@ -243,6 +253,7 @@ export const KIT = {
     const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
     const board = new THREE.Mesh(new THREE.PlaneGeometry(w, bh), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide, toneMapped: false })); board.position.copy(P(0, 0.09, H + bh / 2)); add(board);
     add(box(ctx, -w / 2, 0.02, w / 2, 0.08, H - 0.04, H + bh + 0.04, wood, { round: 0 }));
+    if (s.neon) { const nn = neonPlane(ctx, s, w, bh, lines, fs, f => `700 ${f}px Georgia, serif`, 0.11, H + bh / 2, 768, 240); grp.add(nn.mesh); return { group: grp, dyn: true, update: nn.update }; }
     return { group: grp };
   },
   // yoga and meditation mats laid in a ring (s.layout 'ring') or in rows: s.count, s.r; flat, so people sit on them
@@ -468,6 +479,7 @@ export const KIT = {
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
     const bh = (w + 0.6) / 4; const board = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.6, bh), new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide, toneMapped: false }));
     board.position.copy(P(0, 0.2, H - 0.3)); add(board); add(box(ctx, -w / 2 - 0.3, 0.05, w / 2 + 0.3, 0.18, H - 0.3 - bh / 2 - 0.05, H - 0.3 + bh / 2 + 0.05, wood, { round: 0 }));
+    if (s.neon) { const nn = neonPlane(ctx, s, w + 0.6, bh, [s.text || 'WELCOME'], s.size || 110, f => `700 ${f}px ${s.font || 'Georgia, serif'}`, 0.22, H - 0.3, 1024, 256); grp.add(nn.mesh); return { group: grp, canvas: c, tex: t, dyn: true, update: nn.update }; }
     return { group: grp, canvas: c, tex: t };
   },
   // parked cars in a row (the check-in car park)

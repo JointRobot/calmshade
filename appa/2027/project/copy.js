@@ -83,6 +83,7 @@ export const COPY = {
   tourLabel: 'Guided tour', tourStop: 'Stop the tour',
   overview: { eyebrow: 'The festival at a glance', h2: 'One lake. Many venues. A living ecosystem.', text: 'Welcome to the festival of festivals. Each venue runs its own festival inside one big fest. Wake up to fine arts, installations, films, theatre, spoken word, fashion, forums, workshops, digital interactive installations, music and nature. Curate your experiences to create your memories.',
     quote: { text: 'Art procreates when minds co\u2011create.', by: 'Appa' },
+    badges: [{ icon: '🐾', label: 'Pet friendly' }, { icon: '🧒', label: 'Kid friendly', note: 'under 10 always free' }],
     controls: [
       { type: 'choice', label: '4 weeks, plus the Encore', channel: 'week', options: weekOptions },
       { type: 'slider', label: 'Time of day', channel: 'timeOfDay', min: 0.1, max: 1, step: 0.01, readout: v => (v < 0.3 ? 'Morning' : v < 0.45 ? 'Afternoon' : v < 0.62 ? 'Golden hour' : v < 0.8 ? 'Dusk' : 'Night') },
