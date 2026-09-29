@@ -15,6 +15,7 @@ import { CAST } from '../../project/cast.js';
 import { LOOK } from '../../project/look.js';
 import { COPY } from '../../project/copy.js';
 import * as TOURM from '../../project/tour.js';
+import * as SFX from './sfx.js';
 
 const BOOT = { start: performance.now() }; window.__boot = BOOT;
 const q = new URLSearchParams(location.search); const $ = s => document.querySelector(s);
@@ -168,7 +169,10 @@ $('#ticketsbtn').onclick = goTickets;
 
 // ---- guided tour: the video's walk, live
 let tour = false, tourT0 = 0; const audio = $('#score'); if (LOOK.audio) audio.src = LOOK.audio;
-function startTour() { tour = true; S.mode = 'film'; if (prCur > prTourCap) setPR(prTourCap); const from = +(q.get('tour0') || 0); tourT0 = performance.now() - from * 1000; if (LOOK.audio) { try { audio.currentTime = from; audio.play().catch(() => {}); } catch (e) {} } $('#tourbtn').textContent = COPY.tourStop; document.body.classList.add('touring'); renderPanel(); }
+const soundBtn = $('#soundbtn'); soundBtn.onclick = () => { const v = SFX.setOn(!SFX.isOn()); soundBtn.textContent = v ? '🔊' : '🔇'; soundBtn.classList.toggle('on', v); soundBtn.setAttribute('aria-pressed', String(v)); };
+document.addEventListener('click', e => { if (e.target !== soundBtn && e.target.closest && e.target.closest('button, .go, #pins *, .tier, .chip')) SFX.tick(); });
+let lastCap = -1, endWh = false;
+function startTour() { lastCap = -1; endWh = false; SFX.whoosh(); tour = true; S.mode = 'film'; if (prCur > prTourCap) setPR(prTourCap); const from = +(q.get('tour0') || 0); tourT0 = performance.now() - from * 1000; if (LOOK.audio) { try { audio.currentTime = from; audio.play().catch(() => {}); } catch (e) {} } $('#tourbtn').textContent = COPY.tourStop; document.body.classList.add('touring'); renderPanel(); }
 function stopTour() { tour = false; S.mode = 'app'; if (LOOK.audio) audio.pause(); $('#tourbtn').textContent = COPY.tourLabel; document.body.classList.remove('touring'); O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); requestAnimationFrame(() => requestAnimationFrame(() => { if (!tour) goOverview(); })); }
 
 // ---- pointer: pan, zoom, pinch (explore only)
@@ -196,7 +200,7 @@ let last = performance.now(), frames = 0;
 function tick(now) {
   const rawDt = (now - last) / 1000, dt = Math.min(0.1, rawDt); last = now; frames++; adapt(rawDt, now);
   let t;
-  if (tour) { t = (now - tourT0) / 1000; if (t > TOUR_LENGTH) { stopTour(); requestAnimationFrame(tick); return; } const c = TOURM.camAt(t); cam.px = c[0]; cam.py = c[1]; cam.S = c[2] * VW / 1920; }
+  if (tour) { t = window.__tourAt != null ? window.__tourAt : (now - tourT0) / 1000; if (t > TOUR_LENGTH) { stopTour(); requestAnimationFrame(tick); return; } { const ci = TOURM.TOUR.captions.findIndex(c => t >= c[0] && t < c[1]); if (ci !== lastCap) { lastCap = ci; if (ci >= 0) SFX.bell(ci); } if (t > TOUR_LENGTH - 2.2 && !endWh) { endWh = true; SFX.whoosh(); } } const c = TOURM.camAt(t); cam.px = c[0]; cam.py = c[1]; cam.S = c[2] * VW / 1920; }
   else { S.step(dt); t = S.clock; const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
   world.setCamIso(cam.px, cam.py, cam.S);
   const t0 = performance.now(); site.update(t); const t1 = performance.now(); crowd.update(t, inView); placeBlobs(); shadowCheck(); const t2 = performance.now(); world.render(); const t3 = performance.now();

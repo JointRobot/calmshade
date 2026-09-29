@@ -55,7 +55,7 @@ export function createWorld({ canvas, width = 1920, height = 1080, pixelRatio = 
     const hh = world.height / (S * 1.2247) / 2, ww = world.width / (S * 1.2247) / 2;
     camera.left = -ww; camera.right = ww; camera.top = hh; camera.bottom = -hh;
     const d = new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(80);
-    camera.position.copy(t).add(d); camera.up.set(0, 1, 0); camera.lookAt(t); camera.near = 1; camera.far = 200; camera.updateProjectionMatrix();
+    camera.position.copy(t).add(d); camera.up.set(0, 1, 0); camera.lookAt(t); camera.near = -80; camera.far = 240; camera.updateProjectionMatrix(); // near/far wide enough that no slab corner is clipped when the camera sits over a distant venue
   };
   world.setCamIso = (px, py, S) => { const a = px / C30, b = 2 * py; world.setCam((a + b) / 2, (b - a) / 2, 0, S); };
   // shadow frustum over a plan rectangle
