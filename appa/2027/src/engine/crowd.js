@@ -62,25 +62,63 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
   });
 
   // ---- wanderers: loop inside an area between free points, pausing to look
-  (CAST.wanderers || []).forEach((wd, wi) => {
+  ([...(CAST.wanderers || []), ...(CAST.runners || [])]).forEach((wd, wi) => {
     const a = areas[wd.area]; const [x0, y0, x1, y1] = a.rect; const R = rng(wd.seed || 100 + wi);
     for (let i = 0; i < (wd.count || 3); i++) {
-      const s = spec({ ...(wd.people ? wd.people[i % wd.people.length] : {}), kind: wd.people ? wd.people[i % wd.people.length].kind || 'man' : ['man', 'woman', 'girl', 'boy', 'man', 'woman'][i % 6] }, wi * 7 + i);
+      const s = spec({ ...(wd.people ? wd.people[i % wd.people.length] : {}), kind: wd.people ? wd.people[i % wd.people.length].kind || 'man' : wd.run ? ['girl', 'boy'][(i + wi) % 2] : ['man', 'woman', 'girl', 'boy', 'man', 'woman'][i % 6] }, wi * 7 + i);
       if (s.kind === 'woman' && !wd.people) Object.assign(s, { outfit: R() < 0.5 ? 'casual' : undefined, saree: SHIRTS[(i + 4) % SHIRTS.length], border: '#E2A33A', blouse: SHIRTS[(i + 7) % SHIRTS.length] });
       if ((s.kind === 'girl' || s.kind === 'boy')) { s.h = s.h || 1.2 + R() * 0.25; s.dress = SHIRTS[(i * 5 + 1) % SHIRTS.length]; } else s.h = s.h || (s.kind === 'woman' ? 1.55 + R() * 0.1 : 1.66 + R() * 0.12);
       if (R() < 0.3) s.hat = R() < 0.5 ? 'sun' : 'cap'; if (R() < 0.35 && s.kind !== 'girl' && s.kind !== 'boy') s.bag = true;
-      const p = makePerson(s, mat); p.id = `${wd.area}-w${i}`; p.kind = 'wanderer'; p.area = wd.area; p.acts = [];
+      const p = makePerson(s, mat); p.id = `${wd.area}-${wd.run ? 'r' : 'w'}${i}`; p.kind = 'wanderer'; p.area = wd.area; p.acts = []; p.run = !!wd.run;
       if (pre && pre[p.id]) { p.path = pre[p.id].path; p.looks = pre[p.id].looks; p.cum = [0]; for (let j = 1; j < p.path.length; j++) p.cum.push(p.cum[j - 1] + Math.hypot(p.path[j][1] - p.path[j - 1][1], p.path[j][2] - p.path[j - 1][2])); }
       else {
         const N = navFor(wd.area); const pick = () => { for (let tries = 0; tries < 60; tries++) { const x = x0 + 1 + R() * (x1 - x0 - 2), y = y0 + 1 + R() * (y1 - y0 - 2); if (N.free(x, y)) return [x, y]; } return N.snap(a.center[0], a.center[1]); };
         const start = pick(); const r = routeOf(start, N); r.hold(R() * 4);
-        while (r.t < LOOP - 14) { const q = pick(); r.go([q], 0.8 + R() * 0.5); const lk = wd.lookAt ? wd.lookAt : [a.center[0] + (R() - 0.5) * 6, a.center[1] + (R() - 0.5) * 6]; r.lookAt(r.t, lk[0], lk[1]); r.hold(r.t + 3 + R() * 6); if (R() < 0.35) p.acts.push([r.t - 2.5, r.t - 0.5, ['photo', 'point', 'clap', 'wave'][Math.floor(R() * 4)], [lk[0], lk[1], 1.6]]); }
+        while (r.t < LOOP - 14) { const q = pick(); r.go([q], wd.run ? 2.1 + R() * 0.9 : 0.8 + R() * 0.5); const lk = wd.lookAt ? wd.lookAt : [a.center[0] + (R() - 0.5) * 6, a.center[1] + (R() - 0.5) * 6]; r.lookAt(r.t, lk[0], lk[1]); r.hold(r.t + (wd.run ? 0.3 + R() * 1.2 : 3 + R() * 6)); if (!wd.run && R() < 0.35) p.acts.push([r.t - 2.5, r.t - 0.5, ['photo', 'point', 'clap', 'wave'][Math.floor(R() * 4)], [lk[0], lk[1], 1.6]]); }
         r.go([start], 1.2); r.hold(LOOP); finish(p, r);
         const last = p.path[p.path.length - 1]; if (last[0] > LOOP) { const k = LOOP / last[0]; p.path.forEach(q => (q[0] *= k)); p.looks.forEach(q => (q[0] *= k)); p.acts.forEach(q => { q[0] *= k; q[1] *= k; }); }
       }
       p.loop = LOOP; walkers.push(p); all.push(p);
     }
   });
+
+
+  // ---- dogs: pets trotting between free points inside an area (CAST.dogs: [{ area, coat }]); a small four-legged rig of their own
+  const dogs = [];
+  (CAST.dogs || []).forEach((dg, di) => {
+    const a = areas[dg.area]; const [x0, y0, x1, y1] = a.rect; const R = rng(dg.seed || 500 + di); const coat = dg.coat || ['#C9A26B', '#3A3230', '#E8DCC4'][di % 3], patch = dg.patch || ['#8A5A32', '#E8E2D2', '#B5763E'][di % 3];
+    const g = new THREE.Group(), M = mat(coat), MP = mat(patch), dark = mat('#2A2220');
+    const bx = (w, h, d, m, x, y, z, par = g) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; par.add(o); return o; };
+    const body = new THREE.Group(); body.position.y = 0.32; g.add(body);
+    bx(0.2, 0.2, 0.46, M, 0, 0, 0, body); bx(0.205, 0.12, 0.2, MP, 0, 0.03, -0.08, body);
+    const head = new THREE.Group(); head.position.set(0, 0.11, 0.27); body.add(head);
+    bx(0.15, 0.15, 0.17, M, 0, 0.03, 0.03, head); bx(0.09, 0.07, 0.11, MP, 0, -0.01, 0.15, head); bx(0.05, 0.04, 0.03, dark, 0, 0.005, 0.21, head);
+    for (const sx of [1, -1]) { const ear = bx(0.04, 0.11, 0.07, MP, sx * 0.085, 0.09, 0.0, head); ear.rotation.z = sx * -0.35; }
+    const tail = new THREE.Group(); tail.position.set(0, 0.07, -0.23); body.add(tail); const tl = bx(0.04, 0.04, 0.2, M, 0, 0.05, -0.08, tail); tl.rotation.x = 0.7; tail.userData.tl = tl;
+    const legs = []; for (const [lx, lz] of [[0.075, 0.17], [-0.075, 0.17], [0.075, -0.17], [-0.075, -0.17]]) { const l = new THREE.Group(); l.position.set(lx, 0.32, lz); g.add(l); bx(0.06, 0.32, 0.06, M, 0, -0.16, 0, l); bx(0.065, 0.04, 0.08, dark, 0, -0.31, 0.01, l); legs.push(l); }
+    const p = { id: `dog-${di}`, kind: 'dog', area: dg.area, root: g, body, tail, legs, spec: { seed: di * 3 + 1 }, loop: LOOP };
+    if (pre && pre[p.id]) { p.path = pre[p.id].path; p.looks = pre[p.id].looks || []; }
+    else {
+      const N = navFor(dg.area); const pick = () => { for (let tries = 0; tries < 60; tries++) { const x = x0 + 1 + R() * (x1 - x0 - 2), y = y0 + 1 + R() * (y1 - y0 - 2); if (N.free(x, y)) return [x, y]; } return N.snap(a.center[0], a.center[1]); };
+      const start = pick(); const r = routeOf(start, N); r.hold(R() * 2);
+      while (r.t < LOOP - 12) { r.go([pick()], 1.7 + R() * 0.9); r.hold(r.t + 0.4 + R() * 2.5); }
+      r.go([start], 2.0); r.hold(LOOP); p.path = r.k; p.looks = r.look;
+      const last = p.path[p.path.length - 1]; if (last[0] > LOOP) { const k = LOOP / last[0]; p.path.forEach(q => (q[0] *= k)); }
+    }
+    p.cum = [0]; for (let j = 1; j < p.path.length; j++) p.cum.push(p.cum[j - 1] + Math.hypot(p.path[j][1] - p.path[j - 1][1], p.path[j][2] - p.path[j - 1][2]));
+    g.traverse(o => { if (o.isMesh) o.receiveShadow = false; }); g.scale.setScalar(dg.scale || 1); dogs.push(p);
+  });
+  function updateDogs(t, inView) {
+    for (const p of dogs) {
+      const tl = tOf(p, t); const s = pos(p, tl), s1 = pos(p, tl + 0.05), s0 = pos(p, Math.max(0, tl - 0.05));
+      const vis = !inView || inView(s.x, s.y); p.root.visible = vis; if (!vis) continue;
+      const mv = clamp(Math.hypot(s1.x - s0.x, s1.y - s0.y) / 0.1 / 1.4, 0, 1); const ph = s.dist / 0.28 * Math.PI;
+      p.root.position.set(s.x, 0, s.y); p.root.rotation.y = smoothYaw(p, tl) * Math.PI / 180;
+      const sw = Math.sin(ph) * 0.75 * mv; p.legs[0].rotation.x = sw; p.legs[3].rotation.x = sw; p.legs[1].rotation.x = -sw; p.legs[2].rotation.x = -sw;
+      p.body.position.y = 0.32 + Math.abs(Math.sin(ph)) * 0.035 * mv; p.body.rotation.x = Math.sin(ph) * 0.05 * mv;
+      p.tail.rotation.y = Math.sin(t * 9 + p.spec.seed) * (0.35 + 0.35 * (1 - mv)); p.tail.rotation.x = -0.2 * mv;
+    }
+  }
 
   // ---- stationed people: stand at a fixed spot facing something, and repeat their acts (a guitarist by the fire,
   // a visitor touching an installation, someone studying a painting). st: { id, at:[x,y], face:[x,y], acts, prop:'guitar', kind, ... }
@@ -119,6 +157,7 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
     }
   });
   for (const p of all) world.scene.add(p.root);
+  for (const p of dogs) world.scene.add(p.root);
 
   // ---- motion
   const ease = f => 0.7 * f + 0.3 * smooth(f);
@@ -171,7 +210,8 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       }
       if (p.kind !== 'performer') { const [gx, gy] = pushOut(x, y, bodyR(p)); x = gx; y = gy; }
       p.root.position.set(x, p.kind === 'performer' ? p.stand.z : 0, y); p.root.rotation.set(0, yaw * Math.PI / 180, 0);
-      let pose = blendPose(POSES.idle, walkPose(dist / (0.62 * p.spec.h / 1.7) * Math.PI, 1, p.kid), moving);
+      let pose = blendPose(POSES.idle, walkPose(dist / (0.62 * p.spec.h / 1.7) * Math.PI, p.run ? 1.7 : 1, p.kid), moving);
+      if (p.run && moving > 0.2) pose = addPose(pose, { spine: [0.18 * moving, 0, 0], elL: [-1.2 * moving, 0, 0], elR: [-1.2 * moving, 0, 0], shL: [0.2 * moving, 0, 0.12 * moving], shR: [0.2 * moving, 0, -0.12 * moving] });
       const fwd = new THREE.Vector3(Math.sin(yaw * Math.PI / 180), 0, Math.cos(yaw * Math.PI / 180));
       let act = null, af = 0, w = 0;
       if (p.kind === 'performer') { const on = S.get('stageOn', t, p.area); if (on > 0.25) { const st = p.stand.style; act = [0, 1, st === 'dance' ? 'dance' : 'play']; w = smooth((on - 0.25) / 0.4); } }
@@ -189,6 +229,7 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       if (p.j.plaits) for (const pl of p.j.plaits) pl.rotation.x = 0.15 * Math.sin(t * 5 + p.spec.seed) * moving + 0.1;
       if (p.j.drape) p.j.drape.rotation.x = 0.08 * Math.sin(t * 3 + p.spec.seed) * (0.3 + moving);
     }
+    updateDogs(t, inView);
   }
 
   // ---- proof: nobody inside anything, nobody standing in anybody, cyclist lanes clear
@@ -201,6 +242,6 @@ export function buildCrowd(world, mat, SITE, CAST, opts = {}) {
       for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) { const A = st[i], B = st[j]; if (!A.still || !B.still) continue; const d = Math.hypot(A.x - B.x, A.y - B.y); if (d < bodyR(A.p) + bodyR(B.p) - 0.03) { const key = A.p.id + '|' + B.p.id; const run = pr[key]; if (run && t - run.t1 < 0.3) run.t1 = +t.toFixed(1); else { pr[key] = { a: A.p.id, b: B.p.id, t0: +t.toFixed(1), t1: +t.toFixed(1), x: +A.x.toFixed(1), y: +A.y.toFixed(1) }; pairs.push(pr[key]); } } } }
     return { hits, pairs: pairs.filter(q => q.t1 - q.t0 >= 0.4), lanes, people: all.length };
   }
-  const exportRoutes = () => Object.fromEntries(walkers.filter(p => !p.station).map(p => [p.id, { path: p.path.map(k => k.map(v => +v.toFixed(3))), looks: (p.looks || []).map(k => k.map(v => +v.toFixed(3))) }]));
-  return { all, walkers, cyclists, performers, update, validate, exportRoutes, pos, LOOP };
+  const exportRoutes = () => Object.fromEntries([...walkers.filter(p => !p.station), ...dogs].map(p => [p.id, { path: p.path.map(k => k.map(v => +v.toFixed(3))), looks: (p.looks || []).map(k => k.map(v => +v.toFixed(3))) }]));
+  return { all, walkers, cyclists, performers, dogs, update, validate, exportRoutes, pos, LOOP };
 }

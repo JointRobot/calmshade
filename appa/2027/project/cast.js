@@ -17,6 +17,9 @@ export const CAST = {
     { area: 'raiker', count: 4 }, { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },
     { area: 'company', count: 4 }, { area: 'calmshet', count: 5 }, { area: 'theeya', count: 5 }, { area: 'checkin', count: 6 }, { area: 'camp', count: 3 }, { area: 'hidden', count: 2 }
   ],
+  // five kids running about (girls and boys), spread over the square and three venues; three dogs trotting around
+  runners: [{ area: 'checkin', count: 2, run: true, seed: 700 }, { area: 'lefarm', count: 1, run: true, seed: 701 }, { area: 'calmshet', count: 1, run: true, seed: 702 }, { area: 'theeya', count: 1, run: true, seed: 703 }],
+  dogs: [{ area: 'checkin', coat: '#C9A26B', patch: '#8A5A32', scale: 1.35 }, { area: 'calmshet', coat: '#3A3230', patch: '#E8E2D2', scale: 1.35 }, { area: 'lefarm', coat: '#E8DCC4', patch: '#B5763E', scale: 1.35 }],
   cyclists: [{ path: 'loop', count: 8, speed: 3.0, lane: 0.55 }],
   performers: [
     { area: 'calmshet', count: 4, colors: ['#F2E6CF', '#D9502F', '#E2A33A', '#2F7F7A'] },
