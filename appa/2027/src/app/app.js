@@ -71,13 +71,14 @@ const setCamT = v => Object.assign(camT, v);
 Object.assign(cam, fitOverview()); setCamT(fitOverview());
 
 // ---- navigation state
-const A = { visited: new Set(), revealed: new Set(), area: null, spot: null, tickets: false };
+const A = { visited: new Set(), revealed: new Set(), area: null, spot: null, tickets: false, join: null };
 const areaList = SITE.areas.filter(a => COPY.areas[a.id]);
 const shownArea = a => !a.hidden || A.revealed.has(a.id);
-function goOverview() { A.area = null; A.spot = null; A.tickets = false; setCamT(fitOverview()); renderPanel(); }
-function goArea(id) { A.area = id; A.spot = null; A.tickets = false; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
-function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
-function goTickets() { A.tickets = true; renderPanel(); }
+function goOverview() { A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(fitOverview()); renderPanel(); }
+function goArea(id) { A.area = id; A.spot = null; A.tickets = false; A.join = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
+function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; A.join = null; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
+function goTickets() { A.tickets = true; A.join = null; renderPanel(); panel.scrollTop = 0; }
+function goJoin(key) { A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
 function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.set, a.arg, a.value); if (a.pulse) S.pulse(a.pulse, a.arg, a.dur || 8, a.peak || 1); if (a.reveal) { A.revealed.add(a.reveal); buildChips(); } if (a.say && out) out.textContent = a.say;
   if (a.go) { const [k, v] = a.go.split(':'); if (k === 'area') goArea(v); else if (k === 'spot') goSpot(v); else if (k === 'tickets') goTickets(); else goOverview(); } } }
 
@@ -114,6 +115,19 @@ function controls(list = [], box) {
 let soon = 0; const renderPanelSoon = () => { clearTimeout(soon); soon = setTimeout(renderPanel, 60); };
 function renderPanel() {
   pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
+  if (A.join) { const J = COPY.join[A.join];
+    pBody.append(el('div', 'eyebrow', J.eyebrow), el('h2', '', J.title), el('p', 'note', J.intro));
+    for (const b of J.blocks || []) { pBody.appendChild(el('div', 'label', b.h)); const ul = el('ul', 'offer'); b.bullets.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); }
+    if (J.tiers) { const tl = el('div', 'tierlist');
+      for (const t of J.tiers) { const card = el('div', 'tier'); card.append(el('div', 'tiername', t.name), el('div', 'tierprice', t.price), el('div', 'tierunit', t.unit), el('p', 'tierblurb', t.blurb));
+        const ul = el('ul', 'offer'); t.bullets.forEach(s => ul.appendChild(el('li', '', s))); card.appendChild(ul); tl.appendChild(card); }
+      pBody.appendChild(tl); }
+    if (J.note) pBody.appendChild(el('p', 'small', J.note));
+    if (J.contact) pBody.appendChild(el('p', 'small', J.contact));
+    if (J.cta) pBody.appendChild(row(J.cta.url ? linkBtn(J.cta.label, J.cta.url, 'primary') : el('div', 'small', J.cta.label)));
+    pBody.appendChild(el('div', 'label', 'More ways to be part of it'));
+    const more = el('div', 'alist'); for (const k of Object.keys(COPY.join)) if (k !== A.join) more.appendChild(btn(COPY.join[k].button, () => goJoin(k))); pBody.appendChild(more);
+    pBody.appendChild(row(btn('← The map', goOverview, 'ghost'))); return; }
   if (A.tickets) { const T = COPY.tickets;
     pBody.append(el('div', 'eyebrow', T.eyebrow), el('h2', '', T.title), el('p', 'note', T.intro));
     const tl = el('div', 'tierlist');
@@ -131,7 +145,9 @@ function renderPanel() {
     const list = el('div', 'alist'); for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { if (!shownArea(a)) continue; const c = COPY.areas[a.id]; const b = el('button', 'abtn' + (A.visited.has(a.id) ? ' done' : '')); b.innerHTML = `<span class="n">${c.n || '•'}</span><span><b>${c.name}</b><br><i>${c.tagline}</i></span>`; b.onclick = () => goArea(a.id); list.appendChild(b); }
     pBody.appendChild(list); controls(o.controls, pBody);
     if (o.journey) { pBody.appendChild(el('div', 'label', 'Your festival journey')); const ol = el('ol', 'journey'); o.journey.forEach(s => ol.appendChild(el('li', '', s))); pBody.appendChild(ol); }
-    pBody.appendChild(row(btn(COPY.tourLabel, startTour, 'primary'))); return; }
+    pBody.appendChild(row(btn(COPY.tourLabel, startTour, 'primary')));
+    if (COPY.join) { pBody.appendChild(el('div', 'label', 'Join the festival')); const jl = el('div', 'alist'); for (const k of Object.keys(COPY.join)) jl.appendChild(btn(COPY.join[k].button, () => goJoin(k))); pBody.appendChild(jl); }
+    return; }
   if (A.spot) { const sp = COPY.spots[A.spot]; const a = sp.area ? COPY.areas[sp.area] : null;
     pBody.append(el('div', 'eyebrow', a ? a.name : COPY.title), el('h2', '', sp.title), el('p', 'note', sp.text)); if (sp.programme) { pBody.appendChild(el('div', 'label', 'On the programme here')); const ul = el('ul', 'offer'); sp.programme.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); } controls(sp.controls, pBody);
     pBody.appendChild(row(btn('← ' + (a ? a.name : 'The map'), () => (sp.area ? goArea(sp.area) : goOverview()), 'ghost'))); return; }

@@ -3,7 +3,10 @@
 // Channels used by the engine: timeOfDay (0 morning, 0.5 golden hour, 1 night), buildIn, stageOn, crowd, lotusGlow, dronesOn.
 import { env, smooth, ramp, lerp } from '../src/engine/util.js';
 
-export const TOUR_LENGTH = 114;
+// The tour is authored on a 114 s timeline; TS squeezes it to a tight ~91 s (under two minutes). Everything time-based
+// in the tour (camera, captions, channels, the family walkers) is authored in the original seconds and scaled by TS.
+export const TS = 0.8;
+export const TOUR_LENGTH = Math.round(114 * TS);
 // the order venues rise in during the opening, and when the tour's camera visits each one (seconds)
 const ORDER = ['checkin', 'island', 'lefarm', 'camp', 'shambhala', 'raiker', 'calmshet', 'purrom', 'company', 'theeya', 'hidden'];
 // the tour goes round the lake clockwise on screen from the festival square: Le Farm, Shambhala, Raiker, (Calmshet is
@@ -30,3 +33,5 @@ export const CHANNELS = {
   lotusGlow: { film: t => smooth(ramp(t, 64, 69)), app: 0, ease: 0.8 },
   dronesOn: { film: t => env(t, 88.5, 92, 101, 102.5), app: 0, ease: 0.8 }
 };
+// channels are authored in original seconds: feed them t / TS
+for (const c of Object.values(CHANNELS)) { const f = c.film; if (f) c.film = (t, id) => f(t / TS, id); }

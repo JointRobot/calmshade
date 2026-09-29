@@ -3,8 +3,9 @@
 // Keep each venue on screen for 5 to 8 seconds; pull back (smaller S) between far-apart venues.
 import { makeCamera, drawOverlay } from '../src/engine/overlay.js';
 import { LOOK } from './look.js';
+import { TS } from './story.js';
 
-export const KEYS = [
+const KEYS0 = [
   [0, 65, 66, 0, 6.9], [7, 65, 68, 0, 7.6],
   [10.5, 90, 94, 0, 28], [15, 90, 93, 0, 31],
   [17.5, 76, 100, 0, 14], [19.5, 60, 107, 0, 28], [24.5, 60, 108, 0, 31],
@@ -18,7 +19,9 @@ export const KEYS = [
   [88.5, 22, 38, 0, 22], [94.5, 22, 39, 1, 32], [97, 22, 38, 1, 29], [101, 65, 67, 0, 7.2], [102.5, 65, 67, 0, 7.1],
   [114, 65, 67, 0, 7.1]
 ];
-export const TOUR = {
+const scaleRow = r => [r[0] * TS, r[1] * TS, ...r.slice(2)];
+export const KEYS = KEYS0.map(k => [k[0] * TS, ...k.slice(1)]);
+const TOUR0 = {
   title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Seven venues. A living ecosystem.'],
   end: [110.2, 114, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
@@ -45,6 +48,7 @@ export const TOUR = {
     [60, 63.5, 'Sing together.'], [70.3, 73.8, 'The lake lights up at dusk.']
   ]
 };
+export const TOUR = { title: scaleRow(TOUR0.title), end: scaleRow(TOUR0.end), captions: TOUR0.captions.map(scaleRow), subs: TOUR0.subs.map(scaleRow) };
 export const camAt = makeCamera(KEYS);
 let logo = null; if (typeof Image !== 'undefined') { logo = new Image(); logo.src = LOOK.logo.dark; }
 export const overlay = (O, t, W, H, wCss, hCss) => drawOverlay(O, t, W, H, TOUR, { ...LOOK.ui.overlay, font: LOOK.ui.font, display: LOOK.ui.display }, logo && logo.complete && logo.naturalWidth ? logo : null, wCss, hCss);

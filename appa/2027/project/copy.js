@@ -36,7 +36,45 @@ const TICKETS = {
   contact: 'To book, scan the QR to pay, then share the payment screenshot along with your dates and headcount on WhatsApp.'
 };
 
+
+// Join the festival: volunteer, partner, sponsor. Early draft wording, all of it is meant to be edited.
+const JOIN = {
+  volunteer: { button: 'Be a volunteer', eyebrow: 'Be a volunteer', title: 'Help build a season',
+    intro: 'A month-long festival runs on people. Volunteers are the friendly faces at every venue: they greet guests, help artists set up, keep the cycle stands moving and make the whole lake feel like one big welcome.',
+    blocks: [
+      { h: 'Where you could help', bullets: ['Guest welcome and wayfinding at check-in and at every venue', 'The cycle and e-bike desk: fitting, handing out and checking bikes', 'Artist hosts: looking after resident artists and their materials', 'Workshop assistants: setting up, guiding and clearing', 'Stage and show crew: lights, sound, seating, backstage', 'The green team: waste, water and keeping the lake clean', 'Kids’ corner and family help', 'Photo, video and reels for the festival’s own channels'] },
+      { h: 'What you get', bullets: ['Meals on shift and a place to stay', 'Free festival access on your days off, including workshops', 'A chance to meet and talk with the artists', 'A volunteer certificate and a reference on request', 'Being part of the first APPA season'] },
+      { h: 'How it works', bullets: ['Open to everyone 18 and over; people from the villages around the lake are especially welcome', 'Shifts of about five hours; a minimum of three days', 'A short orientation before the festival opens on 25 January'] }
+    ],
+    contact: 'Tell us your name, the days you can come and where you would like to help. We will reply with a shift plan.',
+    cta: { label: 'Volunteer sign-up: contact details coming soon' } },
+  partner: { button: 'Be a partner', eyebrow: 'Be a partner', title: 'Make Kamshet a season',
+    intro: 'APPA is a festival of festivals, and it belongs to the whole lake. We are inviting stays, farms, theatres, collectives, schools, local businesses and civic bodies to become partners and grow a February season for Kamshet that people plan their year around.',
+    blocks: [
+      { h: 'Who we would love to work with', bullets: ['Stays, farms and retreats around the lake (venue partners)', 'Theatres, collectives, studios and schools that want to curate their own festival within ours', 'Local makers, food producers and village communities', 'Civic and government partners: district administration, police, tourism, forest and local bodies', 'Mobility partners: cycles, e-bikes and electric two-wheelers', 'Media and culture partners'] },
+      { h: 'What we ask of venue partners', bullets: ['Open and common spaces for performances, exhibitions and workshops', 'About one room in five for a resident artist, whose work in progress your guests get to watch', 'Your own festival or programme inside APPA, if you would like one'] },
+      { h: 'What partners receive', bullets: ['A full month of bookings, instead of the usual handful of busy days', 'A share of ticket income from paid events at your venue', 'Your name and logo in festival media, the app and the press', 'A place on the map, the tour and the itinerary every guest carries', 'Early-partner status as the festival grows year after year'] },
+      { h: 'For government and civic partners', bullets: ['A public inauguration on 25 January, the eve of Republic Day', 'Recognition as a founding supporter in all press and communication', 'A safe, well-run and well-planned event, built together from day one'] }
+    ],
+    contact: 'Write to us about the space, service or programme you would like to bring, and we will set up a conversation.',
+    cta: { label: 'Partner enquiries: contact details coming soon' } },
+  sponsor: { button: 'Be a sponsor', eyebrow: 'Be a sponsor', title: 'Back the season',
+    intro: 'APPA Art Fest 2027 is dedicated to the late artist K. N. Ramachandran: a month of art, people and nature across a whole lake, with cycles instead of cars and a new artist at work in every corner. Sponsors make it possible, and we make sure they are seen.',
+    tiers: [
+      { name: 'Title sponsor', price: '₹60 lakh and above', unit: 'one only · indicative', blurb: 'The festival carries your name for the month.', bullets: ['“APPA Art Fest 2027 presented by …” on everything', 'Main-stage and inauguration branding on 25 January', 'Your name in the app, the tour and the press release', 'A private evening and artist meet-up for your guests', 'A film and reels package across the month'] },
+      { name: 'Week sponsor', price: '₹15 to 20 lakh', unit: 'four available, one per week · indicative', blurb: 'Own a week and its theme: Roots & Raga, Keeping it Real, Tech & AI, All Forms Together.', bullets: ['Your name on that week’s programme and stages', 'Weekend headline slot branding', 'Social and reel features through the week'] },
+      { name: 'Venue sponsor', price: '₹4 to 8 lakh', unit: 'seven available · indicative', blurb: 'Be the presenting sponsor of one of the seven venues.', bullets: ['Your name beside the venue’s on the map and in the app', 'Signage at the venue', 'A curated moment with the venue’s resident artists'] },
+      { name: 'Event or stage sponsor', price: '₹1.5 to 3 lakh', unit: 'many available · indicative', blurb: 'Back one show, workshop, screening or stage.', bullets: ['Your name on the show’s billing and stage', 'Mentions in social posts and reels for the event'] },
+      { name: 'Artist sponsor', price: '₹50,000 to ₹1 lakh', unit: 'many available · indicative', blurb: 'Support one resident artist: materials, stay and travel.', bullets: ['Your name beside the artist’s work and residency', 'A studio visit and a piece for your collection or office'] },
+      { name: 'In-kind and barter', price: 'Value-matched', unit: 'cycles, e-bikes, food, sound, print, travel and more', blurb: 'Pay in product or service instead of cash.', bullets: ['Logo on signage, the map and the app', 'Reels and shout-outs matched to the value you bring', 'Cycle and e-bike partners: a presence at every check-in'] }
+    ],
+    note: 'Figures are early and open to discussion. Every sponsor is named in the app, on the signage and in the reels.',
+    contact: 'Tell us which tier interests you and we will send the full sponsorship proposal.',
+    cta: { label: 'Sponsorship enquiries: contact details coming soon' } }
+};
+
 export const COPY = {
+  join: JOIN,
   brand: 'APPA', title: 'APPA Art Fest 2027',
   tickets: TICKETS,
   intro: { eyebrow: '25 Jan to 25 Feb 2027', h1: 'APPA Art Fest 2027', tag: 'When minds co-create',
