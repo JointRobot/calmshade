@@ -22,7 +22,7 @@ const KEYS0 = [
 const scaleRow = r => [r[0] * TS, r[1] * TS, ...r.slice(2)];
 export const KEYS = KEYS0.map(k => [k[0] * TS, ...k.slice(1)]);
 const TOUR0 = {
-  title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Seven venues. A living ecosystem.'],
+  title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Many venues. A living ecosystem.'],
   end: [110.2, 114, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],

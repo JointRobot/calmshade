@@ -63,7 +63,7 @@ const JOIN = {
     tiers: [
       { name: 'Title sponsor', price: '₹60 lakh and above', unit: 'one only · indicative', blurb: 'The festival carries your name for the month.', bullets: ['“APPA Art Fest 2027 presented by …” on everything', 'Main-stage and inauguration branding on 25 January', 'Your name in the app, the tour and the press release', 'A private evening and artist meet-up for your guests', 'A film and reels package across the month'] },
       { name: 'Week sponsor', price: '₹15 to 20 lakh', unit: 'four available, one per week · indicative', blurb: 'Own a week and its theme: Roots & Raga, Keeping it Real, Tech & AI, All Forms Together.', bullets: ['Your name on that week’s programme and stages', 'Weekend headline slot branding', 'Social and reel features through the week'] },
-      { name: 'Venue sponsor', price: '₹4 to 8 lakh', unit: 'seven available · indicative', blurb: 'Be the presenting sponsor of one of the seven venues.', bullets: ['Your name beside the venue’s on the map and in the app', 'Signage at the venue', 'A curated moment with the venue’s resident artists'] },
+      { name: 'Venue sponsor', price: '₹4 to 8 lakh', unit: 'one per venue · indicative', blurb: 'Be the presenting sponsor of one of the venues.', bullets: ['Your name beside the venue’s on the map and in the app', 'Signage at the venue', 'A curated moment with the venue’s resident artists'] },
       { name: 'Event or stage sponsor', price: '₹1.5 to 3 lakh', unit: 'many available · indicative', blurb: 'Back one show, workshop, screening or stage.', bullets: ['Your name on the show’s billing and stage', 'Mentions in social posts and reels for the event'] },
       { name: 'Artist sponsor', price: '₹50,000 to ₹1 lakh', unit: 'many available · indicative', blurb: 'Support one resident artist: materials, stay and travel.', bullets: ['Your name beside the artist’s work and residency', 'A studio visit and a piece for your collection or office'] },
       { name: 'In-kind and barter', price: 'Value-matched', unit: 'cycles, e-bikes, food, sound, print, travel and more', blurb: 'Pay in product or service instead of cash.', bullets: ['Logo on signage, the map and the app', 'Reels and shout-outs matched to the value you bring', 'Cycle and e-bike partners: a presence at every check-in'] }
@@ -78,10 +78,10 @@ export const COPY = {
   brand: 'APPA', title: 'APPA Art Fest 2027',
   tickets: TICKETS,
   intro: { eyebrow: '25 Jan to 25 Feb 2027', h1: 'APPA Art Fest 2027', tag: 'When minds co-create',
-    text: 'A festival of festivals: a month of art, people, nature and a better tomorrow, where every venue curates its own festival. One lake, seven venues, a living ecosystem. Drag to look around, scroll or pinch to zoom, and tap any venue to see what happens there.',
+    text: 'A festival of festivals: a month of art, people, nature and a better tomorrow, where every venue curates its own festival. One lake, many venues, a living ecosystem. Drag to look around, scroll or pinch to zoom, and tap any venue to see what happens there.',
     enter: 'Enter the festival', loading: 'Loading the festival…' },
   tourLabel: 'Guided tour', tourStop: 'Stop the tour',
-  overview: { eyebrow: 'The festival at a glance', h2: 'One lake. Seven venues. A living ecosystem.', text: 'Welcome to the festival of festivals. Each venue runs its own festival inside one big fest. Wake up to fine arts, installations, films, theatre, spoken word, fashion, forums, workshops, digital interactive installations, music and nature. Curate your experiences to create your memories.',
+  overview: { eyebrow: 'The festival at a glance', h2: 'One lake. Many venues. A living ecosystem.', text: 'Welcome to the festival of festivals. Each venue runs its own festival inside one big fest. Wake up to fine arts, installations, films, theatre, spoken word, fashion, forums, workshops, digital interactive installations, music and nature. Curate your experiences to create your memories.',
     quote: { text: 'Art procreates when minds co\u2011create.', by: 'Appa' },
     controls: [
       { type: 'choice', label: '4 weeks, plus the Encore', channel: 'week', options: weekOptions },
