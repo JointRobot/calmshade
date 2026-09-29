@@ -143,6 +143,7 @@ function renderPanel() {
     pBody.appendChild(row(btn('← The map', goOverview, 'ghost'))); return; }
   if (!A.area && !A.spot) { const o = COPY.overview;
     pBody.append(el('div', 'eyebrow', o.eyebrow), el('h2', '', o.h2), el('p', 'note', o.text));
+    if (o.quote) { const q = el('blockquote', 'pull'); q.append(el('p', '', o.quote.text), el('cite', '', '— ' + o.quote.by)); pBody.appendChild(q); }
     const list = el('div', 'alist'); for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { if (!shownArea(a)) continue; const c = COPY.areas[a.id]; const b = el('button', 'abtn' + (A.visited.has(a.id) ? ' done' : '')); b.innerHTML = `<span class="n">${c.n || '•'}</span><span><b>${c.name}</b><br><i>${c.tagline}</i></span>`; b.onclick = () => goArea(a.id); list.appendChild(b); }
     pBody.appendChild(list); controls(o.controls, pBody);
     if (o.journey) { pBody.appendChild(el('div', 'label', 'Your festival journey')); const ol = el('ol', 'journey'); o.journey.forEach(s => ol.appendChild(el('li', '', s))); pBody.appendChild(ol); }
