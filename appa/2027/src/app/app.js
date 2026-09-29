@@ -169,11 +169,13 @@ $('#ticketsbtn').onclick = goTickets;
 
 // ---- guided tour: the video's walk, live
 let tour = false, tourT0 = 0; const audio = $('#score'); if (LOOK.audio) audio.src = LOOK.audio;
-const soundBtn = $('#soundbtn'); soundBtn.onclick = () => { const v = SFX.setOn(!SFX.isOn()); soundBtn.textContent = v ? '🔊' : '🔇'; soundBtn.classList.toggle('on', v); soundBtn.setAttribute('aria-pressed', String(v)); };
+const soundBtn = $('#soundbtn'); let autoSound = false;
+const showSound = v => { soundBtn.textContent = v ? '🔊' : '🔇'; soundBtn.classList.toggle('on', v); soundBtn.setAttribute('aria-pressed', String(v)); };
+soundBtn.onclick = () => { autoSound = false; showSound(SFX.setOn(!SFX.isOn())); };
 document.addEventListener('click', e => { if (e.target !== soundBtn && e.target.closest && e.target.closest('button, .go, #pins *, .tier, .chip')) SFX.tick(); });
 let lastCap = -1, endWh = false;
-function startTour() { lastCap = -1; endWh = false; SFX.whoosh(); tour = true; S.mode = 'film'; if (prCur > prTourCap) setPR(prTourCap); const from = +(q.get('tour0') || 0); tourT0 = performance.now() - from * 1000; if (LOOK.audio) { try { audio.currentTime = from; audio.play().catch(() => {}); } catch (e) {} } $('#tourbtn').textContent = COPY.tourStop; document.body.classList.add('touring'); renderPanel(); }
-function stopTour() { tour = false; S.mode = 'app'; if (LOOK.audio) audio.pause(); $('#tourbtn').textContent = COPY.tourLabel; document.body.classList.remove('touring'); O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); requestAnimationFrame(() => requestAnimationFrame(() => { if (!tour) goOverview(); })); }
+function startTour() { lastCap = -1; endWh = false; if (!SFX.isOn()) { autoSound = true; showSound(SFX.setOn(true)); } SFX.whoosh(); /* the tour plays with sound; the visitor can switch it off from the speaker button */ tour = true; S.mode = 'film'; if (prCur > prTourCap) setPR(prTourCap); const from = +(q.get('tour0') || 0); tourT0 = performance.now() - from * 1000; if (LOOK.audio) { try { audio.currentTime = from; audio.play().catch(() => {}); } catch (e) {} } $('#tourbtn').textContent = COPY.tourStop; document.body.classList.add('touring'); renderPanel(); }
+function stopTour() { if (autoSound && SFX.isOn()) showSound(SFX.setOn(false)); autoSound = false; tour = false; S.mode = 'app'; if (LOOK.audio) audio.pause(); $('#tourbtn').textContent = COPY.tourLabel; document.body.classList.remove('touring'); O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); requestAnimationFrame(() => requestAnimationFrame(() => { if (!tour) goOverview(); })); }
 
 // ---- pointer: pan, zoom, pinch (explore only)
 let drag = null; const touches = new Map();
