@@ -8,15 +8,16 @@ import { TS } from './story.js';
 const KEYS0 = [
   [0, 65, 66, 0, 6.9], [7, 65, 68, 0, 7.6],
   [10.5, 90, 100, 3.4, 140], [13, 90, 100, 3.4, 140], [15.5, 90, 93, 0, 41.9],
-  [17.5, 76, 100, 0, 14], [19.5, 60, 107, 0, 37.8], [24.5, 60, 108, 0, 41.9],
-  [28, 34, 87, 0, 37.8], [32.5, 34, 86, 0, 41.9],
-  [36, 15, 67, 0, 37.8], [40.5, 15, 66, 0, 41.9],
-  [42, 30, 42, 0, 14], [44, 48, 19, 0, 37.8], [48.5, 48, 18, 0, 41.9],
-  [52, 74, 17, 0, 37.8], [56.5, 75, 17, 0, 41.9],
-  [58.5, 95, 42, 0, 12], [60.5, 112, 68, 0, 36.5], [63, 113, 68, 0, 39.2],
-  [65, 116, 92, 0, 12], [67, 118, 113, 0, 35.1], [68.5, 117, 112, 0, 36.5],
-  [71, 80, 64, 0, 19], [73, 76, 60, 0, 21],
-  [88.5, 22, 38, 0, 22], [94.5, 22, 39, 1, 43.2], [97, 22, 38, 1, 39.2], [101, 65, 67, 0, 7.2], [102.5, 65, 67, 0, 7.1],
+  [17.5, 56, 66, 0, 14], [19.5, 22, 39, 1, 37.8], [24, 22, 39, 1, 43.2],
+  [26.5, 48, 19, 0, 37.8], [30.5, 48, 18, 0, 41.9],
+  [33, 74, 17, 0, 37.8], [37, 75, 17, 0, 41.9],
+  [38.5, 95, 42, 0, 12], [41, 112, 68, 0, 36.5], [44, 113, 68, 0, 39.2],
+  [45.5, 116, 92, 0, 12], [47.5, 118, 113, 0, 35.1], [50, 117, 112, 0, 36.5],
+  [51.5, 88, 106, 0, 14], [54, 60, 107, 0, 37.8], [58, 60, 108, 0, 41.9],
+  [60.5, 34, 87, 0, 37.8], [64.5, 34, 86, 0, 41.9],
+  [67, 15, 67, 0, 37.8], [71, 15, 66, 0, 41.9],
+  [74, 48, 66, 0, 14], [76.5, 80, 64, 0, 19], [82.5, 76, 60, 0, 21],
+  [90, 65, 67, 0, 10], [97, 65, 67, 0, 7.2], [102.5, 65, 67, 0, 7.1],
   [114, 65, 67, 0, 7.1]
 ];
 const scaleRow = r => [r[0] * TS, r[1] * TS, ...r.slice(2)];
@@ -26,26 +27,26 @@ const TOUR0 = {
   end: [110.2, 114, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
-    [18, 25.5, 'Venue 1', 'Le Farm', 'Big events, open debate and long tables'],
-    [27, 33.5, 'Venue 2', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
-    [35, 41.5, 'Venue 3', 'Secret Farm', 'The biggest gatherings, forums and large-scale art'],
-    [43, 49.5, 'Venue 5', 'Purrom', 'A horror film festival in a healing retreat'],
-    [51, 57.5, 'Venue 6', 'The Company Theatre', 'Their own theatre festival'],
-    [59.5, 64, 'Venue 7', 'Theeya Creation Village', 'Voice, craft and community'],
-    [66, 69.5, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
-    [70, 74.2, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
-    // the four festival weeks, recapped over a wide hold before the finale zooms into Calmshet
-    [74.5, 77.9, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
-    [78.1, 81.5, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
-    [81.7, 85.1, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
-    [85.3, 88.4, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [89.2, 100.5, 'Venue 4', 'Calmshet', 'The past two years, fashion, art, opening night'],
+    [18, 25.5, 'Venue 1', 'Calmshet', 'The past two years, fashion, art, opening night'],
+    [26, 31.5, 'Venue 2', 'Purrom', 'A horror film festival in a healing retreat'],
+    [32.5, 38, 'Venue 3', 'The Company Theatre', 'Their own theatre festival'],
+    [40, 45.5, 'Venue 4', 'Theeya Creation Village', 'Voice, craft and community'],
+    [46.5, 51.5, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
+    [53, 59, 'Venue 5', 'Le Farm', 'Big events, open debate and long tables'],
+    [60, 65.5, 'Venue 6', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
+    [66.5, 72.5, 'Venue 7', 'Secret Farm', 'The biggest gatherings, forums and large-scale art'],
+    [77, 82, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
+    // the four festival weeks, recapped over a wide hold before the Encore
+    [82.3, 85.7, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
+    [85.9, 89.3, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
+    [89.5, 92.9, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
+    [93.1, 96.4, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
     [104, 109.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
   ],
   subs: [
-    [11, 14.8, 'Park the car. Pick a cycle.'], [19.5, 23.5, 'Villages, fields, forests, hills.'], [28.5, 32.5, 'Music by the water.'],
-    [36.5, 40.5, 'Different scales. Different experiences.'], [44.5, 48.5, 'Horror films after dark.'], [52.5, 56.5, 'Theatre, and stories after dark.'],
-    [60, 63.5, 'Sing together.'], [70.3, 73.8, 'The lake lights up at dusk.']
+    [11, 14.8, 'Park the car. Pick a cycle.'], [20, 23.5, 'Where the story begins.'], [27, 30.5, 'Horror films after dark.'],
+    [33.5, 37, 'Theatre, and stories after dark.'], [41.5, 44.5, 'Sing together.'], [56, 59, 'Villages, fields, forests, hills.'],
+    [61, 64.5, 'Music by the water.'], [67.5, 71, 'Different scales. Different experiences.'], [77.5, 81.5, 'The lake lights up at dusk.']
   ]
 };
 export const TOUR = { title: scaleRow(TOUR0.title), end: scaleRow(TOUR0.end), captions: TOUR0.captions.map(scaleRow), subs: TOUR0.subs.map(scaleRow) };

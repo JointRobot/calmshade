@@ -47,7 +47,7 @@ export const SITE = {
   areas: [
     // 1 · RAIKER FARMS (Kamshet): a cream farmhouse with twin red gables and a double curved staircase up to the balcony.
     // Huge, parking inside: forums, town halls and the biggest gatherings. Flower polyhouses, buffalo stables, a lotus pond.
-    { id: 'raiker', n: 1, name: 'Secret Farm', center: C.raiker, rect: [1, 54, 29, 80], floor: '#CDBA8A', structures: [
+    { id: 'raiker', n: 7, name: 'Secret Farm', center: C.raiker, rect: [1, 54, 29, 80], floor: '#CDBA8A', structures: [
       A(15, 60, { type: 'villa', w: 9, d: 5.5, floors: 2, floorH: 2.7, color: '#F4ECDA', roof: '#B8432F', rail: '#FFFFFF', twin: true, frontStairs: 'double' }),
       A(7, 71, { type: 'stage', w: 10, d: 5, glow: '#FFB45A' }),
       A(7, 74, { type: 'audience', area: 'raiker', face: Math.PI / 2, r0: 2, r1: 6, count: 45 }),
@@ -62,7 +62,7 @@ export const SITE = {
       A(5.5, 57.4, { type: 'pavilion', w: 7, d: 3.2, roof: '#6A4A3A' }), A(5.5, 57.7, { type: 'easels', count: 5, gap: 1.25, seed: 2 }), A(5.5, 60.4, { type: 'sign', w: 3.4, text: 'MEGA EXHIBITION\nK. N. RAMACHANDRAN', size: 52 }), A(3.2, 65.8, { type: 'pavilion', w: 3, d: 2.6, roof: '#8A6A3A' }), A(3.2, 66.0, { type: 'easels', count: 2, gap: 1.2, seed: 1 }), A(21.2, 69.2, { type: 'pavilion', w: 3.6, d: 2.6, roof: '#6A4A3A' }), A(21.2, 69.5, { type: 'easels', count: 3, gap: 1.05, seed: 3 }), A(8.4, 66.6, { type: 'sign', w: 3.4, text: 'CONCERTS · DEBATES\nTHEATRE · AWARDS', size: 52 }), A(28.0, 62.4, { type: 'sign', w: 2.6, text: 'FARM VISITS\nTREKS · PERMACULTURE', size: 48 }), A(14.8, 77.4, { type: 'sign', w: 2.4, text: 'ACOUSTIC\nFIRE' }), A(28, 60.6, { type: 'sculpture', kind: 'crystal', h: 2.6, glow: '#FFB45A' }), A(22.5, 54.8, { type: 'sculpture', kind: 'ring', h: 2.8 }), A(28, 74.6, { type: 'sculpture', kind: 'totem', h: 3 }) ] },
     // 2 · SHAMBHALA BY THE LAKE: a big open pavilion with a red tiled roof on stone terraces, steps down to the lawn.
     // Lake-touch homestay, dormitories, jetty, paragliding base. Intimate music.
-    { id: 'shambhala', n: 2, name: 'Shambhala by the Lake', center: C.shambhala, rect: [21, 76, 50, 98], floor: '#D8C8A0', structures: [
+    { id: 'shambhala', n: 6, name: 'Shambhala by the Lake', center: C.shambhala, rect: [21, 76, 50, 98], floor: '#D8C8A0', structures: [
       A(31, 84, { type: 'pavilion', w: 10, d: 6, h: 3, raised: 0.8, steps: 4, tables: 4, roof: '#B8432F', post: '#3A3A40', stone: '#B9A583' }),
       A(44, 83, { type: 'stage', w: 5, d: 3, h: 0.6, truss: 3.6, glow: '#FFC9E0', beam: '#FFD0E8' }),
       A(44, 85, { type: 'audience', area: 'shambhala', face: Math.PI / 2, r0: 1.5, r1: 5, count: 18 }),
@@ -73,7 +73,7 @@ export const SITE = {
       A(38.6, 80.8, { type: 'pavilion', w: 4, d: 2.6, roof: '#6A4A3A' }), A(38.6, 81.1, { type: 'easels', count: 3, gap: 1.1, seed: 1 }), A(38.6, 83.6, { type: 'sign', w: 2.8, text: 'ART EXHIBITION', size: 60 }), A(39.8, 93.6, { type: 'sign', w: 2.2, text: 'ROCK\nBALANCING' }), A(47.4, 92.8, { type: 'sign', w: 2.6, text: 'CARPENTRY\nWORKSHOP' }), A(30.8, 95.4, { type: 'easels', count: 2, gap: 1.3, seed: 2 }) ] },
     // 3 · LE FARM: On the backwaters. A two-storey modern house with flat roofs, big glass and a carport.
     // Political forums and big events under the big tops, with parking.
-    { id: 'lefarm', n: 3, name: 'Le Farm', center: C.lefarm, rect: [48, 97, 73, 120], floor: '#D3C193', structures: [
+    { id: 'lefarm', n: 5, name: 'Le Farm', center: C.lefarm, rect: [48, 97, 73, 120], floor: '#D3C193', structures: [
       A(57, 102, { type: 'modern', w: 8, d: 5.5, h: 2.8, h2: 2.4, color: '#F2D58E', trim: '#F8EFDC', car: '#3A3A42' }),
       A(64.5, 112, { type: 'stage', w: 9, d: 4.5, glow: '#FFB45A' }),
       A(64.5, 114.8, { type: 'audience', area: 'lefarm', face: Math.PI / 2, r0: 2, r1: 6, count: 40 }),
@@ -84,7 +84,7 @@ export const SITE = {
       A(65, 106.6, { type: 'pavilion', w: 4.4, d: 2.6, roof: '#6A4A3A' }), A(65, 106.9, { type: 'easels', count: 3, gap: 1.3, seed: 0 }), A(65.2, 108.9, { type: 'sign', w: 3.4, text: 'EXHIBITS\nANTIQUE · AI · KNR SKETCHES', size: 50 }), A(71.3, 116.6, { type: 'pavilion', w: 3.6, d: 2.6, tables: 2, roof: '#B8643A' }), A(71, 119.5, { type: 'sign', w: 2.4, text: 'BEER FEST', size: 80 }), A(63.2, 99.6, { type: 'pavilion', w: 3.6, d: 2.6, tables: 2, roof: '#7A2A3A' }), A(63.2, 102.6, { type: 'sign', w: 2.8, text: 'WINE & CHEESE\nFINE DINE', size: 58 }), A(50.1, 99.6, { type: 'shrine' }), A(52.4, 97.9, { type: 'sign', w: 3.0, text: 'TEMPLE TRAIL\nFARM · PERMACULTURE', size: 50 }), A(57.5, 110.7, { type: 'sign', w: 2.4, text: 'WOODCUT\nWORKSHOP' }), A(50.5, 104.4, { type: 'sign', w: 2.6, text: 'SUNRISE YOGA\nMEDITATION', size: 60 }), A(71.2, 110.5, { type: 'sign', w: 2.6, text: 'AI FUTURES\nINTERACTIVE' }), A(55.2, 98.0, { type: 'sculpture', kind: 'totem', h: 2.6 }) ] },
     // 4 · CALMSHET: a cream two-storey timber-and-stone hill lodge with wraparound verandas on a stone terrace, the main
     // stage on the lawn, the archive of the last two years' events and formats, the fashion runway, art and installations.
-    { id: 'calmshet', n: 4, name: 'Calmshet', center: C.calmshet, rect: [10, 24, 38, 53], floor: '#D9C597', structures: [
+    { id: 'calmshet', n: 1, name: 'Calmshet', center: C.calmshet, rect: [10, 24, 38, 53], floor: '#D9C597', structures: [
       A(24, 31, { type: 'lodge', w: 5, d: 6, floors: 2, color: '#F2D58E', roof: '#7A4A2C', rail: '#FFFFFF', wood: '#8A5A34', plinth: 0.8, stone: '#B9A583' }),
       A(17, 28, { type: 'bush', r: 2.2, color: '#3F7A3A' }), A(31.5, 27.5, { type: 'bush', r: 2.4, color: '#356F35' }), A(8.5, 33.5, { type: 'bush', r: 1.8, color: '#4B8440' }), A(34.5, 34, { type: 'bush', r: 2, color: '#3F7A3A' }), A(24, 26.2, { type: 'bush', r: 2.6, color: '#2F6A34' }),
       A(14, 31, { type: 'pavilion', w: 7, d: 3, tables: 3, roof: '#3E6AA0' }), A(14, 33.3, { type: 'easels', count: 4, gap: 1.6, seed: 0 }),
@@ -99,7 +99,7 @@ export const SITE = {
       ...[0, 1, 2].map(i => A(35.5, 39 + i * 2.8, { type: 'stall', rot: -Math.PI / 2, color: ['#B5523B', '#D9953F', '#3E6AA0'][i], seed: i + 1 })) ] },
     // 5 · PURROM: an eco retreat facing the Sahyadri. Square clay huts with red pyramid roofs, clay pots, white canopies,
     // and the Glass House. The horror film festival.
-    { id: 'purrom', n: 5, name: 'Purrom', center: C.purrom, rect: [36, 6, 61, 31], floor: '#D6C49A', structures: [
+    { id: 'purrom', n: 2, name: 'Purrom', center: C.purrom, rect: [36, 6, 61, 31], floor: '#D6C49A', structures: [
       A(44, 15, { type: 'hut', square: true, r: 1.8, h: 2.2, roofH: 1.7, color: '#B5533A', roof: '#C4452C' }),
       A(49, 10.5, { type: 'hut', square: true, r: 1.8, h: 2.2, roofH: 1.7, color: '#B04E36', roof: '#C4452C' }),
       A(56, 15, { type: 'dome', r: 2.6, glow: '#B8FFD8', color: '#EDE4D0' }),
@@ -111,7 +111,7 @@ export const SITE = {
       A(38.5, 28, { type: 'stall', color: '#2F7F7A', seed: 0 }), A(41.2, 28.5, { type: 'stall', color: '#B5523B', seed: 1 }) ] },
     // 6 · THE COMPANY THEATRE: a white colonial house with a red roof and a railed veranda, up a few stone steps on its
     // lawn. Their own theatre festival inside the festival.
-    { id: 'company', n: 6, name: 'The Company Theatre', center: C.company, rect: [62, 5, 88, 27], floor: '#D1BE92', structures: [
+    { id: 'company', n: 3, name: 'The Company Theatre', center: C.company, rect: [62, 5, 88, 27], floor: '#D1BE92', structures: [
       A(73, 13, { type: 'theatre', w: 9, d: 5.5, h: 3.4, roofH: 1.5, color: '#F6F2EA', roof: '#C0452E', rail: '#FFFFFF', veranda: true, plinth: 0.6 }),
       A(83.5, 11, { type: 'stage', w: 5, d: 3, h: 0.7, truss: 3.6, glow: '#E8C8FF', beam: '#E8D8FF' }),
       A(83.5, 13, { type: 'audience', area: 'company', face: Math.PI / 2, r0: 1.5, r1: 4.5, count: 16 }),
@@ -123,7 +123,7 @@ export const SITE = {
       A(73, 18.6, { type: 'sign', w: 3.4, text: 'THE COMPANY THEATRE\nFESTIVAL', size: 56 }), A(79.6, 19.7, { type: 'mats', count: 5, r: 1.5, seed: 3 }), A(64, 19.8, { type: 'sculpture', kind: 'totem', h: 2.4 }), A(83, 25.9, { type: 'sign', w: 2.4, text: 'THEATRE\nWORKSHOPS' }) ] },
     // 7 · THEEYA CREATION VILLAGE: a red-walled house under a low dark roof, a timber pergola deck for long meals,
     // bougainvillea. Run by a singer, so a vocal stage under the trees.
-    { id: 'theeya', n: 7, name: 'Theeya Creation Village', center: C.theeya, rect: [100, 56, 126, 80], floor: '#CFB98C', structures: [
+    { id: 'theeya', n: 4, name: 'Theeya Creation Village', center: C.theeya, rect: [100, 56, 126, 80], floor: '#CFB98C', structures: [
       A(113, 61, { type: 'house', w: 8, d: 4.2, h: 2.8, pitch: 0.5, color: '#B8563A', roof: '#4A4A52' }),
       A(107, 70, { type: 'pergola', w: 7, d: 4, h: 2.4, tables: 3 }),
       A(119.5, 69, { type: 'stage', w: 6, d: 3.4, h: 0.8, truss: 4, glow: '#FFC08A', beam: '#FFE0B8' }),

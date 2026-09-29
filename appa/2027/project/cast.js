@@ -10,8 +10,8 @@ export const CAST = {
         ['mira', 'girl', { h: 1.3, dress: '#E2A33A', bag: true, bagColor: '#D9502F' }, [0.3, 0.9]], ['kabir', 'boy', { h: 1.2, shirt: '#3E6AA0', pants: '#6A5A48' }, [1.1, 1.1]]]
       .map(([id, kind, look, [ox, oy]]) => ({ id, kind, ...look, plan: [
         { xy: [92 + ox, 104 + oy], until: 16 * TS, acts: id === 'mira' ? [[10 * TS, 12 * TS, 'point', [90, 100, 4]]] : [] },
-        { xy: [72 + ox, 84 + oy], until: 70 * TS, look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[65.5, 68.5, 'point', [68, 38.5, 0.6]], [69, 70, 'joy']] : [[66, 68.5, 'photo', [75, 57, 1.5]]]).map(a => [a[0] * TS, a[1] * TS, ...a.slice(2)]) },
-        { xy: [94 + ox, 90 + oy], until: 90 * TS, look: [96, 84], acts: [[76 * TS, 78 * TS, 'joy'], [80 * TS, 84 * TS, id === 'father' ? 'clap' : 'raise']] } ] }))
+        { xy: [72 + ox, 84 + oy], until: 78 * TS, look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[73.5, 76.5, 'point', [68, 38.5, 0.6]], [77, 78, 'joy']] : [[74, 76.5, 'photo', [75, 57, 1.5]]]).map(a => [a[0] * TS, a[1] * TS, ...a.slice(2)]) },
+        { xy: [94 + ox, 90 + oy], until: 96 * TS, look: [96, 84], acts: [[84 * TS, 86 * TS, 'joy'], [88 * TS, 92 * TS, id === 'father' ? 'clap' : 'raise']] } ] }))
   ],
   wanderers: [
     { area: 'raiker', count: 4 }, { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },
