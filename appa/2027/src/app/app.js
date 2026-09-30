@@ -122,7 +122,7 @@ function renderPanel() {
     pBody.append(el('div', 'eyebrow', J.eyebrow), el('h2', '', J.title), el('p', 'note', J.intro));
     for (const b of J.blocks || []) { pBody.appendChild(el('div', 'label', b.h)); const ul = el('ul', 'offer'); b.bullets.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); }
     if (J.tiers) { const tl = el('div', 'tierlist');
-      for (const t of J.tiers) { const card = el('div', 'tier'); card.append(el('div', 'tiername', t.name), el('div', 'tierprice', t.price), el('div', 'tierunit', t.unit), el('p', 'tierblurb', t.blurb));
+      for (const t of J.tiers) { const card = el('div', 'tier'); card.append(el('div', 'tiername', t.name)); if (t.price) card.append(el('div', 'tierprice', t.price)); card.append(el('div', 'tierunit', t.unit), el('p', 'tierblurb', t.blurb));
         const ul = el('ul', 'offer'); t.bullets.forEach(s => ul.appendChild(el('li', '', s))); card.appendChild(ul); tl.appendChild(card); }
       pBody.appendChild(tl); }
     if (J.note) pBody.appendChild(el('p', 'small', J.note));

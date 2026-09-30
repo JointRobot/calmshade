@@ -63,15 +63,15 @@ const JOIN = {
   sponsor: { button: 'Be a sponsor', eyebrow: 'Be a sponsor', title: 'Back the season',
     intro: 'APPA Art Fest 2027 is dedicated to the late artist K. N. Ramachandran: a month of art, people and nature across a whole lake, with cycles instead of cars and a new artist at work in every corner. Sponsors make it possible, and we make sure they are seen.',
     tiers: [
-      { name: 'Title sponsor', price: '₹60 lakh and above', unit: 'one only · indicative', blurb: 'The festival carries your name for the month.', bullets: ['“APPA Art Fest 2027 presented by …” on everything', 'Main-stage and inauguration branding on 25 January', 'Your name in the app, the tour and the press release', 'A private evening and artist meet-up for your guests', 'A film and reels package across the month'] },
-      { name: 'Week sponsor', price: '₹15 to 20 lakh', unit: 'four available, one per week · indicative', blurb: 'Own a week and its theme: Roots & Raga, Keeping it Real, Tech & AI, All Forms Together.', bullets: ['Your name on that week’s programme and stages', 'Weekend headline slot branding', 'Social and reel features through the week'] },
-      { name: 'Venue sponsor', price: '₹4 to 8 lakh', unit: 'one per venue · indicative', blurb: 'Be the presenting sponsor of one of the venues.', bullets: ['Your name beside the venue’s on the map and in the app', 'Signage at the venue', 'A curated moment with the venue’s resident artists'] },
-      { name: 'Event or stage sponsor', price: '₹1.5 to 3 lakh', unit: 'many available · indicative', blurb: 'Back one show, workshop, screening or stage.', bullets: ['Your name on the show’s billing and stage', 'Mentions in social posts and reels for the event'] },
-      { name: 'Artist sponsor', price: '₹50,000 to ₹1 lakh', unit: 'many available · indicative', blurb: 'Support one resident artist: materials, stay and travel.', bullets: ['Your name beside the artist’s work and residency', 'A studio visit and a piece for your collection or office'] },
-      { name: 'In-kind and barter', price: 'Value-matched', unit: 'cycles, e-bikes, food, sound, print, travel and more', blurb: 'Pay in product or service instead of cash.', bullets: ['Logo on signage, the map and the app', 'Reels and shout-outs matched to the value you bring', 'Cycle and e-bike partners: a presence at every check-in'] }
+      { name: 'Title sponsor', unit: 'one only', blurb: 'The festival carries your name for the month.', bullets: ['“APPA Art Fest 2027 presented by …” on everything', 'Main-stage and inauguration branding on 25 January', 'Your name in the app, the tour and the press release', 'A private evening and artist meet-up for your guests', 'A film and reels package across the month'] },
+      { name: 'Week sponsor', unit: 'four available, one per week', blurb: 'Own a week and its theme: Roots & Raga, Keeping it Real, Tech & AI, All Forms Together.', bullets: ['Your name on that week’s programme and stages', 'Weekend headline slot branding', 'Social and reel features through the week'] },
+      { name: 'Venue sponsor', unit: 'one per venue', blurb: 'Be the presenting sponsor of one of the venues.', bullets: ['Your name beside the venue’s on the map and in the app', 'Signage at the venue', 'A curated moment with the venue’s resident artists'] },
+      { name: 'Event or stage sponsor', unit: 'many available', blurb: 'Back one show, workshop, screening or stage.', bullets: ['Your name on the show’s billing and stage', 'Mentions in social posts and reels for the event'] },
+      { name: 'Artist sponsor', unit: 'many available', blurb: 'Support one resident artist: materials, stay and travel.', bullets: ['Your name beside the artist’s work and residency', 'A studio visit and a piece for your collection or office'] },
+      { name: 'In-kind and barter', unit: 'cycles, e-bikes, food, sound, print, travel and more', blurb: 'Pay in product or service instead of cash.', bullets: ['Logo on signage, the map and the app', 'Reels and shout-outs matched to the value you bring', 'Cycle and e-bike partners: a presence at every check-in'] }
     ],
-    note: 'Figures are early and open to discussion. Every sponsor is named in the app, on the signage and in the reels.',
-    contact: 'Tell us which tier interests you and we will send the full sponsorship proposal.',
+    note: 'Sponsorship figures are shared on request. Every sponsor is named in the app, on the signage and in the reels.',
+    contact: 'Tell us which tier interests you and we will send the full proposal, with the numbers, on request.',
     cta: { label: 'Sponsorship enquiries: contact details coming soon' } }
 };
 
