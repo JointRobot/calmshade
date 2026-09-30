@@ -72,7 +72,7 @@ const JOIN = {
     ],
     note: 'Sponsorship figures are shared on request. Every sponsor is named in the app, on the signage and in the reels.',
     contact: 'Tell us which tier interests you and we will send the full proposal, with the numbers, on request.',
-    cta: { label: 'Sponsorship enquiries: contact details coming soon' } }
+    cta: { label: 'Sponsorship enquiries: karthik@xtrathin.in', url: 'mailto:karthik@xtrathin.in?subject=APPA%20Art%20Fest%202027%20sponsorship' } }
 };
 
 export const COPY = {
