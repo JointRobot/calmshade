@@ -23,7 +23,7 @@ export function buildSite(world, mat, g, style, SITE) {
   const glows = [], anims = [], pools = [];
   const glowCache = new Map();
   const ctx = {
-    mat, g, S, world, style, hit, mergeGeometries, night: () => night,
+    mat, g, S, world, style, hit, mergeGeometries, night: () => night, lamps: () => lamps,
     // a material that glows with a channel: off colour by day, on colour lit up by the channel (and the night)
     glow(key, o) { if (glowCache.has(key)) return glowCache.get(key); const m = mat(o.map ? '#ffffff' : o.off, { emissive: o.on, emissiveIntensity: 0, noCache: true, map: o.map }); if (o.map) { m.emissiveMap = o.map; m.needsUpdate = true; } glows.push({ m, ...o }); glowCache.set(key, m); return m; },
     // a soft additive light pool on the ground (fake light), strength from a channel
@@ -125,26 +125,34 @@ export function buildSite(world, mat, g, style, SITE) {
   function light(t) {
     const tod = S.get('timeOfDay', t); night = smooth((tod - 0.55) / 0.33); const duskEve = Math.max(0, 1 - Math.abs(tod - 0.5) / 0.22) * (1 - night); lamps = Math.max(night, duskEve * 0.85); // windows and lamps come on at sunset, not only in the dark
     const dusk = Math.max(duskEve, Math.max(0, 1 - tod / 0.16) * 0.85); // sunrise gets the same warm light as sunset
-    world.key.intensity = base.key * lerp(1, 0.2, night) * lerp(1, 0.85, dusk);
-    world.key.color.copy(base.keyCol).lerp(col('#FFB070'), dusk * 0.7).lerp(col('#8FA4E0'), night);
-    world.key.shadow.intensity = base.shadow * lerp(1, 0.4, night);
-    if (amb) { amb.intensity = base.amb * lerp(1, 0.75, night); amb.color.set('#FFF4E6').lerp(col('#5A6AA0'), night); }
-    if (hemi) { hemi.intensity = base.hemi * lerp(1, 0.45, night) * lerp(1, 0.9, dusk); hemi.color.set('#FFF6EA').lerp(col('#FFC89A'), dusk).lerp(col('#7080C0'), night); }
+    world.key.intensity = base.key * lerp(1, 0.55, night) * lerp(1, 0.85, dusk);
+    world.key.color.copy(base.keyCol).lerp(col('#FFB070'), dusk * 0.7).lerp(col('#B4C6FF'), night); // moonlight: a bright, cool silver
+    world.key.shadow.intensity = base.shadow * lerp(1, 0.55, night);
+    if (amb) { amb.intensity = base.amb * lerp(1, 1.05, night); amb.color.set('#FFF4E6').lerp(col('#8496D6'), night); }
+    if (hemi) { hemi.intensity = base.hemi * lerp(1, 0.85, night) * lerp(1, 0.9, dusk); hemi.color.set('#FFF6EA').lerp(col('#FFC89A'), dusk).lerp(col('#8C9CDC'), night); }
     const mixC = (a, b, c2) => col(a).lerp(col(b), dusk).lerp(col(c2), night);
     const top = mixC(SKY.day[0], SKY.dusk[0], SKY.night[0]), bot = mixC(SKY.day[1], SKY.dusk[1], SKY.night[1]);
     const key = top.getHexString() + bot.getHexString();
     if (bgCan && key !== lastBg) { lastBg = key; const x = bgCan.getContext('2d'); const gr = x.createLinearGradient(0, 0, 0, bgCan.height); gr.addColorStop(0, '#' + top.getHexString()); gr.addColorStop(1, '#' + bot.getHexString()); x.fillStyle = gr; x.fillRect(0, 0, bgCan.width, bgCan.height); world.scene.background.needsUpdate = true; }
-    for (const { m, w } of waterMats) { m.color.set(w.color || '#6FA8C8').lerp(col(w.dusk || '#86A9D8'), dusk * 0.55).lerp(col(w.night || '#1E2A50'), night); }
+    for (const { m, w } of waterMats) { m.color.set(w.color || '#6FA8C8').lerp(col(w.dusk || '#86A9D8'), dusk * 0.55).lerp(col(w.night || '#2C3F7E'), night); }
     if (ripple) ripple.offset.set((t * 0.004) % 1, (t * 0.0025) % 1);
     const Lg = S.channels.lights ? S.get('lights', t) : 1; // installation lights wait for the 'lights' channel (the tour's lake moment); windows and lamps follow the dark on their own
     for (const gl of glows) { const k = gl.channel === 'night' ? (gl.keepLit ? night * Lg : lamps) : S.get(gl.channel, t, gl.arg) * lerp(gl.day ?? 0.3, 1, night); gl.m.emissiveIntensity = 1.7 * k; }
   }
+
+  // ---------- mist: two slow drifting banks of soft cloud low over the ground, thickening after dark ----------
+  const mistTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const r = rng(77);
+    for (let i = 0; i < 46; i++) { const px = r() * 256, py = r() * 256, rad = 26 + r() * 46, a = 0.10 + r() * 0.16; for (const dx of [-256, 0, 256]) for (const dy of [-256, 0, 256]) { const gr = x.createRadialGradient(px + dx, py + dy, 0, px + dx, py + dy, rad); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(px + dx - rad, py + dy - rad, rad * 2, rad * 2); } }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const mistLayers = [[0.9, 0.34, 0.012, 0.004, 5], [2.6, 0.2, -0.008, 0.006, 3.4]].map(([y, op, vx, vy, rep]) => { const tx = mistTex.clone(); tx.needsUpdate = true; tx.repeat.set(rep, rep * H / W);
+    const m = new THREE.MeshBasicMaterial({ map: tx, color: '#C4D2FF', transparent: true, opacity: 0, depthWrite: false, toneMapped: false }); const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, H), m); mesh.rotation.x = -Math.PI / 2; mesh.position.set(X0 + W / 2, y, Y0 + H / 2); mesh.renderOrder = 4; mesh.frustumCulled = false; root.add(mesh); return { m, tx, op, vx, vy }; });
+  function mist(t) { const k = smooth(clamp((night - 0.25) / 0.5, 0, 1)); for (const L of mistLayers) { L.m.opacity = L.op * k; L.m.visible = k > 0.01; L.tx.offset.set(t * L.vx, t * L.vy); } }
   // venues rising in (channel 'buildIn', arg area id), used by the tour's opening
   function build(t) { for (const id in AREAS) { if (!S.channels.buildIn) return; const k = clamp(S.get('buildIn', t, id), 0, 1); const grp = AREAS[id].group; grp.visible = k > 0.001; const e = easeOutBack(k); grp.scale.set(1, Math.max(0.001, e), 1); } }
 
   return {
     root, areas: AREAS, bounds: SITE.bounds, ctx,
     get night() { return night; },
-    update(t) { light(t); build(t); for (const f of anims) f(t); }
+    update(t) { light(t); mist(t); build(t); for (const f of anims) f(t); }
   };
 }

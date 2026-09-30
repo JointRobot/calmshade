@@ -424,6 +424,20 @@ export const KIT = {
     for (let i = 0; i < 5; i++) add(box(ctx, -0.35 + hash(i + s.x) * 0.1, -0.35, 0.35, 0.35, i * H / 5, (i + 1) * H / 5 - 0.05, ctx.mat(cols[i % 5])));
     addCircle(s.x, s.y, 0.5, `${s.id} totem`); return { group: grp };
   },
+  // fairy lights: a sagging string of small bulbs between poles at plan points s.pts that twinkle in a running sequence
+  // (a chase along the string, in soft warm, pink, mint and blue), on from sunset. Lively rather than a plain glow.
+  fairy(ctx, s) {
+    const grp = new THREE.Group(); const H = s.h || 2.9; const pole = ctx.mat('#5A4030'); const pts = s.pts; const pos = [];
+    for (let i = 0; i < pts.length; i++) { grp.add(ctx.g.cyl(pts[i][0], pts[i][1], 0.05, 0, H, pole, { seg: 6 })); addCircle(pts[i][0], pts[i][1], 0.1, 'fairy pole');
+      if (i < pts.length - 1) { const [a, b] = [pts[i], pts[i + 1]]; const len = Math.hypot(b[0] - a[0], b[1] - a[1]); const n = Math.max(4, Math.round(len / 0.42)); for (let k = 0; k <= n; k++) { const f = k / n; pos.push([lerp(a[0], b[0], f), lerp(a[1], b[1], f), H - 0.05 - 0.4 * Math.sin(f * Math.PI)]); } } }
+    const bm = new THREE.MeshBasicMaterial({ color: '#ffffff', toneMapped: false }); const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(0.08, 6, 4), bm, pos.length); const m4 = new THREE.Matrix4();
+    pos.forEach((p, i) => { m4.makeTranslation(p[0], p[2], p[1]); inst.setMatrixAt(i, m4); inst.setColorAt(i, new THREE.Color('#000000')); }); inst.castShadow = false; inst.frustumCulled = false; grp.add(inst);
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pos.map(p => new THREE.Vector3(p[0], p[2] + 0.03, p[1]))), new THREE.LineBasicMaterial({ color: '#3A3030' })); grp.add(line);
+    const hues = ['#FFD48A', '#FFA8D2', '#B4FFDC', '#B8D0FF'].map(h => new THREE.Color(h)); const c = new THREE.Color(); const ph = hash(pts[0][0] * 3.1 + pts[0][1]) * 6;
+    return { group: grp, dyn: true, update: t => { const L = ctx.lamps(); inst.visible = L > 0.02; if (!inst.visible) return;
+      for (let i = 0; i < pos.length; i++) { const chase = Math.pow(0.5 + 0.5 * Math.sin(t * 2.6 - i * 0.55 + ph), 2), spark = (i % 5 === 0) ? 0.5 + 0.5 * Math.sin(t * 7 + i) : 0; c.copy(hues[(((i + Math.floor(t * 0.5)) % 4) + 4) % 4]).multiplyScalar(L * (0.22 + 1.5 * chase + 0.5 * spark)); inst.setColorAt(i, c); }
+      inst.instanceColor.needsUpdate = true; } };
+  },
   // string lights along plan points [[x, y], ...] on poles; the bulbs glow at night
   lanterns(ctx, s) {
     const grp = new THREE.Group(); const H = s.h || 3; const pole = ctx.mat('#5A4030'); const pts = s.pts;

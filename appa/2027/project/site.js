@@ -21,7 +21,7 @@ export const SITE = {
   ground: { color: '#A3B56C', edge: '#7A5A3A', depth: 2.2, ppm: 12,
     fields: [ { x: 124, y: 40, w: 10, d: 12, rot: 0.1, color: '#C8B56A' }, { x: 84, y: 118, w: 10, d: 8, rot: -0.1, color: '#B9C36E' },
       { x: 39, y: 112, w: 8, d: 12, rot: 0.05, color: '#D2BF72' }, { x: 8, y: 90, w: 9, d: 10, rot: 0.1, color: '#BFCB74' }, { x: 96, y: 14, w: 10, d: 8, rot: 0.15, color: '#C8B56A' } ] },
-  sky: { day: ['#F6ECDA', '#EAD9BE'], dusk: ['#F7C88C', '#E48F6C'], night: ['#121834', '#2A2F58'] },
+  sky: { day: ['#F6ECDA', '#EAD9BE'], dusk: ['#F7C88C', '#E48F6C'], night: ['#1E2A55', '#3D4A80'] },
   water: [ { id: 'lake', color: '#4FA6D2', dusk: '#86A9D8', night: '#1D2A55', shallow: '#8FD0DE', shore: '#DCCB9C', shoreWidth: 2.6,
     pts: [[44.8, 73.4], [40.8, 64.3], [41.3, 57.2], [45.3, 49.9], [51, 45.1], [56.3, 43.8], [58.3, 40.2], [62.7, 35], [71.2, 32.2], [81.3, 31.9], [92, 36], [98.3, 41.3],
       [100.8, 48.5], [96.8, 55.9], [90.6, 62.9], [84, 71], [76, 77], [65, 78.5], [55.2, 77.7]],
@@ -108,6 +108,7 @@ export const SITE = {
       A(51, 15.5, { type: 'pots', count: 7, r: 1.2 }), A(41, 18.5, { type: 'pots', count: 5, r: 1 }),
       A(58, 28, { type: 'sculpture', kind: 'totem', h: 3.4 }),
       A(50.5, 28.6, { type: 'sign', w: 3.0, text: 'HORROR FILM\nFESTIVAL', neon: '#7CFF9A', size: 58 }), A(57.6, 10.4, { type: 'mats', count: 5, r: 1.5, seed: 0 }), A(60, 15.6, { type: 'sign', w: 2.4, text: 'SUNRISE YOGA\nSOUND HEALING', size: 52 }), A(50.6, 19.8, { type: 'sign', w: 2.6, text: 'EXHIBITION\nIN THE HUTS' }), A(55.0, 26.0, { type: 'sign', w: 2.4, text: 'ACOUSTIC\nSETS' }), A(38.4, 24.8, { type: 'sign', w: 2.4, text: 'WORKSHOP', size: 64 }), A(46, 18.6, { type: 'easels', count: 3, gap: 1.4, seed: 3 }),
+      A(0, 0, { type: 'fairy', pts: [[38.5, 11], [38.5, 19], [40, 25.5]] }), A(0, 0, { type: 'fairy', pts: [[54, 7], [59.5, 10], [59.8, 19]] }),
       A(38.5, 28, { type: 'stall', color: '#2F7F7A', seed: 0 }), A(41.2, 28.5, { type: 'stall', color: '#B5523B', seed: 1 }) ] },
     // 6 · THE COMPANY THEATRE: a white colonial house with a red roof and a railed veranda, up a few stone steps on its
     // lawn. Their own theatre festival inside the festival.
@@ -116,6 +117,7 @@ export const SITE = {
       A(83.5, 11, { type: 'stage', w: 5, d: 3, h: 0.7, truss: 3.6, glow: '#E8C8FF', beam: '#E8D8FF' }),
       A(83.5, 13, { type: 'audience', area: 'company', face: Math.PI / 2, r0: 1.5, r1: 4.5, count: 16 }),
       A(69, 21.5, { type: 'screen', w: 6, h: 3.4, rows: 2 }),
+      A(0, 0, { type: 'fairy', pts: [[63, 8], [63, 16], [65, 23]] }), A(0, 0, { type: 'fairy', pts: [[67, 24.6], [73, 25.2], [79, 24.6]] }), A(0, 0, { type: 'fairy', pts: [[79.5, 6.5], [86.5, 7.5], [87.3, 15]] }),
       A(83, 22.5, { type: 'pavilion', w: 4, d: 3, tables: 2, roof: '#6A3A2E' }),
       A(77.5, 23, { type: 'sculpture', kind: 'ring', h: 3.5 }),
       A(64.5, 14, { type: 'bush', r: 0.9, color: '#E0457B' }),

@@ -34,6 +34,8 @@
   #chips button { min-width: 40px; }
   #tourbtn { background: var(--accent); color: #FFF6EA; border-radius: 10px; }
   #soundbtn { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; font-size: 18px; padding: 4px 11px; cursor: pointer; min-height: 40px; }
+  #moon { position: fixed; right: 7%; top: 16%; width: 74px; height: 74px; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(circle at 38% 36%, #FFFFFF 0 38%, #EEF2FF 52%, #C9D6FF 70%); box-shadow: 0 0 40px 18px rgba(190,206,255,.55), 0 0 120px 60px rgba(150,170,255,.25); z-index: 1; }
+  @media (max-width: 700px) { #moon { width: 46px; height: 46px; top: 21%; right: 8%; } }
   #soundbtn.on { background: var(--ink); }
   #ticketsbtn { background: var(--gold); color: #23202A; border: 1px solid var(--gold); border-radius: 10px; font: 600 15px var(--font), sans-serif; padding: 7px 14px; cursor: pointer; min-height: 40px; }
   .spacer { flex: 1; }
@@ -108,6 +110,7 @@
 <body>
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
+<div id="moon"></div>
 <div id="pins"></div>
 <header>
   <button id="brand" title="Back to the map">APPA</button>
