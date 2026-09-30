@@ -6,6 +6,8 @@ import { env, smooth, ramp, lerp } from '../src/engine/util.js';
 // The tour is authored on a 105 s timeline; TS squeezes it to a tight ~84 s (under two minutes). Everything time-based
 // in the tour (camera, captions, channels, the family walkers) is authored in the original seconds and scaled by TS.
 export const TS = 0.8;
+/* the tour skips CUT_D original seconds once the banner close-up is done (real time CUT_AT), so the camera pans straight from the banner to Calmshet */
+export const CUT_AT = 13 * TS, CUT_D = 3 * TS;
 export const TOUR_LENGTH = Math.round(105 * TS);
 // the order venues rise in during the opening, and when the tour's camera visits each one (seconds)
 const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'theeya', 'lefarm', 'shambhala', 'raiker', 'hidden'];
