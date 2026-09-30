@@ -121,9 +121,10 @@ export function buildSite(world, mat, g, style, SITE) {
   const base = { key: world.key.intensity, amb: amb ? amb.intensity : 0, hemi: hemi ? hemi.intensity : 0, keyCol: col(style.keyColor || '#FFFFFF'), shadow: world.key.shadow.intensity };
   const SKY = SITE.sky || { day: ['#F4E9DA', '#E8D8C2'], dusk: ['#F6C98A', '#E58F6A'], night: ['#141A33', '#2A2F55'] };
   const bgCan = world.scene.background && world.scene.background.image; let lastBg = '';
-  let night = 0;
+  let night = 0, lamps = 0;
   function light(t) {
-    const tod = S.get('timeOfDay', t); night = smooth((tod - 0.55) / 0.33); const dusk = Math.max(0, 1 - Math.abs(tod - 0.5) / 0.22) * (1 - night);
+    const tod = S.get('timeOfDay', t); night = smooth((tod - 0.55) / 0.33); const duskEve = Math.max(0, 1 - Math.abs(tod - 0.5) / 0.22) * (1 - night); lamps = Math.max(night, duskEve * 0.85); // windows and lamps come on at sunset, not only in the dark
+    const dusk = Math.max(duskEve, Math.max(0, 1 - tod / 0.16) * 0.85); // sunrise gets the same warm light as sunset
     world.key.intensity = base.key * lerp(1, 0.2, night) * lerp(1, 0.85, dusk);
     world.key.color.copy(base.keyCol).lerp(col('#FFB070'), dusk * 0.7).lerp(col('#8FA4E0'), night);
     world.key.shadow.intensity = base.shadow * lerp(1, 0.4, night);
@@ -136,7 +137,7 @@ export function buildSite(world, mat, g, style, SITE) {
     for (const { m, w } of waterMats) { m.color.set(w.color || '#6FA8C8').lerp(col(w.dusk || '#86A9D8'), dusk * 0.55).lerp(col(w.night || '#1E2A50'), night); }
     if (ripple) ripple.offset.set((t * 0.004) % 1, (t * 0.0025) % 1);
     const Lg = S.channels.lights ? S.get('lights', t) : 1; // installation lights wait for the 'lights' channel (the tour's lake moment); windows and lamps follow the dark on their own
-    for (const gl of glows) { const k = gl.channel === 'night' ? night * (gl.keepLit ? Lg : 1) : S.get(gl.channel, t, gl.arg) * lerp(gl.day ?? 0.3, 1, night); gl.m.emissiveIntensity = 1.7 * k; }
+    for (const gl of glows) { const k = gl.channel === 'night' ? (gl.keepLit ? night * Lg : lamps) : S.get(gl.channel, t, gl.arg) * lerp(gl.day ?? 0.3, 1, night); gl.m.emissiveIntensity = 1.7 * k; }
   }
   // venues rising in (channel 'buildIn', arg area id), used by the tour's opening
   function build(t) { for (const id in AREAS) { if (!S.channels.buildIn) return; const k = clamp(S.get('buildIn', t, id), 0, 1); const grp = AREAS[id].group; grp.visible = k > 0.001; const e = easeOutBack(k); grp.scale.set(1, Math.max(0.001, e), 1); } }
