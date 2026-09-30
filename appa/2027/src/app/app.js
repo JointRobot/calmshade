@@ -205,7 +205,7 @@ let last = performance.now(), frames = 0;
 function tick(now) {
   const rawDt = (now - last) / 1000, dt = Math.min(0.1, rawDt); last = now; frames++; adapt(rawDt, now);
   let t;
-  if (tour) { t = window.__tourAt != null ? window.__tourAt : (now - tourT0) / 1000; if (t > TOUR_LENGTH) { stopTour(); requestAnimationFrame(tick); return; } { const ci = TOURM.TOUR.captions.findIndex(c => t >= c[0] && t < c[1]); if (ci !== lastCap) { lastCap = ci; if (ci >= 0) SFX.bell(ci); } if (t > TOUR_LENGTH - 2.2 && !endWh) { endWh = true; SFX.whoosh(); } } const c = TOURM.camAt(t); cam.px = c[0]; cam.py = c[1]; cam.S = c[2] * VW / 1920; }
+  if (tour) { t = window.__tourAt != null ? window.__tourAt : (now - tourT0) / 1000; if (t > TOUR_LENGTH) { stopTour(); requestAnimationFrame(tick); return; } { const ci = TOURM.TOUR.captions.findIndex(c => t >= c[0] && t < c[1]); if (ci !== lastCap) { lastCap = ci; if (ci >= 0) SFX.bell(ci); } if (t > TOUR_LENGTH - 2.2 && !endWh) { endWh = true; SFX.whoosh(); } } const c = (VH > VW * 1.1 ? TOURM.camAtPortrait : TOURM.camAt)(t); cam.px = c[0]; cam.py = c[1]; cam.S = c[2] * VW / 1920; }
   else { S.step(dt); t = S.clock; const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
   world.setCamIso(cam.px, cam.py, cam.S);
   const t0 = performance.now(); site.update(t); const t1 = performance.now(); crowd.update(t, inView); placeBlobs(); shadowCheck(); const t2 = performance.now(); world.render(); const t3 = performance.now();

@@ -1,4 +1,4 @@
-// APPA Art Fest 2027 · the guided tour (114 s): the camera path, captions and subtitles.
+// APPA Art Fest 2027 · the guided tour (105 s): the camera path, captions and subtitles.
 // Camera keys: [t, x, y, z, S] = at time t look at plan point (x, y, z) with S pixels per metre (at 1920 px wide).
 // Keep each venue on screen for 5 to 8 seconds; pull back (smaller S) between far-apart venues.
 import { makeCamera, drawOverlay } from '../src/engine/overlay.js';
@@ -7,7 +7,7 @@ import { TS } from './story.js';
 
 const KEYS0 = [
   [0, 65, 66, 0, 6.9], [7, 65, 68, 0, 7.6],
-  [10.5, 90, 100, 3.4, 140], [13, 90, 100, 3.4, 140], [15.5, 90, 93, 0, 41.9],
+  [10.5, 90, 100, 3.4, 140, -2.2], [13, 90, 100, 3.4, 140, -2.2], [15.5, 90, 93, 0, 41.9],
   [17.5, 56, 66, 0, 14], [19.5, 22, 39, 1, 37.8], [24, 22, 39, 1, 43.2],
   [26.5, 48, 19, 0, 37.8], [30.5, 48, 18, 0, 41.9],
   [33, 74, 17, 0, 37.8], [37, 75, 17, 0, 41.9],
@@ -17,14 +17,16 @@ const KEYS0 = [
   [61.5, 15, 67, 0, 37.8], [65.5, 15, 66, 0, 41.9],
   [67.7, 66, 90, 0, 12], [70, 118, 113, 0, 35.1], [73.5, 117, 112, 0, 36.5],
   [75, 100, 88, 0, 14], [76.5, 80, 64, 0, 19], [82.5, 76, 60, 0, 21],
-  [90, 65, 67, 0, 10], [97, 65, 67, 0, 7.2], [100.5, 65, 67, 0, 7.2],
-  [106, 90, 100, 5.4, 120], [114, 90, 100, 5.4, 126]
+  [86, 65, 67, 0, 10], [91, 65, 67, 0, 8.5],
+  [96, 90, 100, 5.4, 120, 2.2], [105, 90, 100, 5.4, 126, 2.2]
 ];
 const scaleRow = r => [r[0] * TS, r[1] * TS, ...r.slice(2)];
-export const KEYS = KEYS0.map(k => [k[0] * TS, ...k.slice(1)]);
+export const KEYS = KEYS0.map(k => [k[0] * TS, k[1], k[2], k[3], k[4]]);
+// on a tall phone screen the arch is framed higher (a lower look-at height), so it sits above the caption text instead of behind it
+export const KEYS_PORTRAIT = KEYS0.map(k => [k[0] * TS, k[1], k[2], k[5] ?? k[3], k[4]]);
 const TOUR0 = {
   title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Many venues. A living ecosystem.'],
-  end: [110.2, 114, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
+  end: [101.2, 105, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
     [18, 25.5, 'Venue 1', 'Calmshet', 'The past two years, fashion, art, opening night'],
@@ -37,11 +39,11 @@ const TOUR0 = {
     [68, 74, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
     [77, 82, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
     // the four festival weeks, recapped over a wide hold before the Encore
-    [82.3, 85.7, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
-    [85.9, 89.3, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
-    [89.5, 92.9, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
-    [93.1, 96.4, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [104, 109.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
+    [82.3, 85, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
+    [85.2, 87.9, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
+    [88.1, 90.8, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
+    [91, 93.7, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
+    [94.5, 100.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
   ],
   subs: [
     [11, 14.8, 'Park the car. Pick a cycle.'], [20, 23.5, 'Where the story begins.'], [27, 30.5, 'Horror films after dark.'],
@@ -52,5 +54,6 @@ const TOUR0 = {
 };
 export const TOUR = { title: scaleRow(TOUR0.title), end: scaleRow(TOUR0.end), captions: TOUR0.captions.map(scaleRow), subs: TOUR0.subs.map(scaleRow) };
 export const camAt = makeCamera(KEYS);
+export const camAtPortrait = makeCamera(KEYS_PORTRAIT);
 let logo = null; if (typeof Image !== 'undefined') { logo = new Image(); logo.src = LOOK.logo.dark; }
 export const overlay = (O, t, W, H, wCss, hCss) => drawOverlay(O, t, W, H, TOUR, { ...LOOK.ui.overlay, font: LOOK.ui.font, display: LOOK.ui.display }, logo && logo.complete && logo.naturalWidth ? logo : null, wCss, hCss);

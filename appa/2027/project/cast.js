@@ -11,7 +11,7 @@ export const CAST = {
       .map(([id, kind, look, [ox, oy]]) => ({ id, kind, ...look, plan: [
         { xy: [92 + ox, 104 + oy], until: 16 * TS, acts: id === 'mira' ? [[10 * TS, 12 * TS, 'point', [90, 100, 4]]] : [] },
         { xy: [72 + ox, 84 + oy], until: 78 * TS, look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[73.5, 76.5, 'point', [68, 38.5, 0.6]], [77, 78, 'joy']] : [[74, 76.5, 'photo', [75, 57, 1.5]]]).map(a => [a[0] * TS, a[1] * TS, ...a.slice(2)]) },
-        { xy: [94 + ox, 90 + oy], until: 96 * TS, look: [96, 84], acts: [[84 * TS, 86 * TS, 'joy'], [88 * TS, 92 * TS, id === 'father' ? 'clap' : 'raise']] } ] }))
+        { xy: [94 + ox, 90 + oy], until: 94 * TS, look: [96, 84], acts: [[83 * TS, 85 * TS, 'joy'], [87 * TS, 91 * TS, id === 'father' ? 'clap' : 'raise']] } ] }))
   ],
   wanderers: [
     { area: 'raiker', count: 4 }, { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },
