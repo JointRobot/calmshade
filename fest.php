@@ -32,7 +32,14 @@ function db() {
       $pdo = new PDO('sqlite:'.$dir.'/fest.sqlite');
       $pdo->exec('PRAGMA busy_timeout=8000');
     }
-  } catch (Throwable $e) { fail('Booking store is not reachable', 503); }
+  } catch (Throwable $e) {
+    $code = (int)($e->errorInfo[1] ?? 0); $msg = $e->getMessage();
+    $hint = $code === 1045 || stripos($msg, 'Access denied') !== false ? 'database login failed: check FEST_DB_USER and FEST_DB_PASS'
+          : ($code === 1049 || stripos($msg, 'Unknown database') !== false ? 'database name not found: check dbname in FEST_DB_DSN'
+          : ($code === 2002 || stripos($msg, 'connect') !== false ? 'database server not reachable: use host=localhost' : 'database error'));
+    error_log('fest.php db: '.$msg);
+    fail('Booking store is not reachable ('.$hint.')', 503);
+  }
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_bookings (ref VARCHAR(16) PRIMARY KEY, token VARCHAR(40) NOT NULL, status VARCHAR(12) NOT NULL, created_at BIGINT NOT NULL, tier VARCHAR(8), total BIGINT, payout BIGINT, items TEXT, guest TEXT, utr VARCHAR(60))');
