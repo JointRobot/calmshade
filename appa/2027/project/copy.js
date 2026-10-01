@@ -23,19 +23,22 @@ const dusk = nightBtn(0.86, 'Let the evening come');
 const site = (label, url) => ({ label, url });
 const search = q => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
 
-// ticket tiers for the ticket counter (subject to change as the plan firms up)
+// ticket tiers for the ticket counter. Booking, payment and availability live on calmshade.in (fest.php);
+// keep these prices in step with the APPA Fest desk (Creator console → APPA Fest desk → Festival prices).
+const BOOK = '../../';
 const TICKETS = {
   title: 'Tickets & stays', eyebrow: 'The ticket counter',
-  intro: 'Everything to come to APPA Art Fest 2027, from a single day to the whole month. Prices are early plans and may change.',
+  intro: 'Everything to come to APPA Art Fest 2027, from a single day to the whole month. Book online with live availability; pay by UPI.',
   tiers: [
-    { name: 'Day pass', price: '₹2,000', unit: 'per person, per day', blurb: 'Entry to the festival for one day: every venue, every open show.', bullets: ['Access to all open venues for the day', 'Exhibitions, art walks and open workshops', 'No stay included'] },
-    { name: 'Stay + festival, for 2', price: '₹10,000', unit: 'per night (a 24-hour stay)', blurb: 'A night’s stay for two, with festival tickets for two included.', bullets: ['One night’s stay for 2 guests at a partner venue', 'Festival tickets for 2 people, for that day', 'Cycle or e-bike pickup at check-in', 'Kids under 10: free entry with a paying adult'] },
-    { name: 'VIP · 1 week', price: 'On request', unit: 'a 7-day booking', blurb: 'A week at the festival with full access to every show and experience.', bullets: ['All shows and experiences for 7 days', 'Priority entry at every venue', 'A stay for the week (partner venue, subject to availability)'] },
-    { name: 'VVIP · 30 days', price: 'On request', unit: 'the full month, stay + experience', blurb: 'The whole festival, start to finish: full access plus a few things nobody else gets.', bullets: ['All access, all 30 days, every venue', 'A few special-access moments across the month', 'Personal meet-ups with resident artists', 'Stay for the full run (partner venue, subject to availability)'] }
+    { name: 'Day pass', price: '₹2,000', unit: 'per person, per day', blurb: 'Entry to the festival for one day: every venue, every open show.', bullets: ['Access to all open venues for the day', 'Exhibitions, art walks and open workshops', 'No stay included'], book: { label: 'Buy day passes', href: BOOK + '#appa-pass' } },
+    { name: 'Stay + festival, for 2', price: '₹12,000', unit: 'per couple, per night, inside the festival', blurb: 'A night’s stay for two in a VIP room inside the festival, with festival tickets for two included.', bullets: ['A room at Calmshet, Le Farm, Shambhala by the Lake, Theeya or The Company Theatre', 'Purrom single rooms ₹6,000 a night; VIP tents ₹9,000 for 2', 'Festival tickets for 2 people, every night you stay', 'Cycle or e-bike pickup at check-in', 'Mix venues night by night', 'Kids under 10: free entry with a paying adult'], book: { label: 'See live availability', href: BOOK + '#appa' } },
+    { name: 'VIP · 1 week', price: '₹7,000 off', unit: 'any 7 or more nights inside the festival', blurb: 'A week at the festival with full access to every show and experience.', bullets: ['All shows and experiences for 7 days', 'Priority entry at every venue', 'A stay for the week inside the festival, across one or several venues', 'Curate your route, or let us plan it'], book: { label: 'Curate a VIP week', href: BOOK + '#appa-curate' } },
+    { name: 'VVIP · 30 days', price: '₹40,000 off', unit: 'the full month, stay + experience', blurb: 'The whole festival, start to finish: full access plus a few things nobody else gets.', bullets: ['All access, all 30 days, every venue', 'A few special-access moments across the month', 'Personal meet-ups with resident artists', 'Stay for the full run inside the festival', 'The Encore: 26 to 28 February, after the festival closes'], book: { label: 'Curate the month', href: BOOK + '#appa-curate' } },
+    { name: 'Partner stays nearby', price: 'Host rate + ₹1,000', unit: 'per guest, per night', blurb: 'Homestays and camps around the lake, approved by the festival team, with festival entry included.', bullets: ['Festival entry for every guest, every night', 'Hosts can list their own place too'], book: { label: 'See partner stays', href: BOOK + '#appa' } }
   ],
-  note: 'Kids under 10 always enter free, on every ticket type. Exact stay partner is assigned at booking, based on availability.',
-  qr: { image: './assets/tickets_qr.png', caption: 'Scan to pay by UPI', payee: 'Karthikeyan Ramachandran', upi: 'xtrathindesign@okicici' },
-  contact: 'To book, scan the QR to pay, then share the payment screenshot along with your dates and headcount on WhatsApp.'
+  note: 'Kids under 10 always enter free, on every ticket type. Prices inside the festival rise up to 20% as venues fill, so earlier is cheaper. Payments go by UPI to Karthikeyan Ramachandran (xtrathindesign@okicici); the booking page gives you the exact amount and QR.',
+  links: [{ label: 'Book tickets & stays', href: BOOK + '#appa', primary: true }, { label: 'My Art Passport', href: BOOK + '#passport' }],
+  contact: 'Every booking comes with an APPA Art Passport: your itinerary, the map, and a stamp from each venue you visit. Questions? WhatsApp +91 87999 38193.'
 };
 
 

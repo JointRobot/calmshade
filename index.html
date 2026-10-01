@@ -817,6 +817,7 @@ body{background:var(--bg);}
 #cs-app .fx-x{color:var(--mute); font-size:12px; text-decoration:underline; font-weight:700;}
 #cs-app .fx-tot{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--display); font-weight:600; font-size:24px; border-top:2px solid var(--ink); padding-top:10px;}
 #cs-app .fx-mob{display:none;}
+#cs-app .fx-incl{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px;}
 #cs-app .fx-status{font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:99px; border:1px solid currentColor; white-space:nowrap;}
 #cs-app .fx-status.pending{color:#9A6A14;} #cs-app .fx-status.confirmed,#cs-app .fx-status.approved{color:var(--wa-deep);} #cs-app .fx-status.cancelled,#cs-app .fx-status.rejected,#cs-app .fx-status.expired{color:#B03A22;}
 #cs-app .fx-qr{background:#FFFFFF; padding:10px; border-radius:8px; width:max-content; max-width:100%; border:1px solid var(--line);}
@@ -1298,6 +1299,7 @@ ${kb()}`;}
         <span class="seclabel">Curated</span>
         <h2>Can we help curate your travel?</h2>
         <p>Pick your dates and the route you'd love to wander — the concierge stitches the collective's <b>available</b> homes into a day-by-day itinerary you can edit until it's yours.<br>This map grows with every host who joins: soon, whole journeys drawn dot to dot.</p>
+        <div class="fx-warn" style="margin-top:14px;max-width:72ch;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><span><b>Coming for APPA Art Fest 2027?</b> VIP and VVIP guests can curate a week or the whole month across the festival venues, with every show included.</span><button class="fx-btn small" onclick="CS.fx('openCurate')">Curate your festival stay</button></div>
       </div>
       <div class="cur-grid">
         <div class="cmap">${mapSVG()}
@@ -2053,7 +2055,7 @@ ${kb()}`;}
         <span class="fx-eyebrow">VIP tier · 25 Jan – 25 Feb 2027 · Kamshet</span>
         <h2>Stay <em>inside</em> APPA Art Fest</h2>
         <p>${total} rooms and a tent village inside the festival, plus partner homestays and camps nearby. Every night includes festival entry for two. Mix venues night by night: three nights at Le Farm, three at Calmshet, two at Theeya.</p>
-        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
+        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP week</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
       </div>
       <div class="fx-venues">${FX_VIP.map(u=>`<div class="fx-venue"><b>${esc(u.name)}</b><span>${u.rooms} ${u.kind==='single'?'single rooms':'rooms'} · from ${inr(fxFrom(u))}</span></div>`).join('')}
         <div class="fx-venue tent"><b>VIP Tent Village</b><span>${+FX.S.tents||0} tents inside the grounds · from ${inr(FX.S.tentNight)}</span></div></div>
@@ -2061,8 +2063,8 @@ ${kb()}`;}
 
   /* festival page */
   function fest(){
-    const tabs=[['stay','Stay + festival'],['pass','Day passes'],['host','List your stay']];
-    const body=FX.tab==='pass'?fxPassHTML():FX.tab==='host'?fxHostHTML():fxStayHTML();
+    const tabs=[['stay','Stay + festival'],['curate','Curate · VIP'],['pass','Day passes'],['host','List your stay']];
+    const body=FX.tab==='pass'?fxPassHTML():FX.tab==='host'?fxHostHTML():FX.tab==='curate'?fxCurateHTML():fxStayHTML()+fxIncludedHTML();
     return `<div class="page fx">
       <header class="fx-mast"><div>
         <span class="fx-eyebrow">APPA Art Fest 2027 · VIP tier on Calm Shade</span>
@@ -2103,6 +2105,15 @@ ${kb()}`;}
       <div class="fx-board"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div>
       ${fxSelHTML()}`;}
 
+  function fxIncludedHTML(){const S=FX.S;
+    const T=[['Day pass',inr(S.dayPass),'per person, per day','Entry to the festival for one day: every venue, every open show.',['Access to all open venues for the day','Exhibitions, art walks and open workshops','No stay included']],
+      ['VIP room, for 2',inr(S.coupleNight),'per couple, per night','A room inside the festival with festival tickets for two each night.',['A room at Calmshet, Le Farm, Shambhala, Theeya or The Company Theatre (Purrom single rooms '+inr(S.singleNight)+')','Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in','Extra adults '+inr(S.extraGuest)+' a night; kids under 10 free']],
+      ['VIP tent, for 2',inr(S.tentNight),'per couple, per night','A tent inside the festival grounds, festival tickets included.',['Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in']],
+      ['VIP · '+S.vipNights+'+ nights',inr(S.vipDiscount)+' off','any '+S.vipNights+' or more nights inside the festival','A week at the festival with full access to every show and experience.',['All shows and experiences for your nights','Priority entry at every venue','Mix venues night by night, or use Curate']],
+      ['VVIP · '+S.vvipNights+' nights',inr(S.vvipDiscount)+' off','the full month, stay + experience','The whole festival, start to finish: full access plus a few things nobody else gets.',['All access, every venue, the whole month','A few special-access moments across the month','Personal meet-ups with resident artists','The Encore: three extra days after the festival closes']],
+      ['Partner stays','Host rate + '+inr(S.partnerMarkup),'per guest, per night','Homestays and camps near the lake, festival entry included.',['Festival entry for every guest, every night','Listed and approved by the festival team']]];
+    return `<div style="margin-top:8px"><h2 class="fx-h2">What's included</h2><p class="fx-sub">Kids under 10 always enter free, on every ticket type. Every booking comes with your APPA Art Passport: the map, your itinerary and a stamp from each venue you visit.</p></div>
+      <div class="fx-incl">${T.map(t=>`<div class="fx-panel" style="gap:6px"><b style="font-family:var(--display);font-style:italic;font-weight:600;font-size:18px">${esc(t[0])}</b><div><span class="fx-money" style="color:var(--accent);font-size:19px">${esc(t[1])}</span> <span class="fx-note">${esc(t[2])}</span></div><p class="fx-note" style="color:var(--ink)">${esc(t[3])}</p><ul class="pp-prog" style="font-size:13px">${t[4].map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>`).join('')}</div>`;}
   function fxSelHTML(){
     const s=FX.sel;
     if(!s)return `<div class="fx-panel"><b class="fx-h2" style="font-size:18px">Nothing selected yet</b><p class="fx-note">Tap a night on the board to start. Add each run of nights separately; your trip on the right puts them in order and adds up the total.</p></div>`;
@@ -2295,8 +2306,9 @@ ${kb()}`;}
   function fxAct(a,x,y){
     const bw=root.querySelector('.fx-board');if(bw)fxAct.sl=bw.scrollLeft;
     switch(a){
-      case 'tab':FX.tab=x;FX.err='';break;
-      case 'openPasses':FX.tab='pass';view='fest';window.scrollTo({top:0});break;
+      case 'tab':FX.tab=x;FX.err='';try{const h=x==='stay'?'#appa':'#appa-'+x;if(location.hash!==h)history.replaceState({},'',h);}catch(e){}break;
+      case 'openPasses':case 'openCurate':{const t=a==='openPasses'?'pass':'curate';FX.tab=t;
+        try{history.pushState({},'','#appa-'+t);}catch(e){}CS.go('fest');return;}
       case 'filter':FX.filter=x;break;
       case 'cell':{const u=fxU(x);if(!u)return;if(fxLeft(u,y)===0)return toast('Sold out that night');
         const s=FX.sel;
@@ -2358,6 +2370,7 @@ ${kb()}`;}
     if(FX.last&&view==='fest')fxDrawQR();
   }
   window.addEventListener('popstate',()=>{const want=/^#(appa|fest)/i.test(location.hash)?'fest':/^#passport/i.test(location.hash)?'passport':'home';
+    {const t=(location.hash.match(/^#(?:appa|fest)-(stay|curate|pass|host)/i)||[])[1];if(t&&want==='fest'){FX.tab=t.toLowerCase();if(view==='fest')render();}}
     if(want!==view&&(view==='fest'||view==='passport'||want!=='home')){view=want;if(want==='fest')fxLoad();if(want==='passport')ppLoad();render();window.scrollTo({top:0});}});
   document.addEventListener('click',ev=>{const c=ev.target.closest&&ev.target.closest('.fx-cell');if(c&&root.contains(c))fxAct('cell',c.dataset.fxu,c.dataset.fxd);});
 
@@ -2599,6 +2612,92 @@ ${kb()}`;}
     if(a==='schedDel'){ppSched(sched.filter(i=>i.id!==x));return;}
     ppActBase(a,x,y);
   }
+  /* ═════════ CURATE YOUR STAY — VIP (7+ nights) and VVIP (30 nights) planner across the festival venues ═════════ */
+  const CU={from:'2027-01-25',n:7,rooms:1,guests:2,route:[],plan:null,err:'',auto:false};
+  const cuUnits=()=>FX_VIP.concat([fxTent()]).filter(u=>u.rooms>0&&u.cap>=CU.guests);
+  const cuFree=(u,d)=>fxLeft(u,d)-fxCartOcc(u.id,d)>=CU.rooms;
+  function cuNights(){const last=CU.n>=FX.S.vipNights?FX.S.lastNight:FX.S.passLast;const ns=fxRange(CU.from,CU.n);return ns.filter(d=>d<=last);}
+  /* split nights into one run per stop, in order, as even as possible, every night free (DP) */
+  function cuAllocate(stops,ns){const K=stops.length,N=ns.length;if(!K||K>N)return null;const tgt=N/K;
+    const okRun=(s,a,b)=>{const u=fxU(stops[s]);for(let i=a;i<b;i++)if(!cuFree(u,ns[i]))return false;return true;};
+    const INF=1e18;const dp=Array.from({length:K+1},()=>Array(N+1).fill(INF)),from=Array.from({length:K+1},()=>Array(N+1).fill(-1));dp[0][0]=0;
+    for(let s=1;s<=K;s++)for(let i=s;i<=N-(K-s);i++)for(let j=s-1;j<i;j++){if(dp[s-1][j]>=INF||!okRun(s-1,j,i))continue;const c=dp[s-1][j]+(i-j-tgt)*(i-j-tgt);if(c<dp[s][i]){dp[s][i]=c;from[s][i]=j;}}
+    if(dp[K][N]>=INF)return null;const plan=[];let i=N;for(let s=K;s>=1;s--){const j=from[s][i];for(let k=j;k<i;k++)plan[k]={date:ns[k],unit:stops[s-1]};i=j;}return plan;}
+  function cuAutoRoute(ns){const us=cuUnits();const score=u=>ns.filter(d=>cuFree(u,d)).length;
+    const k=Math.max(1,Math.min(us.length,Math.round(ns.length/3.5)));
+    return us.map(u=>({u,s:score(u)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,k).map(x=>x.u.id).sort((a,b)=>FX_VIP.findIndex(v=>v.id===a)-FX_VIP.findIndex(v=>v.id===b));}
+  function cuRun(){const ns=cuNights();CU.err='';CU.plan=null;
+    if(ns.length<FX.S.vipNights){CU.err='Curated stays start at '+FX.S.vipNights+' nights. Move your arrival earlier or add nights.';return;}
+    let stops=CU.route.length?CU.route.slice():cuAutoRoute(ns);CU.auto=!CU.route.length;
+    if(!stops.length){CU.err='Nothing inside the festival is free for these nights. Try other dates or fewer rooms.';return;}
+    let plan=cuAllocate(stops,ns);
+    while(!plan&&CU.auto&&stops.length>1){stops=stops.slice(0,-1);plan=cuAllocate(stops,ns);}
+    if(!plan){const busy=stops.filter(id=>!ns.some(d=>cuFree(fxU(id),d))).map(id=>fxU(id).name);
+      CU.err=busy.length?busy.join(', ')+(busy.length>1?' are':' is')+' full for these nights. Remove '+(busy.length>1?'them':'it')+' or change dates.':'These stops can’t split your nights without hitting a full night. Try reordering, dropping a stop or shifting a day.';return;}
+    CU.plan=plan;}
+  function cuQuote(){if(!CU.plan)return null;const prem=new Set();let total=0;
+    CU.plan.forEach(p=>{const u=fxU(p.unit);total+=fxPrice(u,p.date,u.kind==='single'?1:CU.guests)*CU.rooms;prem.add(p.date);});
+    const t=fxTrip();const all=new Set([...prem]);t.lines.forEach(({p})=>{if(fxPrem(p.u))p.nights.forEach(d=>all.add(d));});
+    const pn=all.size,tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
+    return {total,tier,pn,discount:tier==='vvip'?+FX.S.vvipDiscount:tier==='vip'?+FX.S.vipDiscount:0};}
+  function fxCurateHTML(){
+    const S=FX.S;const ns=cuNights();const enc=ns.length>=S.vipNights;
+    const opts=fxRange(S.firstNight,fxDiff(S.firstNight,S.passLast)+1);
+    const maxN=fxDiff(CU.from,S.lastNight)+1;
+    const us=cuUnits();
+    const q=cuQuote();
+    const runs=[];if(CU.plan)CU.plan.forEach((p,i)=>{const r=runs[runs.length-1];if(r&&r.unit===p.unit)r.n++;else runs.push({unit:p.unit,from:p.date,n:1,i});});
+    return `<div><h2 class="fx-h2">Curate your stay <span class="fx-tier vip" style="vertical-align:4px;margin-left:6px">VIP · VVIP</span></h2>
+      <p class="fx-sub">For a week or the whole month inside the festival. Choose your dates and the venues you'd love to wake up in, in order, and we split your nights across them by what's free. Leave the venues blank and we'll pick a route for you. ${S.vipNights}+ nights is VIP (${inr(S.vipDiscount)} off, every show, priority entry); ${S.vvipNights}+ is VVIP (${inr(S.vvipDiscount)} off, special-access moments and artist meet-ups, plus the Encore nights).</p></div>
+      <div class="fx-panel">
+        <div class="fx-row">
+          <div class="fx-field" style="min-width:180px"><label for="cu-from">Arrive</label><select id="cu-from" onchange="CS.cu('from',this.value)">${opts.map(d=>`<option value="${d}" ${CU.from===d?'selected':''}>${fxFmt(d)}</option>`).join('')}</select></div>
+          <div class="fx-kv"><span>Nights</span><div class="fx-step"><button onclick="CS.cu('n',-1)" ${CU.n<=S.vipNights?'disabled':''} aria-label="Fewer nights">−</button><output>${CU.n}</output><button onclick="CS.cu('n',1)" ${CU.n>=maxN?'disabled':''} aria-label="More nights">+</button></div></div>
+          <div class="fx-chips"><button class="fx-chip ${CU.n===7?'on':''}" onclick="CS.cu('preset',7)">A week · VIP</button><button class="fx-chip ${CU.n===14?'on':''}" onclick="CS.cu('preset',14)">Two weeks</button><button class="fx-chip ${CU.n>=S.vvipNights?'on':''}" onclick="CS.cu('preset',${S.vvipNights})">The month · VVIP</button></div>
+        </div>
+        <div class="fx-row">
+          <div class="fx-kv"><span>Rooms</span><div class="fx-step"><button onclick="CS.cu('rooms',-1)" ${CU.rooms<=1?'disabled':''} aria-label="Fewer rooms">−</button><output>${CU.rooms}</output><button onclick="CS.cu('rooms',1)" ${CU.rooms>=4?'disabled':''} aria-label="More rooms">+</button></div></div>
+          <div class="fx-kv"><span>Adults per room</span><div class="fx-step"><button onclick="CS.cu('guests',-1)" ${CU.guests<=1?'disabled':''} aria-label="Fewer">−</button><output>${CU.guests}</output><button onclick="CS.cu('guests',1)" ${CU.guests>=4?'disabled':''} aria-label="More">+</button></div></div>
+          <p class="fx-note" style="flex:1;min-width:200px">${fxFmt(CU.from)} → ${fxFmt(fxAdd(CU.from,ns.length))} · ${ns.length} nights${ns.length<CU.n?' (trimmed to the festival)':''}${CU.guests>2?' · tents and Purrom need 2 or fewer':''}</p>
+        </div>
+        <div><span class="fx-eyebrow" style="color:var(--mute)">Venues, in the order you'd like them${CU.route.length?'':' · or leave empty and we choose'}</span>
+          <div class="fx-chips" style="margin-top:8px">${us.map(u=>{const i=CU.route.indexOf(u.id);const free=ns.filter(d=>cuFree(u,d)).length;
+            return `<button class="fx-chip ${i>=0?'on':''}" onclick="CS.cu('stop','${u.id}')" ${free||i>=0?'':'disabled'} title="${free} of ${ns.length} nights free">${i>=0?(i+1)+' · ':''}${esc(u.name)} <small style="opacity:.7">${free===ns.length?'free':free?free+'/'+ns.length:'full'}</small></button>`;}).join('')}</div>
+          ${CU.route.length?`<button class="fx-x" style="margin-top:8px" onclick="CS.cu('clear')">Clear venues</button>`:''}</div>
+        <div><button class="fx-btn" onclick="CS.cu('go')">${CU.plan?'Re-curate':'Curate my stay'}</button></div>
+        ${CU.err?`<div class="fx-err">${esc(CU.err)}</div>`:''}
+      </div>
+      ${CU.plan?`<div class="fx-panel accent">
+        <div class="fx-row between"><b class="fx-h2" style="font-size:19px">${CU.auto?'Our suggestion':'Your route'} · ${runs.length} venue${runs.length>1?'s':''}</b>${q.tier?`<span class="fx-tier ${q.tier}">${q.tier.toUpperCase()} · ${q.pn} nights inside</span>`:''}</div>
+        <div class="fx-items">${runs.map(r=>`<div class="fx-item"><div><div class="what">${esc(fxU(r.unit).name)}</div><div class="when">${fxFmt(r.from)} → ${fxFmt(fxAdd(r.from,r.n))} · ${r.n} night${r.n>1?'s':''}</div></div><div class="fx-money" style="align-self:center">${inr(CU.plan.slice(r.i,r.i+r.n).reduce((a,p)=>a+fxPrice(fxU(p.unit),p.date,fxU(p.unit).kind==='single'?1:CU.guests)*CU.rooms,0))}</div></div>`).join('')}</div>
+        <details><summary class="fx-x" style="cursor:pointer">Change any single night</summary>
+          <div class="fx-tbl" style="margin-top:8px"><table><tbody>${CU.plan.map((p,i)=>{const choices=cuUnits().filter(u=>u.id===p.unit||cuFree(u,p.date));
+            return `<tr><td style="white-space:nowrap">${fxFmt(p.date)}</td><td><select class="sel" onchange="CS.cu('night',${i},this.value)" aria-label="Venue for ${fxFmt(p.date)}">${choices.map(u=>`<option value="${u.id}" ${u.id===p.unit?'selected':''}>${esc(u.name)}</option>`).join('')}</select></td><td class="num">${inr(fxPrice(fxU(p.unit),p.date,fxU(p.unit).kind==='single'?1:CU.guests)*CU.rooms)}</td></tr>`;}).join('')}</tbody></table></div></details>
+        <div class="fx-lines"><div><span>${CU.plan.length} nights × ${CU.rooms} room${CU.rooms>1?'s':''}</span><b>${inr(q.total)}</b></div>${q.discount?`<div><span>${q.tier.toUpperCase()} discount (applied once to your trip)</span><b>−${inr(q.discount)}</b></div>`:''}</div>
+        <div class="fx-row between"><span class="fx-money" style="font-size:22px">${inr(Math.max(0,q.total-q.discount))}</span><button class="fx-btn" onclick="CS.cu('add')">Add to my trip</button></div>
+        <p class="fx-note">Includes festival entry for everyone each night. Prices follow live availability and are rechecked when you book.</p>
+      </div>`:''}`;
+  }
+  function cuAct(a,x,y){
+    const S=FX.S;const maxN=()=>fxDiff(CU.from,S.lastNight)+1;
+    if(a==='from'){CU.from=x;CU.n=Math.min(CU.n,maxN());CU.plan=null;}
+    else if(a==='n'){CU.n=Math.max(S.vipNights,Math.min(maxN(),CU.n+x));CU.plan=null;}
+    else if(a==='preset'){CU.n=x;if(fxDiff(CU.from,S.lastNight)+1<x)CU.from=fxAdd(S.lastNight,1-x)<S.firstNight?S.firstNight:fxAdd(S.lastNight,1-x);CU.n=Math.min(x,maxN());CU.plan=null;}
+    else if(a==='rooms'){CU.rooms=Math.max(1,Math.min(4,CU.rooms+x));CU.plan=null;}
+    else if(a==='guests'){CU.guests=Math.max(1,Math.min(4,CU.guests+x));CU.route=CU.route.filter(id=>fxU(id).cap>=CU.guests);CU.plan=null;}
+    else if(a==='stop'){const i=CU.route.indexOf(x);i>=0?CU.route.splice(i,1):CU.route.push(x);CU.plan=null;}
+    else if(a==='clear'){CU.route=[];CU.plan=null;}
+    else if(a==='go'){cuRun();}
+    else if(a==='night'){if(CU.plan&&CU.plan[x])CU.plan[x].unit=y;}
+    else if(a==='add'){if(!CU.plan)return;
+      const bad=CU.plan.find(p=>!cuFree(fxU(p.unit),p.date));if(bad){CU.err=fxU(bad.unit).name+' just filled up on '+fxShort(bad.date)+'. Curate again.';CU.plan=null;return render();}
+      CU.plan.forEach((p,i)=>{const last=FX.cart.stays[FX.cart.stays.length-1];
+        if(i>0&&CU.plan[i-1].unit===p.unit&&last&&last._cu)last.n++;
+        else FX.cart.stays.push({key:fxKey(),unit:p.unit,from:p.date,n:1,rooms:CU.rooms,guests:fxU(p.unit).kind==='single'?1:Math.min(CU.guests,fxU(p.unit).cap),_cu:1});});
+      FX.cart.stays.forEach(s=>delete s._cu);fxSave();
+      toast('Curated stay added · '+CU.plan.length+' nights');CU.plan=null;FX.tab='stay';FX.tripOpen=true;FX.last=null;FX.ticket=null;window.scrollTo({top:0,behavior:'smooth'});}
+    render();
+  }
   /* ═════════ RENDER ═════════ */
   let searchFocusHack=false;
   function render(){
@@ -2615,6 +2714,7 @@ ${kb()}`;}
   /* ═════════ PUBLIC API ═════════ */
   window.CS={
     fx(a,x,y){fxAct(a,x,y);},
+    cu(a,x,y){cuAct(a,x,y);},
     pp(a,x,y){ppDo(a,x,y);},
     csOpen(){const h=CSB.hold;h.open=true;h.err='';if(!h.phone&&guestPhone)h.phone=guestPhone;render();},
     csClose(){CSB.hold.open=false;CSB.hold.err='';render();},
@@ -2632,7 +2732,7 @@ ${kb()}`;}
       if(bk.days.length){CSB.hold.open=true;if(!CSB.hold.phone&&guestPhone)CSB.hold.phone=guestPhone;}
       render();setTimeout(()=>{const el=root.querySelector('.book-card');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
       if(!bk.days.length)toast('Tap your nights on the calendar, then Hold');},
-    go(v){const H={fest:'#appa',passport:'#passport'};
+    go(v){const H={fest:'#appa',passport:'#passport'};if(v==='fest'&&/^#(appa|fest)-/i.test(location.hash))H.fest=location.hash;
       if(v==='fest')fxLoad();if(v==='passport'){fxLoad();ppLoad();}
       try{if(H[v]){if(location.hash!==H[v])history.pushState({},'',H[v]);}else if(H[view]&&location.hash===H[view])history.pushState({},'',location.pathname+location.search);}catch(e){}if(v==='dash'&&!session){view='login';}else{view=v;}editing=null;edMedia=null;lbState=null;vtRender();window.scrollTo({top:0});},
     open(id){csLoad();if(activeProp!==id){bk={heads:2,days:[],sent:false};CSB.hold.open=false;CSB.hold.err='';}bkOpen=false;activeProp=id;view='detail';lbState=null;vtRender();window.scrollTo({top:0});},
@@ -2844,7 +2944,7 @@ ${kb()}`;}
   (function deepLink(){try{
     const q=new URLSearchParams(location.search).get('invite')||((location.hash.match(/#join-([A-Za-z0-9-]+)/i)||[])[1]);
     if(q)CS.invite(q);
-    else if(/^#(appa|fest)/i.test(location.hash)||new URLSearchParams(location.search).has('fest'))view='fest';
+    else if(/^#(appa|fest)/i.test(location.hash)||new URLSearchParams(location.search).has('fest')){view='fest';const t=(location.hash.match(/^#(?:appa|fest)-(stay|curate|pass|host)/i)||[])[1];if(t)FX.tab=t.toLowerCase();}
     else if(/^#passport/i.test(location.hash)){view='passport';setTimeout(ppLoad,0);}
     const stampQ=new URLSearchParams(location.search).get('stamp');
     if(stampQ&&/^[a-z]+\.[0-9a-f]{12}$/.test(stampQ)){const [sp,sg]=stampQ.split('.');view='passport';
