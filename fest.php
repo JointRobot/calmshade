@@ -38,6 +38,23 @@ function db() {
           : ($code === 1049 || stripos($msg, 'Unknown database') !== false ? 'database name not found: check dbname in FEST_DB_DSN'
           : ($code === 2002 || stripos($msg, 'connect') !== false ? 'database server not reachable: use host=localhost' : 'database error'));
     error_log('fest.php db: '.$msg);
+    /* Safe checks on fest-config.php (never reveals values): duplicate lines, stray spaces, odd quotes */
+    $diag = [];
+    $cfg = @file_get_contents(__DIR__.'/fest-config.php');
+    if ($cfg !== false) {
+      foreach (['FEST_DB_USER','FEST_DB_PASS','FEST_DB_DSN'] as $k) {
+        $n = preg_match_all('/^\s*define\(\s*[\'"]'.$k.'[\'"]/m', $cfg);
+        if ($n > 1) $diag[] = $k.' is defined '.$n.' times (only the first counts): delete the extra lines';
+      }
+      if (preg_match('/[\x{2018}\x{2019}\x{201C}\x{201D}]/u', $cfg)) $diag[] = 'the file contains curly quotes; retype them as straight quotes';
+      if (defined('FEST_DB_PASS') && FEST_DB_PASS !== trim(FEST_DB_PASS)) $diag[] = 'the password has a space at the start or end';
+      if (defined('FEST_DB_USER') && FEST_DB_USER !== trim(FEST_DB_USER)) $diag[] = 'the username has a space at the start or end';
+      if (defined('FEST_DB_PASS') && FEST_DB_PASS === '') $diag[] = 'the password is empty';
+      if (defined('FEST_DB_PASS') && stripos(FEST_DB_PASS, 'YOUR') !== false) $diag[] = 'the password is still the placeholder text';
+      if (defined('FEST_DB_USER') && stripos(FEST_DB_USER, 'YOUR') !== false) $diag[] = 'the username is still the placeholder text';
+    }
+    if ($diag) $hint .= '; '.implode('; ', $diag);
+    elseif ($code === 1045) $hint .= '; the file looks well-formed, so the password itself differs from hPanel';
     fail('Booking store is not reachable ('.$hint.')', 503);
   }
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
