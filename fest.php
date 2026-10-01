@@ -38,6 +38,7 @@ function db() {
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_bookings (ref VARCHAR(16) PRIMARY KEY, token VARCHAR(40) NOT NULL, status VARCHAR(12) NOT NULL, created_at BIGINT NOT NULL, tier VARCHAR(8), total BIGINT, payout BIGINT, items TEXT, guest TEXT, utr VARCHAR(60))');
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_listings (id VARCHAR(20) PRIMARY KEY, created_at BIGINT NOT NULL, status VARCHAR(12) NOT NULL, data TEXT, contact TEXT)');
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_kv (k VARCHAR(40) PRIMARY KEY, v TEXT)');
+  $pdo->exec('CREATE TABLE IF NOT EXISTS fest_hits (ip VARCHAR(64) NOT NULL, act VARCHAR(12) NOT NULL, at BIGINT NOT NULL)');
   return $pdo;
 }
 function is_mysql() { return defined('FEST_DB_DSN') && stripos(FEST_DB_DSN, 'mysql') === 0; }
@@ -156,8 +157,41 @@ function quote($stays, $passes, $occ) {
 }
 
 /* ---------- helpers ---------- */
-function body() { $j = json_decode(file_get_contents('php://input') ?: '{}', true); return is_array($j) ? $j : []; }
-function clean($s, $max) { return mb_substr(trim(preg_replace('/[\x00-\x1F\x7F]/u', ' ', (string)$s)), 0, $max); }
+function body() {
+  $raw = file_get_contents('php://input', false, null, 0, 65536) ?: '{}';
+  $j = json_decode($raw, true); return is_array($j) ? $j : [];
+}
+function clean($s, $max) {
+  $s = trim((string)preg_replace('/[\x00-\x1F\x7F]/u', ' ', (string)$s));
+  return function_exists('mb_substr') ? mb_substr($s, 0, $max) : substr($s, 0, $max);
+}
+function digits($s) { return substr(preg_replace('/\D/', '', (string)$s), -10); }
+function client_ip() { return hash('sha256', ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0').'|appa'); }
+/* Simple abuse guard: at most $max actions of one kind per visitor per $window seconds. */
+function throttle($act, $max, $window, $msg) {
+  $p = db(); $ip = client_ip(); $now = time();
+  $p->prepare('DELETE FROM fest_hits WHERE at < ?')->execute([$now - 86400 * 2]);
+  $st = $p->prepare('SELECT COUNT(*) c FROM fest_hits WHERE ip=? AND act=? AND at > ?'); $st->execute([$ip, $act, $now - $window]);
+  if ((int)$st->fetch()['c'] >= $max) fail($msg, 429);
+  $p->prepare('INSERT INTO fest_hits (ip,act,at) VALUES (?,?,?)')->execute([$ip, $act, $now]);
+}
+/* Best-effort email (Hostinger PHP mail). Never blocks a booking. */
+function notify($to, $subject, $lines) {
+  if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) return;
+  $host = preg_replace('/[^a-z0-9.-]/i', '', $_SERVER['HTTP_HOST'] ?? 'calmshade.in');
+  $from = defined('FEST_MAIL_FROM') ? FEST_MAIL_FROM : 'bookings@'.preg_replace('/^www\./', '', $host);
+  $headers = 'From: APPA Art Fest <'.$from.">\r\nReply-To: ".settings()['contact']."\r\nContent-Type: text/plain; charset=UTF-8";
+  @mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', implode("\n", $lines), $headers);
+}
+function inr($n) { return '₹'.number_format((float)$n); }
+function trip_lines($items) {
+  $out = [];
+  foreach ($items as $it) {
+    if ($it['kind'] === 'stay') $out[] = '- '.$it['name'].': '.gmdate('j M', strtotime($it['nights'][0])).' to '.gmdate('j M', strtotime(addDays(end($it['nights']), 1))).', '.count($it['nights']).' night(s), '.$it['rooms'].' room(s), '.$it['guests'].' adult(s) each — '.inr($it['total']);
+    else $out[] = '- Day pass '.gmdate('j M', strtotime($it['date'])).' × '.$it['qty'].' — '.inr($it['total']);
+  }
+  return $out;
+}
 function need_admin() {
   if (!defined('FEST_ADMIN_KEY') || strlen(FEST_ADMIN_KEY) < 12) fail('The festival desk is locked until FEST_ADMIN_KEY is set in fest-config.php.', 403);
   $k = $_SERVER['HTTP_X_FEST_KEY'] ?? '';
@@ -193,6 +227,11 @@ switch ($a) {
     if ($name === '') fail('Add your name.');
     if (strlen(preg_replace('/\D/', '', $phone)) < 10) fail('Add a 10-digit phone number.');
     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) fail('That email address looks wrong.');
+    throttle('book', 10, 86400, 'Too many bookings from this device today. Message us on WhatsApp and we will help.');
+    $S0 = settings(); $mineOpen = 0;
+    foreach (db()->query("SELECT status, created_at, guest FROM fest_bookings WHERE status='pending'") as $r)
+      if (active_booking($r, $S0) && digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') === digits($phone)) $mineOpen++;
+    if ($mineOpen >= 3) fail('You already have 3 unpaid bookings on hold. Pay or cancel one of them first.', 429);
     lock_start(); $ok = false;
     try {
       [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy());
@@ -204,12 +243,26 @@ switch ($a) {
         ->execute([$ref,$token,'pending',$now,$q['tier'],$q['total'],$q['payout'],json_encode($q['items']),json_encode(['name'=>$name,'phone'=>$phone,'email'=>$email,'note'=>$note,'discount'=>$q['discount']])]);
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
-    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + settings()['holdHours']*3600]);
+    $S = settings(); $until = gmdate('j M, H:i', $now + $S['holdHours']*3600 + 19800).' IST';
+    $body = array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], trip_lines($q['items']),
+      [$q['discount'] ? strtoupper($q['tier']).' discount: −'.inr($q['discount']) : '', 'Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : '']);
+    notify($S['contact'], 'New festival booking '.$ref.' · '.inr($q['total']), $body);
+    if ($email) notify($email, 'Your APPA Art Fest rooms are held · '.$ref, array_merge(['Hi '.$name.',', '', 'Your rooms are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.', ''], trip_lines($q['items']), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
+    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + $S['holdHours']*3600]);
   }
 
   case 'quote': {
     $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy());
     out(['ok'=>!$err,'quote'=>$q,'errors'=>$err]);
+  }
+
+  case 'find': {
+    if ($m !== 'POST') fail('Use POST');
+    throttle('find', 20, 3600, 'Too many lookups. Try again in an hour.');
+    $b = body(); $ref = strtoupper(clean($b['ref'] ?? '', 16)); $ph = digits($b['phone'] ?? '');
+    $st = db()->prepare('SELECT ref, token, guest FROM fest_bookings WHERE ref=?'); $st->execute([$ref]); $r = $st->fetch();
+    if (!$r || strlen($ph) < 10 || digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') !== $ph) { usleep(300000); fail('No booking matches that reference and phone number.', 404); }
+    out(['ok'=>true,'ref'=>$r['ref'],'token'=>$r['token']]);
   }
 
   case 'mine': {
@@ -228,10 +281,13 @@ switch ($a) {
     $b = body(); $st = db()->prepare('SELECT token,status FROM fest_bookings WHERE ref=?'); $st->execute([(string)($b['ref'] ?? '')]);
     $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($b['token'] ?? ''))) fail('Booking not found.', 404);
     if ($a === 'utr') {
-      $utr = clean($b['utr'] ?? '', 60); if (strlen($utr) < 6) fail('That reference number looks short.');
+      $utr = clean($b['utr'] ?? '', 200); if (strlen(preg_replace('/\W/', '', $utr)) < 6) fail('That reference number looks short. UPI references are usually 12 digits.');
+      if ($r['status'] === 'cancelled') fail('This booking was cancelled. Message us on WhatsApp if you have already paid.');
       db()->prepare('UPDATE fest_bookings SET utr=? WHERE ref=?')->execute([$utr, $b['ref']]);
+      notify(settings()['contact'], 'Payment reference for '.$b['ref'], ['UPI reference: '.$utr, 'Check it and confirm the booking in the APPA Fest desk.']);
     } else {
-      if ($r['status'] !== 'pending') fail('Only unpaid bookings can be cancelled here. Write to the festival team for a confirmed one.');
+      if ($r['status'] === 'cancelled') out(['ok'=>true]);
+      if ($r['status'] !== 'pending') fail('Paid bookings can only be changed by the festival team. Message us on WhatsApp.');
       db()->prepare("UPDATE fest_bookings SET status='cancelled' WHERE ref=?")->execute([$b['ref']]);
     }
     out(['ok'=>true]);
@@ -246,8 +302,10 @@ switch ($a) {
     if ($d['name'] === '' || $d['location'] === '' || $ct['name'] === '' || strlen(preg_replace('/\D/', '', $ct['phone'])) < 10) fail('Fill in the property name, area, your name and a 10-digit phone number.');
     $n = (int)db()->query("SELECT COUNT(*) c FROM fest_listings WHERE status='pending'")->fetch()['c'];
     if ($n > 300) fail('We have a lot of applications right now. Write to the festival team instead.', 429);
+    throttle('list', 5, 86400, 'Too many applications from this device today. Write to the festival team instead.');
     $id = strtoupper(bin2hex(random_bytes(4)));
     db()->prepare('INSERT INTO fest_listings (id,created_at,status,data,contact) VALUES (?,?,?,?,?)')->execute([$id,time(),'pending',json_encode($d),json_encode($ct)]);
+    notify(settings()['contact'], 'New partner stay application: '.$d['name'], [$d['name'].' ('.$d['type'].'), '.$d['location'], $d['rooms'].' rooms × '.$d['maxGuests'].' adults at '.inr($d['rate']).' a night', 'Contact: '.$ct['name'].', '.$ct['phone'].' '.$ct['email'], '', 'Approve it in the APPA Fest desk.']);
     out(['ok'=>true,'id'=>$id]);
   }
 
@@ -265,7 +323,27 @@ switch ($a) {
   case 'status': {
     need_admin(); $b = body(); $s = (string)($b['status'] ?? '');
     if (!in_array($s, ['confirmed','cancelled','pending'], true)) fail('Unknown status');
-    $st = db()->prepare('UPDATE fest_bookings SET status=? WHERE ref=?'); $st->execute([$s, (string)($b['ref'] ?? '')]);
+    $ref = (string)($b['ref'] ?? ''); $S = settings();
+    $st = db()->prepare('SELECT * FROM fest_bookings WHERE ref=?'); $st->execute([$ref]); $r = $st->fetch();
+    if (!$r) fail('Booking not found.', 404);
+    lock_start(); $ok = false;
+    try {
+      if ($s !== 'cancelled' && !active_booking($r, $S)) {
+        /* reviving an expired or cancelled booking: its rooms may have gone to someone else */
+        $occ = occupancy(); $U = units(); $clash = [];
+        foreach (json_decode($r['items'], true) ?: [] as $it) if ($it['kind'] === 'stay') foreach ($it['nights'] as $d) {
+          $cap = $U[$it['unit']]['rooms'] ?? 0;
+          if (($occ[$it['unit']][$d] ?? 0) + $it['rooms'] > $cap) $clash[] = $it['name'].' on '.gmdate('j M', strtotime($d));
+        }
+        if ($clash) { lock_end(false); fail('Those rooms were taken after this hold expired: '.implode(', ', array_slice(array_unique($clash), 0, 4)).'. Refund the guest or move them.', 409); }
+      }
+      $created = ($s === 'pending') ? time() : (int)$r['created_at'];
+      db()->prepare('UPDATE fest_bookings SET status=?, created_at=? WHERE ref=?')->execute([$s, $created, $ref]);
+      $ok = true; lock_end(true);
+    } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
+    $g = json_decode($r['guest'], true) ?: [];
+    if ($s === 'confirmed') notify($g['email'] ?? '', 'Confirmed: your APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'Payment received — your booking is confirmed. See you at the lake.', ''], trip_lines(json_decode($r['items'], true) ?: []), ['', '— APPA Art Fest 2027']));
+    if ($s === 'cancelled') notify($g['email'] ?? '', 'Cancelled: APPA Art Fest booking '.$ref, ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$ref.' has been cancelled and its rooms released. If you already paid, reply to this email and we will sort out the refund.', '', '— APPA Art Fest 2027']);
     out(['ok'=>true]);
   }
   case 'approve': {

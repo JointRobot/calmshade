@@ -846,6 +846,7 @@ body{background:var(--bg);}
   #cs-app .fx-board .rowh{min-width:134px; max-width:134px; padding:6px 8px;}
   #cs-app .fx-board .rowh small{display:none;}
   #cs-app .fx-mast{padding-top:16px;}
+  #cs-app .fx-trip-head h2{display:none;}
 }
 
 </style>
@@ -856,6 +857,10 @@ body{background:var(--bg);}
 (function(){
   const root=document.getElementById('cs-app');
   const COMM=0.03; // platform commission on confirmed bookings
+  /* Booking month for Calm Shade's own calendars: the current month, or next month in its last week */
+  const BM=(()=>{const n=new Date();let y=n.getFullYear(),m=n.getMonth();if(new Date(y,m+1,0).getDate()-n.getDate()<7){m++;if(m>11){m=0;y++;}}
+    const L=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return {y,m,days:new Date(y,m+1,0).getDate(),name:L[m],mon:L[m].slice(0,3)};})();
 
   /* ═════════ ACCESS ═════════ */
   const SUPER={name:'Karthik', emails:['karthik@xtrathin.in'], phones:['9619176007'], ownerId:'o1'};
@@ -905,10 +910,10 @@ body{background:var(--bg);}
   const GLOBAL_FAQ=[['Availability','What dates are free between X and Y?'],['Pricing','Cost per head with / without meals?'],['Rooms','Do you have a room for 4 people?'],['Food','What is on the menu? Do you serve non-veg?'],['Activities','What can we do nearby?'],['Policies','Is it pet friendly? Check-in / check-out time?'],['Full property','Can we book the entire place?'],['Transport','Can you arrange a cab?'],['Weather','How is the weather this time of year?'],['Amenities','Is there AC / WiFi / hot water?']];
   let CAL={p1:{10:'bk',11:'bk',18:'bk'},p2:{12:'bk'},p3:{},p4:{4:'bk',5:'bk',25:'bk',26:'bk'},p5:{19:'bk'},p6:{11:'bk',12:'bk'},p7:{8:'bk'},p8:{},p9:{}};
   let BOOKINGS=[
-    {id:'B-1042',prop:'p4',guest:'Sneha K.',dates:'4–5 Jul',head:2,amt:8800,status:'confirmed'},
-    {id:'B-1046',prop:'p1',guest:'Arjun M.',dates:'10–11 Jul',head:6,amt:21600,status:'confirmed'},
-    {id:'B-1051',prop:'p6',guest:'Trek Club Pune',dates:'11–12 Jul',head:12,amt:26400,status:'confirmed'},
-    {id:'B-1049',prop:'p7',guest:'Devika R.',dates:'8 Jul',head:3,amt:4800,status:'confirmed'},
+    {id:'B-1042',prop:'p4',guest:'Sneha K.',dates:'4–5 '+BM.mon+'',head:2,amt:8800,status:'confirmed'},
+    {id:'B-1046',prop:'p1',guest:'Arjun M.',dates:'10–11 '+BM.mon+'',head:6,amt:21600,status:'confirmed'},
+    {id:'B-1051',prop:'p6',guest:'Trek Club Pune',dates:'11–12 '+BM.mon+'',head:12,amt:26400,status:'confirmed'},
+    {id:'B-1049',prop:'p7',guest:'Devika R.',dates:'8 '+BM.mon+'',head:3,amt:4800,status:'confirmed'},
   ];
   let seq=1052, pseq=10, momSeq=2;
   let MOMENTS=[];
@@ -932,7 +937,7 @@ body{background:var(--bg);}
   const bkLabel=()=>{if(!bk.days.length)return'';const a=[...bk.days].sort((x,y)=>x-y);
     const parts=[];let s=a[0],p=a[0];
     for(let i=1;i<=a.length;i++){const v=a[i];if(v===p+1){p=v;continue;}parts.push(s===p?''+s:s+'–'+p);s=v;p=v;}
-    return parts.join(', ')+' Jul';};
+    return parts.join(', ')+' '+BM.mon;};
   let favs={};
 
   /* ═════════ HELPERS ═════════ */
@@ -1017,8 +1022,8 @@ body{background:var(--bg);}
     return null;}
 
   /* ═════════ AI CONCIERGE ═════════ */
-  function kb(){return PROPS.filter(p=>p.live).map(p=>`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${inr(p.ppWith)} with all meals, ${inr(p.ppWithout)} without (breakfast only). Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked July 2026 dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' July':'none — July open'}.`).join('\n\n');}
-  function sysPrompt(n){return `You are the Calm Shade concierge — the always-awake WhatsApp host for a collective of independent homestays. Today is July 2026. The guest opened this chat from "${n}", so start in that stay's context; if they ask about another Calm Shade stay, switch naturally and keep the thread coherent.
+  function kb(){return PROPS.filter(p=>p.live).map(p=>`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${inr(p.ppWith)} with all meals, ${inr(p.ppWithout)} without (breakfast only). Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked ${BM.name} ${BM.y} dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' '+BM.name:'none — '+BM.name+' open'}.`).join('\n\n');}
+  function sysPrompt(n){return `You are the Calm Shade concierge — the always-awake WhatsApp host for a collective of independent homestays. Today is ${new Date().toDateString()}; bookings are open for ${BM.name} ${BM.y}. The guest opened this chat from "${n}", so start in that stay's context; if they ask about another Calm Shade stay, switch naturally and keep the thread coherent.
 
 STRICT RULES:
 - Answer ONLY from the knowledge base. Never invent prices, dates, menus or amenities. If unknown, say you'll check with the host and get back.
@@ -1070,7 +1075,7 @@ ${kb()}`;}
     const id='B-'+(seq++);
     BOOKINGS.push({id,prop:d.prop,guest:'Chat guest · +91 '+guestPhone,dates:d.dates,head:d.head,amt:d.amt,status:'pending',fromChat:true});
     if(!CAL[d.prop])CAL[d.prop]={};
-    let n=0;for(let day=20;day<=31&&n<2;day++){if(!CAL[d.prop][day]){CAL[d.prop][day]='tn';n++;}}
+    let n=0;for(let day=Math.max(20,TODAY);day<=BM.days&&n<2;day++){if(!CAL[d.prop][day]){CAL[d.prop][day]='tn';n++;}}
     chat.awaitShot=false;chat.pendingId=id;
     chat.msgs.push({k:'in',t:`Received, thank you 🙏 I've placed a tentative hold for ${d.dates} at ${p.name} (${d.head} guests, ${inr(d.amt)}) and forwarded your screenshot to ${O(p.owner).name}, your host. You'll get final confirmation here — usually within the hour.`,tm:now()});
     chat.msgs.push({k:'sys',t:`Booking ${id} created · pending host approval`});
@@ -1115,13 +1120,13 @@ ${kb()}`;}
   const MAPXY={p1:[140,118],p2:[186,152],p3:[214,104],p4:[112,176],p5:[318,214],p6:[362,182],p7:[432,118],p8:[292,132],p9:[336,96]};
   function xyOf(id){if(MAPXY[id])return MAPXY[id];let h=0;for(const c of id)h=h*31+c.charCodeAt(0);return MAPXY[id]=[70+(h%400),70+((h*7)%200)];}
   function tripStops(){if(cur.plan){const s=[];cur.plan.forEach(d=>{if(!s.length||s[s.length-1]!==d.prop)s.push(d.prop);});return s;}return cur.route;}
-  const TODAY=new Date().getFullYear()===2026&&new Date().getMonth()===6?new Date().getDate():1;
+  const TODAY=new Date().getFullYear()===BM.y&&new Date().getMonth()===BM.m?new Date().getDate():1;
   const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const dowOf=d=>DOW[new Date(2026,6,d).getDay()];
+  const dowOf=d=>DOW[new Date(BM.y,BM.m,d).getDay()];
   const capOf=p=>parseInt((String(p.cap).match(/\d+/)||[99])[0],10);
   const freeOn=(p,d)=>!((CAL[p.id]||{})[d]);
   function tripDates(){if(!cur.start)return[];const e=cur.end||cur.start;const a=[];for(let d=cur.start;d<=e;d++)a.push(d);return a;}
-  const trLabel=()=>cur.start?((cur.end&&cur.end!==cur.start?cur.start+'–'+cur.end:''+cur.start)+' Jul'):'';
+  const trLabel=()=>cur.start?((cur.end&&cur.end!==cur.start?cur.start+'–'+cur.end:''+cur.start)+' '+BM.mon):'';
   function availOf(p){const ds=tripDates();const okCap=capOf(p)>=cur.heads;
     if(!ds.length)return{free:0,total:0,okCap,full:okCap,none:false};
     const free=ds.filter(d=>freeOn(p,d)).length;
@@ -1174,17 +1179,17 @@ ${kb()}`;}
     </svg>`;
   }
   function tcalHTML(){
-    const first=new Date(2026,6,1).getDay();
+    const first=new Date(BM.y,BM.m,1).getDay();
     const wp=cur.route.length?P(cur.route[0]):P('p1');
     const w=wp?ensureWx(wp):null;const wxm={};
     if(w&&w.daily)w.daily.time.forEach((t,i)=>{const d=new Date(t+'T00:00');
-      if(d.getFullYear()===2026&&d.getMonth()===6)wxm[d.getDate()]={ic:wxIcon(w.daily.weather_code[i]),t:Math.round(w.daily.temperature_2m_max[i])};});
+      if(d.getFullYear()===BM.y&&d.getMonth()===BM.m)wxm[d.getDate()]={ic:wxIcon(w.daily.weather_code[i]),t:Math.round(w.daily.temperature_2m_max[i])};});
     let c=['S','M','T','W','T','F','S'].map(d=>`<div class="dw">${d}</div>`).join('');
     for(let i=0;i<first;i++)c+='<div class="dy bl"></div>';
-    for(let d=1;d<=31;d++){const past=d<TODAY;
+    for(let d=1;d<=BM.days;d++){const past=d<TODAY;
       const sel=cur.start&&(d===cur.start||d===cur.end);
       const inr2=cur.start&&cur.end&&d>cur.start&&d<cur.end;
-      c+=`<div class="dy ${past?'dis':''}${sel?' sel':''}${inr2?' inr':''}" ${past?'':`onclick="CS.curPick(${d})" role="button" tabindex="0" aria-label="${d} July"`}>${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
+      c+=`<div class="dy ${past?'dis':''}${sel?' sel':''}${inr2?' inr':''}" ${past?'':`onclick="CS.curPick(${d})" role="button" tabindex="0" aria-label="${d} ${BM.name}"`}>${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
     return `<div class="cal gcal">${c}</div>`;
   }
   function curated(){
@@ -1237,7 +1242,7 @@ ${kb()}`;}
             <div class="cf"><label>Guests</label><input type="number" min="1" max="20" value="${cur.heads}" onchange="CS.curHeads(this.value)"></div>
             <div class="cf" style="flex:1.6; min-width:190px"><label>Your WhatsApp number</label><input type="tel" inputmode="tel" placeholder="98XXX XXXXX" value="${esc(cur.phone||guestPhone)}" onchange="CS.curPhone(this.value)"></div>
           </div>
-          <div class="bplbl" style="margin-bottom:9px">Travel dates · July 2026 ${cur.start?`<span style="color:var(--ink)">· ${trLabel()} · ${ds.length} night${ds.length>1?'s':''}</span>`:'<span style="font-weight:600;color:var(--faint)">· tap start, then end</span>'}</div>
+          <div class="bplbl" style="margin-bottom:9px">Travel dates · ${BM.name} ${BM.y} ${cur.start?`<span style="color:var(--ink)">· ${trLabel()} · ${ds.length} night${ds.length>1?'s':''}</span>`:'<span style="font-weight:600;color:var(--faint)">· tap start, then end</span>'}</div>
           ${tcalHTML()}
           <div class="routebox" style="margin-top:14px">${routeChips}${rstops.length?`<button class="rclear" onclick="CS.curClear()">Clear</button>`:''}</div>
           <button class="b-cur" onclick="CS.curGo()" ${cur.busy?'disabled':''}>${cur.busy?'The concierge is curating…':'Curate my trip'}</button>
@@ -1279,11 +1284,11 @@ ${kb()}`;}
     cur.conflict=null;
     const seq=[];blocks.forEach((bl,si)=>bl.forEach((d,k)=>seq.push({prop:stops[si],date:d,note:k===0?'Arrive by afternoon, settle in, eat well.':'Full day here — slow morning, explore nearby.'})));
     try{
-      const dayList=seq.map((d,i)=>`Day ${i+1} (${dowOf(d.date)} ${d.date} Jul): ${P(d.prop).name}`).join('; ');
+      const dayList=seq.map((d,i)=>`Day ${i+1} (${dowOf(d.date)} ${d.date} ${BM.mon}): ${P(d.prop).name}`).join('; ');
       const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,
           system:'You are the Calm Shade trip curator for a homestay collective.\n'+kb(),
-          messages:[{role:'user',content:`This itinerary is fixed: ${dayList}. For ${cur.heads} guests in July (monsoon), write one short line (max 14 words) for each day. Respond ONLY with JSON: {"notes":["...","..."]} — exactly ${seq.length} notes in order.`}]})});
+          messages:[{role:'user',content:`This itinerary is fixed: ${dayList}. For ${cur.heads} guests in ${BM.name}, write one short line (max 14 words) for each day. Respond ONLY with JSON: {"notes":["...","..."]} — exactly ${seq.length} notes in order.`}]})});
       const d=await r.json();const txt=(d.content||[]).map(b=>b.type==='text'?b.text:'').join('');
       const j=JSON.parse(txt.match(/\{[\s\S]*\}/)[0]);
       (j.notes||[]).slice(0,seq.length).forEach((n,i)=>{if(n)seq[i].note=String(n).slice(0,120);});
@@ -1378,7 +1383,7 @@ ${kb()}`;}
     </section>
     <div class="sep rv sep-dusk right" aria-hidden="true" data-name="night"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M8 30 Q90 8 158 22 T230 18"/><path class="fl" d="M206 10 a8 8 0 1 0 8 11 a6.5 6.5 0 1 1 -8 -11z"/><circle class="ffd" cx="60" cy="18" r="2"/><circle class="ffd" cx="118" cy="26" r="2"/><circle class="ffd" cx="160" cy="12" r="2"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <footer class="foot"><div class="foot-in">
-      <span>© 2026 Calm Shade · a homestay collective</span><span class="sp"></span>
+      <span>© ${new Date().getFullYear()} Calm Shade · a homestay collective</span><span class="sp"></span>
       <button onclick="CS.go('login')">Host login</button>
     </div></footer></div>`;
   }
@@ -1449,7 +1454,7 @@ ${kb()}`;}
           <div class="bk-plan${bkOpen?' open':''}">
             <div class="steprow"><span class="bplbl">Guests</span>
               <button onclick="CS.bkHeads(-1)" aria-label="Fewer guests">−</button><b>${bk.heads}</b><button onclick="CS.bkHeads(1)" aria-label="More guests">+</button></div>
-            <div class="bplbl" style="margin-bottom:9px">Tap any nights you like · July 2026 <span style="font-weight:600;color:var(--faint)">· forecast shown where available</span></div>
+            <div class="bplbl" style="margin-bottom:9px">Tap any nights you like · ${BM.name} ${BM.y} <span style="font-weight:600;color:var(--faint)">· forecast shown where available</span></div>
             ${gcalHTML(p)}
             ${bk.days.length
               ?`<div class="bksum"><span>${bkLabel()} · ${bkNights()} night${bkNights()>1?'s':''} · ${bk.heads} guest${bk.heads>1?'s':''} with meals</span><b>${inr(p.ppWith*bk.heads*bkNights())}</b><button class="rclear" onclick="CS.bkClear()">Clear</button></div>`
@@ -1514,25 +1519,25 @@ ${kb()}`;}
   }
 
   function gcalHTML(p){
-    const first=new Date(2026,6,1).getDay();
+    const first=new Date(BM.y,BM.m,1).getDay();
     const w=ensureWx(p);const wxm={};
     if(w&&w.daily)w.daily.time.forEach((t,i)=>{const d=new Date(t+'T00:00');
-      if(d.getFullYear()===2026&&d.getMonth()===6)wxm[d.getDate()]={ic:wxIcon(w.daily.weather_code[i]),t:Math.round(w.daily.temperature_2m_max[i])};});
+      if(d.getFullYear()===BM.y&&d.getMonth()===BM.m)wxm[d.getDate()]={ic:wxIcon(w.daily.weather_code[i]),t:Math.round(w.daily.temperature_2m_max[i])};});
     let c=['S','M','T','W','T','F','S'].map(d=>`<div class="dw">${d}</div>`).join('');
     for(let i=0;i<first;i++)c+='<div class="dy bl"></div>';
-    for(let d=1;d<=31;d++){const s=(CAL[p.id]||{})[d];const dis=s==='bk'||s==='tn';
+    for(let d=1;d<=BM.days;d++){const s=(CAL[p.id]||{})[d];const dis=s==='bk'||s==='tn'||d<TODAY;
       const sel=bk.days.includes(d);
-      c+=`<div class="dy ${dis?'dis':''}${sel?' sel':''}" ${dis?'':`onclick="CS.bkDay(${d})" role="button" tabindex="0" aria-label="${sel?'Deselect':'Select'} ${d} July" aria-pressed="${sel?'true':'false'}"`}>${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
+      c+=`<div class="dy ${dis?'dis':''}${sel?' sel':''}" ${dis?'':`onclick="CS.bkDay(${d})" role="button" tabindex="0" aria-label="${sel?'Deselect':'Select'} ${d} ${BM.name}" aria-pressed="${sel?'true':'false'}"`}>${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
     return `<div class="cal gcal">${c}</div>`;
   }
   function calHTML(pid){
-    const first=new Date(2026,6,1).getDay();
+    const first=new Date(BM.y,BM.m,1).getDay();
     const w=ensureWx(P(pid));const wxm={};
     if(w&&w.daily)w.daily.time.forEach((t,i)=>{const d=new Date(t+'T00:00');
-      if(d.getFullYear()===2026&&d.getMonth()===6)wxm[d.getDate()]={ic:wxIcon(w.daily.weather_code[i]),t:Math.round(w.daily.temperature_2m_max[i])};});
+      if(d.getFullYear()===BM.y&&d.getMonth()===BM.m)wxm[d.getDate()]={ic:wxIcon(w.daily.weather_code[i]),t:Math.round(w.daily.temperature_2m_max[i])};});
     let c=['S','M','T','W','T','F','S'].map(d=>`<div class="dw">${d}</div>`).join('');
     for(let i=0;i<first;i++)c+='<div class="dy bl"></div>';
-    for(let d=1;d<=31;d++){const s=(CAL[pid]||{})[d];c+=`<div class="dy ${s==='bk'?'bk':s==='tn'?'tn':''}">${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
+    for(let d=1;d<=BM.days;d++){const s=(CAL[pid]||{})[d];c+=`<div class="dy ${s==='bk'?'bk':s==='tn'?'tn':''}">${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
     return `<div class="cal">${c}</div><div class="leg">
       <span><i style="background:var(--ink)"></i>Booked</span>
       <span><i style="background:var(--r2)"></i>Tentative hold</span>
@@ -1610,7 +1615,7 @@ ${kb()}`;}
       <div class="stats">
         <div class="stat" style="--stc:var(--r2)"><div class="k">Pending approvals</div><div class="v">${pend.length} ${pend.length?'<small>action needed</small>':''}</div></div>
         <div class="stat" style="--stc:var(--r6)"><div class="k">Upcoming stays</div><div class="v">${conf.length}</div></div>
-        <div class="stat" style="--stc:var(--r4)"><div class="k">Your payout · Jul</div><div class="v">${inr(payout)} <small>after 3%</small></div></div>
+        <div class="stat" style="--stc:var(--r4)"><div class="k">Your payout · ${BM.mon}</div><div class="v">${inr(payout)} <small>after 3%</small></div></div>
         <div class="stat" style="--stc:var(--r7)"><div class="k">Live listings</div><div class="v">${myProps.filter(p=>p.live).length}/${myProps.length}</div></div>
       </div>
 
@@ -1677,7 +1682,7 @@ ${kb()}`;}
         <p class="nt2" style="margin-top:16px">How trust works: entry only by invite · 3 invites per property per year · every 10 bad reviews among your active referrals costs you 2 points · remove a referral anytime · a well-reviewed host may vouch for the struggling host who invited them, granting a 10-booking recovery window · reviews are collected on WhatsApp after checkout.</p>
         </div></div>`;})()}
 
-      <div class="pan"><div class="ph2"><h3>Calendar · July 2026</h3><span class="sp"></span>
+      <div class="pan"><div class="ph2"><h3>Calendar · ${BM.name} ${BM.y}</h3><span class="sp"></span>
         <select class="sel" onchange="CS.pickProp(this.value)">${myProps.map(p=>`<option value="${p.id}" ${p.id===ownerProp?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
       </div><div class="pb">${ownerProp?calHTML(ownerProp):'<div class="empty">Add a listing first.</div>'}</div></div>
 
@@ -1695,7 +1700,7 @@ ${kb()}`;}
       <div class="stats">
         <div class="stat" style="--stc:var(--r7)"><div class="k">Live listings</div><div class="v">${PROPS.filter(p=>p.live).length}</div></div>
         <div class="stat" style="--stc:var(--r8)"><div class="k">Hosts</div><div class="v">${OWNERS.length}</div></div>
-        <div class="stat" style="--stc:var(--r4)"><div class="k">Your 3% commission · Jul</div><div class="v">${inr(commTotal)}</div></div>
+        <div class="stat" style="--stc:var(--r4)"><div class="k">Your 3% commission · ${BM.mon}</div><div class="v">${inr(commTotal)}</div></div>
         <div class="stat" style="--stc:var(--r2)"><div class="k">Payment queue</div><div class="v">${pend.length} ${pend.length?'<small>to verify</small>':''}</div></div>
       </div>
 
@@ -1892,7 +1897,8 @@ ${kb()}`;}
   const fxLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem('appa-'+k)||'null');localStorage.setItem('appa-'+k,JSON.stringify(v));}catch(e){return null;}};
   const FX={S:Object.assign({},FX_DEF),occ:{},listings:[],loaded:false,offline:false,deskReady:false,
     tab:'stay',filter:'all',sel:null,rooms:1,guests:2,passDays:[],passQty:2,
-    cart:fxLS('cart')||{stays:[],passes:[]},tickets:fxLS('tickets')||[],mine:[],
+    cart:(c=>c&&Array.isArray(c.stays)&&Array.isArray(c.passes)?{stays:c.stays.filter(x=>x&&x.unit&&/^\d{4}-\d\d-\d\d$/.test(x.from)&&x.n>0&&x.rooms>0),passes:c.passes.filter(x=>x&&/^\d{4}-\d\d-\d\d$/.test(x.date)&&x.qty>0)}:{stays:[],passes:[]})(fxLS('cart')),
+    tickets:(Array.isArray(fxLS('tickets'))?fxLS('tickets'):[]).filter(t=>t&&t.ref&&t.token),mine:[],arm:null,find:{open:false,ref:'',phone:'',err:''},
     checkout:false,busy:false,last:null,err:'',tripOpen:false,
     form:Object.assign({name:'',phone:'',email:'',note:''},fxLS('guest')||{}),utr:'',
     host:{name:'',type:'Homestay',location:'',distance:'',rooms:4,maxGuests:2,rate:4500,desc:'',cname:'',phone:'',email:''},hostSent:null,
@@ -1917,8 +1923,10 @@ ${kb()}`;}
     return j;}
   function fxQuiet(){const a=document.activeElement;return !(a&&a.closest&&a.closest('#cs-app')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));}
   async function fxLoad(){
-    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;}
-    catch(e){if(!FX.loaded)FX.offline=true;}
+    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;FX.synced=Date.now();
+      const before=FX.cart.stays.length;FX.cart.stays=FX.cart.stays.filter(st=>fxU(st.unit));
+      if(FX.cart.stays.length<before){fxSave();toast('A partner stay in your trip is no longer listed, so it was removed');}}
+    catch(e){FX.offline=true;clearTimeout(fxLoad.t);fxLoad.t=setTimeout(()=>{if(view==='fest')fxLoad();},15000);}
     FX.loaded=true;
     if(FX.tickets.length&&!FX.offline){try{FX.mine=(await fxCall('mine',{tickets:FX.tickets})).bookings||[];}catch(e){}}
     if((view==='fest'||view==='home')&&fxQuiet())render();}
@@ -1957,6 +1965,10 @@ ${kb()}`;}
     if(dbl.length)w.push('Two different places on '+dbl.map(fxShort).join(', ')+'. Fine for a group; otherwise remove one.');
     const ns=Object.keys(byNight).sort();
     if(ns.length>1){const gaps=[];for(let d=ns[0];d<ns[ns.length-1];d=fxAdd(d,1))if(!byNight[d])gaps.push(d);if(gaps.length)w.push('No stay booked on '+gaps.map(fxShort).join(', ')+'.');}
+    const out=ns.filter(d=>d<FX.S.firstNight||d>FX.S.lastNight);
+    if(out.length)e.push('Some nights in your trip ('+out.slice(0,3).map(fxShort).join(', ')+') are outside the festival dates now. Remove them.');
+    const badPass=FX.cart.passes.filter(p=>p.date<FX.S.firstNight||p.date>FX.S.passLast);
+    if(badPass.length)e.push('A day pass in your trip is outside the festival days. Remove it.');
     const enc=ns.filter(fxEnc);
     if(enc.length&&!t.tier)e.push('The Encore nights are for VIP and VVIP guests. Add '+(FX.S.vipNights-t.pn)+' more nights inside the festival, or remove them.');
     for(const {s,p} of t.lines)for(const d of p.nights){const l=fxLeft(p.u,d)-fxCartOcc(s.unit,d,s.key);if(l<s.rooms){e.push(p.u.name+' has only '+Math.max(0,l)+' left on '+fxShort(d)+'.');break;}}
@@ -1986,7 +1998,7 @@ ${kb()}`;}
         <h1>Stays <em>&amp;</em> passes</h1>
         <p>25 Jan to 25 Feb 2027 around the lake at Kamshet. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
       </div><nav class="fx-tabs">${tabs.map(([k,l])=>`<button class="fx-tab ${FX.tab===k?'on':''}" onclick="CS.fx('tab','${k}')">${l}</button>`).join('')}</nav></header>
-      ${FX.offline?`<div class="fx-warn" style="margin-top:16px">Preview mode: the booking desk isn't reachable from here, so bookings in this window are not saved.</div>`:''}
+      ${FX.offline?`<div class="fx-err" style="margin-top:16px">We can't reach the booking desk right now, so the room counts may be out of date and booking is paused. We'll keep trying. <button class="fx-x" onclick="CS.fx('retry')">Try again now</button></div>`:''}
       <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
     </div>`;}
 
@@ -2098,28 +2110,35 @@ ${kb()}`;}
         <div class="fx-field"><label for="fxg-note">Anything we should know?</label><textarea id="fxg-note" rows="2" maxlength="300" oninput="CS.fx('guestF','note',this.value)" placeholder="Kids' ages, arrival time, food preferences">${esc(f.note)}</textarea></div>
         <p class="fx-note">We hold your rooms for ${FX.S.holdHours} hours while you pay by UPI.</p>
         ${FX.err&&FX.tab!=='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
-        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy?'disabled':''}>${FX.busy?'Holding your rooms…':'Hold my rooms'}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
+        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy||FX.offline?'disabled':''}>${FX.busy?'Holding your rooms…':'Hold my rooms'}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
       :`<button class="fx-btn" style="justify-content:center" onclick="CS.fx('checkout')" ${e.length?'disabled':''}>Book this trip</button>`;
-    const mine=FX.mine.length?`<div><b class="fx-h2" style="font-size:17px">Your bookings</b><div class="fx-items" style="margin-top:8px">${FX.mine.map(b=>`<div class="fx-item"><div><div class="what">${esc(b.ref)}</div><div class="when">${(b.items||[]).length} item${(b.items||[]).length===1?'':'s'} · ${inr(b.total)}</div></div><div style="text-align:right"><span class="fx-status ${b.status}">${b.status}</span>${b.status==='pending'?`<br><button class="fx-x" onclick="CS.fx('pay','${esc(b.ref)}')">Pay</button> · <button class="fx-x" onclick="CS.fx('myCancel','${esc(b.ref)}')">Cancel</button>`:''}</div></div>`).join('')}</div></div>`:'';
+    const mine=FX.mine.length?`<div><b class="fx-h2" style="font-size:17px">Your bookings</b><div class="fx-items" style="margin-top:8px">${FX.mine.map(b=>`<div class="fx-item"><div><div class="what">${esc(b.ref)}</div><div class="when">${(b.items||[]).length} item${(b.items||[]).length===1?'':'s'} · ${inr(b.total)}</div></div><div style="text-align:right"><span class="fx-status ${b.status}">${b.status}</span>${b.status==='pending'?`<br><button class="fx-x" onclick="CS.fx('pay','${esc(b.ref)}')">Pay</button> · <button class="fx-x" style="${FX.arm==='c'+b.ref?'color:#B03A22':''}" onclick="CS.fx('myCancel','${esc(b.ref)}')">${FX.arm==='c'+b.ref?'Tap again to cancel':'Cancel'}</button>`:''}</div></div>`).join('')}</div></div>`:'';
+    const fd=FX.find;const findHTML=FX.offline?'':fd.open?`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('findGo')"><b style="font-size:13px">Find a booking made on another device</b>
+        <div class="fx-grid2"><div class="fx-field"><label for="fxf-ref">Booking reference</label><input id="fxf-ref" value="${esc(fd.ref)}" oninput="CS.fx('findF','ref',this.value)" placeholder="APPA-XXXXX" required></div><div class="fx-field"><label for="fxf-ph">Phone used</label><input id="fxf-ph" type="tel" value="${esc(fd.phone)}" oninput="CS.fx('findF','phone',this.value)" required></div></div>
+        ${fd.err?`<div class="fx-err">${esc(fd.err)}</div>`:''}<div class="fx-row"><button class="fx-btn small" type="submit">Find booking</button><button class="fx-x" type="button" onclick="CS.fx('findToggle')">Close</button></div></form>`
+      :`<button class="fx-x" style="align-self:flex-start" onclick="CS.fx('findToggle')">Booked on another phone? Find your booking</button>`;
     return mob+`<div class="fx-trip-head"><h2 class="fx-h2">Your trip</h2>${tier}</div>
       ${goal?`<div><div class="fx-meter"><i style="width:${meter*100}%"></i></div><p class="fx-note" style="margin-top:6px">${goal}</p></div>`:''}
       ${count?`<div class="fx-items">${items}</div>`:'<p class="fx-note">Your trip is empty. Pick nights on the board or add day passes. You can combine several places across the festival.</p>'}
       ${w.map(x=>`<div class="fx-warn">${esc(x)}</div>`).join('')}${e.map(x=>`<div class="fx-err">${esc(x)}</div>`).join('')}
       ${count?`<div class="fx-lines"><div><span>Stays</span><b>${inr(t.stays)}</b></div><div><span>Day passes</span><b>${inr(t.passes)}</b></div>${t.discount?`<div><span>${t.tier.toUpperCase()} discount</span><b>−${inr(t.discount)}</b></div>`:''}</div>
         <div class="fx-tot"><span>Total</span><span>${inr(t.total)}</span></div>${checkout}`:''}
-      ${mine}`;}
+      ${mine}${findHTML}`;}
 
-  const fxUpi=b=>`upi://pay?pa=${encodeURIComponent(FX.S.upi)}&pn=${encodeURIComponent(FX.S.payee)}&am=${Math.round(b.total)}&cu=INR&tn=${encodeURIComponent('APPA '+b.ref)}`;
+  const fxUpi=b=>`upi://pay?pa=${encodeURIComponent(FX.S.upi)}&pn=${encodeURIComponent(FX.S.payee)}${b.total>100000?'':'&am='+Math.round(b.total)}&cu=INR&tn=${encodeURIComponent('APPA '+b.ref)}`;
+  const fxWa=b=>'https://wa.me/918799938193?text='+encodeURIComponent(`Hi! I've held rooms for APPA Art Fest 2027. Booking ${b.ref}, total ${inr(b.total)}. Sharing my payment details here.`);
   const fxUntil=ts=>new Date(ts*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
   function fxConfirmHTML(){const b=FX.last;
     return `<div class="fx-trip-head"><h2 class="fx-h2">Rooms held</h2><span class="fx-status pending">awaiting payment</span></div>
       <div class="fx-kv"><span>Booking reference</span><b class="fx-ref">${esc(b.ref)}</b></div>
       <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div><div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div></div>
+      ${b.total>100000?`<div class="fx-warn">UPI apps usually allow up to ${inr(100000)} per payment. Pay in parts of ${inr(100000)} or less with this QR (enter the amount yourself), and send every UPI reference below, separated by commas. Prefer a bank transfer? Ask us on WhatsApp.</div>`:''}
       <div class="fx-qr" id="fx-qr" aria-label="UPI payment QR code"></div>
       <div class="fx-lines"><div><span>UPI ID</span><b>${esc(FX.S.upi)}</b></div><div><span>Payee</span><b>${esc(FX.S.payee)}</b></div></div>
       <div class="fx-row"><button class="fx-btn ghost small" onclick="CS.fx('copy','${esc(FX.S.upi)}')">Copy UPI ID</button><a class="fx-btn ghost small" href="${esc(fxUpi(b))}">Open UPI app</a></div>
-      ${b.utrSent?`<div class="fx-warn">Payment reference received. The team will confirm your booking shortly.</div>`:`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('utr')"><div class="fx-field"><label for="fxg-utr">After paying, enter the UPI reference number</label><input id="fxg-utr" value="${esc(FX.utr)}" oninput="CS.fx('utrF',this.value)" maxlength="40" inputmode="numeric" required></div><button class="fx-btn" type="submit">Send payment reference</button></form>`}
-      <p class="fx-note">Add ${esc(b.ref)} in the payment note. The team confirms once the payment arrives. Questions: ${esc(FX.S.contact)} or WhatsApp +91 87999 38193.</p>
+      ${b.utrSent?`<div class="fx-warn">Payment reference received. The team will confirm your booking shortly.</div>`:`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('utr')"><div class="fx-field"><label for="fxg-utr">After paying, enter the UPI reference number(s)</label><input id="fxg-utr" value="${esc(FX.utr)}" oninput="CS.fx('utrF',this.value)" maxlength="200" placeholder="12-digit UPI ref" required></div><button class="fx-btn" type="submit">Send payment reference</button></form>`}
+      <a class="fx-btn ok" style="justify-content:center;text-decoration:none" href="${esc(fxWa(b))}" target="_blank" rel="noopener">Send this booking on WhatsApp</a>
+      <p class="fx-note">Add ${esc(b.ref)} in the payment note. The team confirms once the payment arrives${FX.form.email?' and emails you':''}. Questions: ${esc(FX.S.contact)} or WhatsApp +91 87999 38193.</p>
       <button class="fx-btn ghost" onclick="CS.fx('done')">Back to the board</button>`;}
   function fxDrawQR(){const q=document.getElementById('fx-qr');if(!q||!FX.last)return;
     const go=()=>{q.innerHTML='';try{new window.QRCode(q,{text:fxUpi(FX.last),width:168,height:168,colorDark:'#111111',colorLight:'#FFFFFF'});}catch(e){q.textContent='Pay to '+FX.S.upi;}};
@@ -2140,10 +2159,10 @@ ${kb()}`;}
     let invT=0,invS=0;const ns=fxNights();FX_VIP.concat([fxTent()]).forEach(u=>{invT+=u.rooms*ns.length;ns.forEach(d=>invS+=fxOcc(u.id,d));});
     const item=it=>it.kind==='stay'?`${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms}×${it.guests}`:`Day pass · ${fxShort(it.date)} · ${it.qty}`;
     const rows=bs.map(b=>{const g=b.guest||{};return `<tr><td><b>${esc(b.ref)}</b><br><span class="fx-note">${new Date(b.createdAt*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
-      <td><b>${esc(g.name||'')}</b><br><span class="fx-note">${esc(g.phone||'')} ${esc(g.email||'')}</span>${g.note?`<br><span class="fx-note">“${esc(g.note)}”</span>`:''}${b.utr?`<br><span class="fx-note">UPI ref <b>${esc(b.utr)}</b></span>`:''}</td>
+      <td><b>${esc(g.name||'')}</b><br><span class="fx-note">${g.phone?`<a href="https://wa.me/${esc(String(g.phone).replace(/\D/g,'').replace(/^(\d{10})$/,'91$1'))}" target="_blank" rel="noopener">${esc(g.phone)}</a>`:''} ${esc(g.email||'')}</span>${g.note?`<br><span class="fx-note">“${esc(g.note)}”</span>`:''}${b.utr?`<br><span class="fx-note">UPI ref <b>${esc(b.utr)}</b></span>`:''}</td>
       <td>${(b.items||[]).map(item).join('<br>')}</td><td>${b.tier?`<span class="fx-tier ${b.tier}">${b.tier}</span>`:''}</td>
       <td class="num"><b>${inr(b.total)}</b><br><span class="fx-note">hosts ${inr(b.payout)}</span></td><td><span class="fx-status ${b.status}">${b.status}</span></td>
-      <td style="white-space:nowrap">${b.status==='pending'||b.status==='expired'?`<button class="fx-btn ok small" onclick="CS.fx('deskStatus','${esc(b.ref)}','confirmed')">Confirm paid</button> `:''}${b.status!=='cancelled'?`<button class="fx-btn warn small" onclick="CS.fx('deskStatus','${esc(b.ref)}','cancelled')">Cancel</button>`:''}</td></tr>`;}).join('');
+      <td style="white-space:nowrap">${b.status==='pending'||b.status==='expired'?`<button class="fx-btn ok small" onclick="CS.fx('deskStatus','${esc(b.ref)}','confirmed')">Confirm paid</button> `:''}${b.status!=='cancelled'?`<button class="fx-btn warn small" onclick="CS.fx('deskStatus','${esc(b.ref)}','cancelled')">${FX.arm==='d'+b.ref?'Tap again to cancel':'Cancel'}</button>`:''}</td></tr>`;}).join('');
     const lrows=ls.map(l=>{const d=l.data||{},c=l.contact||{};return `<tr><td><b>${esc(d.name)}</b><br><span class="fx-note">${esc(d.type)} · ${esc(d.location)}${d.distance?' · '+esc(d.distance)+' km':''}</span>${d.desc?`<br><span class="fx-note">${esc(d.desc)}</span>`:''}</td>
       <td>${esc(c.name||'')}<br><span class="fx-note">${esc(c.phone||'')} ${esc(c.email||'')}</span></td><td class="num">${esc(d.rooms)} × ${esc(d.maxGuests)}</td><td class="num">${inr(d.rate)}<br><span class="fx-note">guest pays ${inr(+d.rate+2*FX.S.partnerMarkup)}</span></td>
       <td><span class="fx-status ${l.status}">${l.status==='approved'?'live':l.status}</span></td>
@@ -2177,10 +2196,7 @@ ${kb()}`;}
     FX.busy=true;render();fxLS('guest',{name:f.name,phone:f.phone,email:f.email});
     const payload={stays:FX.cart.stays.map(s=>({unit:s.unit,from:s.from,n:s.n,rooms:s.rooms,guests:s.guests})),passes:FX.cart.passes,guest:f,expectTotal:t.total};
     try{
-      let r;
-      if(FX.offline){r={ref:'PREVIEW-'+fxKey().slice(0,4).toUpperCase(),token:'',total:t.total,holdUntil:Math.floor(Date.now()/1000)+FX.S.holdHours*3600,preview:true};
-        t.lines.forEach(({s,p})=>p.nights.forEach(d=>{(FX.occ[s.unit]=FX.occ[s.unit]||{})[d]=fxOcc(s.unit,d)+s.rooms;}));}
-      else{r=await fxCall('book',payload);FX.tickets.push({ref:r.ref,token:r.token});}
+      const r=await fxCall('book',payload);FX.tickets.push({ref:r.ref,token:r.token});fxSave();
       FX.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,utrSent:false};
       FX.cart={stays:[],passes:[]};FX.checkout=false;FX.form.note='';FX.utr='';FX.tripOpen=true;fxSave();
       FX.busy=false;await fxLoad();render();fxDrawQR();toast('Rooms held · '+r.ref);
@@ -2224,7 +2240,13 @@ ${kb()}`;}
       case 'utr':{const b=FX.last;if(!b||FX.utr.trim().length<6)return toast('Enter the full UPI reference number');
         if(FX.offline){b.utrSent=true;render();return;}
         fxCall('utr',{ref:b.ref,token:b.token,utr:FX.utr.trim()}).then(()=>{b.utrSent=true;FX.utr='';toast('Payment reference sent');fxLoad();render();fxDrawQR();},e=>toast(e.message));return;}
+      case 'findToggle':FX.find.open=!FX.find.open;FX.find.err='';break;
+      case 'findF':FX.find[x]=y;return;
+      case 'findGo':fxCall('find',{ref:FX.find.ref.trim(),phone:FX.find.phone}).then(r=>{if(!FX.tickets.some(t=>t.ref===r.ref))FX.tickets.push({ref:r.ref,token:r.token});fxSave();FX.find={open:false,ref:'',phone:'',err:''};toast('Found '+r.ref);fxLoad();},e=>{FX.find.err=e.message;render();});return;
+      case 'retry':FX.loaded=false;render();fxLoad();return;
       case 'myCancel':{const t=FX.tickets.find(m=>m.ref===x);if(!t)return;
+        if(FX.arm!=='c'+x){FX.arm='c'+x;clearTimeout(fxAct.at);fxAct.at=setTimeout(()=>{FX.arm=null;if(fxQuiet())render();},4000);break;}
+        FX.arm=null;
         fxCall('cancel',{ref:t.ref,token:t.token}).then(()=>{toast('Booking cancelled and rooms released');fxLoad();},e=>toast(e.message));return;}
       case 'hostSubmit':{const h=FX.host;FX.err='';
         if(FX.offline){FX.err='The booking desk isn\'t reachable from here. Email your details to '+FX.S.contact+'.';break;}
@@ -2234,7 +2256,8 @@ ${kb()}`;}
       case 'hostAgain':FX.hostSent=null;FX.host=Object.assign(FX.host,{name:'',desc:''});break;
       case 'deskKey':FX.desk.key=x;return;
       case 'deskOpen':case 'deskRefresh':fxDeskLoad();return;
-      case 'deskStatus':fxCall('status',{ref:x,status:y},true).then(()=>{toast(y==='confirmed'?x+' confirmed':x+' cancelled');fxDeskLoad();},e=>toast(e.message));return;
+      case 'deskStatus':if(y==='cancelled'&&FX.arm!=='d'+x){FX.arm='d'+x;clearTimeout(fxAct.at);fxAct.at=setTimeout(()=>{FX.arm=null;render();},4000);break;}
+        FX.arm=null;fxCall('status',{ref:x,status:y},true).then(()=>{toast(y==='confirmed'?x+' confirmed':x+' cancelled');fxDeskLoad();},e=>toast(e.message));return;
       case 'deskApprove':fxCall('approve',{id:x,status:y},true).then(()=>{toast(y==='approved'?'Listing is live on the calendar':'Listing hidden');fxDeskLoad();},e=>toast(e.message));return;
       case 'deskSettings':{const s={};root.querySelectorAll('[data-fxs]').forEach(i=>{s[i.dataset.fxs]=i.value;});
         fxCall('settings',{settings:s},true).then(()=>{toast('Festival prices saved');fxDeskLoad();},e=>toast(e.message));return;}
@@ -2242,6 +2265,7 @@ ${kb()}`;}
     render();
     if(FX.last&&view==='fest')fxDrawQR();
   }
+  window.addEventListener('popstate',()=>{const want=/^#(appa|fest)/i.test(location.hash)?'fest':'home';if(want!==view&&(view==='fest'||want==='fest')){view=want;if(want==='fest')fxLoad();render();window.scrollTo({top:0});}});
   document.addEventListener('click',ev=>{const c=ev.target.closest&&ev.target.closest('.fx-cell');if(c&&root.contains(c))fxAct('cell',c.dataset.fxu,c.dataset.fxd);});
 
   /* ═════════ RENDER ═════════ */
@@ -2260,7 +2284,8 @@ ${kb()}`;}
   /* ═════════ PUBLIC API ═════════ */
   window.CS={
     fx(a,x,y){fxAct(a,x,y);},
-    go(v){if(v==='fest')fxLoad();if(v==='dash'&&!session){view='login';}else{view=v;}editing=null;edMedia=null;lbState=null;vtRender();window.scrollTo({top:0});},
+    go(v){if(v==='fest'){fxLoad();try{if(location.hash!=='#appa')history.pushState({fx:1},'','#appa');}catch(e){}}
+      else if(view==='fest'&&location.hash==='#appa'){try{history.pushState({},'',location.pathname+location.search);}catch(e){}}if(v==='dash'&&!session){view='login';}else{view=v;}editing=null;edMedia=null;lbState=null;vtRender();window.scrollTo({top:0});},
     open(id){if(activeProp!==id)bk={heads:2,days:[],sent:false};bkOpen=false;activeProp=id;view='detail';lbState=null;vtRender();window.scrollTo({top:0});},
     cat(c){filterCat=c;render();},
     q(v){query=v;clearTimeout(this._t);this._t=setTimeout(render,250);},
@@ -2385,7 +2410,7 @@ ${kb()}`;}
         if(last&&last.prop===d.prop){last.end=d.date;last.n++;}
         else legs.push({prop:d.prop,startD:d.date,end:d.date,n:1});});
       legs.forEach(l=>{const p=P(l.prop);l.amt=p.ppWith*cur.heads*l.n;l.id='B-'+(seq++);
-        l.dates=(l.n>1?l.startD+'–'+l.end:''+l.startD)+' Jul';
+        l.dates=(l.n>1?l.startD+'–'+l.end:''+l.startD)+' '+BM.mon;
         if(!CAL[l.prop])CAL[l.prop]={};
         for(let d=l.startD;d<=l.end;d++)if(!CAL[l.prop][d])CAL[l.prop][d]='tn';
         BOOKINGS.push({id:l.id,prop:l.prop,guest:'Curated trip · +91 '+cur.phone,dates:l.dates,head:cur.heads,amt:l.amt,status:'pending',fromChat:true});});
@@ -2407,7 +2432,7 @@ ${kb()}`;}
     faqQ(i,v){if(edMedia&&edMedia.faq[i])edMedia.faq[i].q=v;},
     faqA(i,v){if(edMedia&&edMedia.faq[i])edMedia.faq[i].a=v;},
     faqRm(i){if(edMedia){edMedia.faq.splice(i,1);render();}},
-    bkDay(d){const p=P(activeProp);const s=(CAL[p.id]||{})[d];if(s==='bk'||s==='tn')return;
+    bkDay(d){const p=P(activeProp);const s=(CAL[p.id]||{})[d];if(s==='bk'||s==='tn'||d<TODAY)return;
       bk.sent=false;const i=bk.days.indexOf(d);
       if(i>=0)bk.days.splice(i,1);else bk.days.push(d);
       render();},
