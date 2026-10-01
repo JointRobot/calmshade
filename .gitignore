@@ -3,3 +3,4 @@ secrets.php
 *.key
 fest-config.php
 fest-data/
+uploads/

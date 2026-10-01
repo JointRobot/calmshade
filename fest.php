@@ -97,7 +97,7 @@ function units() {
   $u['tents'] = ['name'=>'VIP Tent Village','rooms'=>max(0,(int)$S['tents']),'cap'=>2,'kind'=>'tent'];
   foreach (listings_all() as $l) {
     if ($l['status'] !== 'approved') continue;
-    $d = json_decode($l['data'], true) ?: [];
+    $d = json_decode($l['data'], true) ?: []; if (!empty($d['paused'])) continue;
     $u['L-'.$l['id']] = ['name'=>(string)($d['name']??'Partner stay'),'rooms'=>max(1,(int)($d['rooms']??1)),'cap'=>max(1,(int)($d['maxGuests']??2)),'kind'=>'partner','rate'=>max(0,(int)($d['rate']??0))];
   }
   return $u;
@@ -109,7 +109,17 @@ function active_booking($b, $S) {
   if ($b['status'] !== 'pending') return false;
   return (time() - (int)$b['created_at']) < $S['holdHours'] * 3600;
 }
+/* One calendar per place: a whole-place Calm Shade booking fills that partner's festival rooms, and any festival room booked blocks the Calm Shade whole-place night. */
 function occupancy() {
+  $occ = fest_raw_occ(); $U = null;
+  foreach (cs_raw_occ() as $pid => $nights) {
+    if (strpos($pid, 'L-') !== 0) continue;
+    $U = $U ?? units(); if (!isset($U[$pid])) continue;
+    foreach ($nights as $d => $st) $occ[$pid][$d] = max($occ[$pid][$d] ?? 0, $U[$pid]['rooms']);
+  }
+  return $occ;
+}
+function fest_raw_occ() {
   $S = settings(); $occ = [];
   foreach (db()->query("SELECT status, created_at, items FROM fest_bookings WHERE status IN ('pending','confirmed')") as $b) {
     if (!active_booking($b, $S)) continue;
@@ -232,7 +242,8 @@ function public_listings() {
   $out = [];
   foreach (listings_all() as $l) if ($l['status'] === 'approved') {
     $d = json_decode($l['data'], true) ?: [];
-    $out[] = ['id'=>'L-'.$l['id'],'name'=>$d['name']??'','type'=>$d['type']??'','location'=>$d['location']??'','distance'=>$d['distance']??'','rooms'=>(int)($d['rooms']??1),'maxGuests'=>(int)($d['maxGuests']??2),'rate'=>(int)($d['rate']??0),'desc'=>$d['desc']??''];
+    if (!empty($d['paused'])) continue;
+    $out[] = ['id'=>'L-'.$l['id'],'name'=>$d['name']??'','type'=>$d['type']??'','location'=>$d['location']??'','distance'=>$d['distance']??'','rooms'=>(int)($d['rooms']??1),'maxGuests'=>(int)($d['maxGuests']??2),'rate'=>(int)($d['rate']??0),'desc'=>clean($d['desc']??'',240),'photo'=>($d['photos'][(int)($d['cover']??0)]['src'] ?? ($d['photos'][0]['src'] ?? '')),'maps'=>$d['maps']??'','website'=>$d['website']??'','onCalmShade'=>!empty($d['yearRound'])];
   }
   return $out;
 }
@@ -253,6 +264,14 @@ function cs_init() {
   db()->exec('CREATE TABLE IF NOT EXISTS cs_bookings (ref VARCHAR(16) PRIMARY KEY, token VARCHAR(40) NOT NULL, status VARCHAR(12) NOT NULL, created_at BIGINT NOT NULL, total BIGINT, payout BIGINT, items TEXT, guest TEXT, utr VARCHAR(200))');
 }
 function cs_occ() {
+  $occ = cs_raw_occ();
+  foreach (fest_raw_occ() as $unit => $nights) {
+    if (strpos($unit, 'L-') !== 0) continue;
+    foreach ($nights as $d => $n) if ($n > 0) $occ[$unit][$d] = 'bk';
+  }
+  return $occ;
+}
+function cs_raw_occ() {
   cs_init(); $S = settings(); $occ = [];
   foreach (db()->query("SELECT status, created_at, items FROM cs_bookings WHERE status IN ('pending','confirmed')") as $b) {
     if (!active_booking($b, $S)) continue;
@@ -263,12 +282,23 @@ function cs_occ() {
   }
   return $occ;
 }
+/* Calm Shade property: built-in ones from CS_PROPS, plus enrolled partner listings ('L-<id>') */
+function cs_prop($id) {
+  if (isset(CS_PROPS[$id])) return CS_PROPS[$id];
+  if (strpos($id, 'L-') !== 0) return null;
+  $st = db()->prepare('SELECT status, data FROM fest_listings WHERE id=?'); $st->execute([substr($id, 2)]); $r = $st->fetch();
+  if (!$r || $r['status'] !== 'approved') return null;
+  $d = json_decode($r['data'], true) ?: []; if (empty($d['yearRound'])) return null;
+  $sleeps = max(1, (int)($d['sleeps'] ?? ((int)($d['rooms'] ?? 1) * (int)($d['maxGuests'] ?? 2))));
+  $pw = max(100, (int)($d['ppWith'] ?? round(($d['rate'] ?? 2000) / 2))); $po = max(100, (int)($d['ppWithout'] ?? $pw));
+  return [(string)($d['name'] ?? 'Partner stay'), $sleeps, $pw, $po, empty($d['paused'])];
+}
 function cs_quote($legs, $occ) {
   $err = []; $items = []; $seen = []; $today = ist_today(); $max = addDays($today, 400);
   if (!is_array($legs) || !$legs) return [null, ['Pick at least one night.']];
   if (count($legs) > 14) return [null, ['That trip has too many stops.']];
   foreach ($legs as $l) {
-    $id = (string)($l['prop'] ?? ''); $p = CS_PROPS[$id] ?? null;
+    $id = (string)($l['prop'] ?? ''); $p = cs_prop($id);
     if (!$p || !$p[4]) { $err[] = 'One of these stays is not taking bookings right now.'; continue; }
     $heads = (int)($l['heads'] ?? 0); $meals = !empty($l['meals']);
     $nights = array_values(array_unique(array_map('strval', (array)($l['nights'] ?? []))));
@@ -298,6 +328,68 @@ function ai_key() {
   return '';
 }
 
+
+
+/* ---------- Partner listings → Calm Shade listings, host accounts ---------- */
+const CS_CATS = ['lake','cabin','room','creative','group'];
+function clean_url($u) {
+  $u = trim((string)$u); if ($u === '') return '';
+  if (!preg_match('#^https?://#i', $u)) $u = 'https://'.$u;
+  return (filter_var($u, FILTER_VALIDATE_URL) && preg_match('#^https?://#i', $u)) ? substr($u, 0, 300) : '';
+}
+function clean_photo($u) { $u = (string)$u; return preg_match('#^uploads/\d{6}/[a-f0-9]{24}\.(jpg|png|webp)$#', $u) ? $u : ''; }
+function geo_from($maps) {
+  if (preg_match('/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/', $maps, $m) || preg_match('/[?&](?:q|ll|query)=(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/', $maps, $m)
+      || preg_match('/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/', $maps, $m)) return [round((float)$m[1], 5), round((float)$m[2], 5)];
+  return null;
+}
+/* Listing fields hosts and applicants may set; $old keeps anything not sent */
+function listing_fields($p, $old = []) {
+  $d = $old;
+  $set = function ($k, $v) use (&$d, $p) { if (array_key_exists($k, $p)) $d[$k] = $v; };
+  $set('name', clean($p['name'] ?? '', 80)); $set('type', clean($p['type'] ?? '', 30)); $set('location', clean($p['location'] ?? '', 80));
+  $set('distance', clean($p['distance'] ?? '', 8)); $set('desc', clean($p['desc'] ?? '', 1200)); $set('amen', clean($p['amen'] ?? '', 300));
+  $set('rooms', max(1, min(60, (int)($p['rooms'] ?? 1)))); $set('maxGuests', max(1, min(8, (int)($p['maxGuests'] ?? 2))));
+  $set('rate', max(500, min(200000, (int)($p['rate'] ?? 0)))); $set('sleeps', max(1, min(60, (int)($p['sleeps'] ?? 2))));
+  $set('ppWith', max(100, min(50000, (int)($p['ppWith'] ?? 0)))); $set('ppWithout', max(100, min(50000, (int)($p['ppWithout'] ?? 0))));
+  $set('pet', !empty($p['pet'])); $set('villa', !empty($p['villa'])); $set('yearRound', !empty($p['yearRound'])); $set('paused', !empty($p['paused']));
+  $set('cat', in_array($p['cat'] ?? '', CS_CATS, true) ? $p['cat'] : 'room');
+  $set('maps', clean_url($p['maps'] ?? '')); $set('website', clean_url($p['website'] ?? '')); $set('link', clean_url($p['link'] ?? ''));
+  if (array_key_exists('photos', $p)) {
+    $ph = []; foreach (array_slice((array)$p['photos'], 0, 12) as $x) { $src = clean_photo(is_array($x) ? ($x['src'] ?? '') : $x); if ($src) $ph[] = ['src'=>$src, 'cap'=>clean(is_array($x) ? ($x['cap'] ?? '') : '', 120)]; }
+    $d['photos'] = $ph;
+  }
+  if (array_key_exists('cover', $p)) $d['cover'] = max(0, min(11, (int)$p['cover']));
+  if (array_key_exists('faq', $p)) { $f = []; foreach (array_slice((array)$p['faq'], 0, 20) as $x) { $q = clean($x['q'] ?? '', 200); $a = clean($x['a'] ?? '', 600); if ($q !== '' && $a !== '') $f[] = ['q'=>$q,'a'=>$a]; } $d['faq'] = $f; }
+  if (array_key_exists('maps', $p)) { $g = geo_from($d['maps']); if ($g) $d['geo'] = $g; }
+  if (array_key_exists('geo', $p) && is_array($p['geo']) && count($p['geo']) === 2 && is_numeric($p['geo'][0]) && is_numeric($p['geo'][1])) $d['geo'] = [round((float)$p['geo'][0], 5), round((float)$p['geo'][1], 5)];
+  return $d;
+}
+function hosts_init() { db()->exec('CREATE TABLE IF NOT EXISTS cs_hosts (id VARCHAR(16) PRIMARY KEY, listing_id VARCHAR(20) NOT NULL, name TEXT, phone VARCHAR(24), email TEXT, key_hash VARCHAR(64), created_at BIGINT NOT NULL)'); }
+function host_for_listing($lid) { hosts_init(); $st = db()->prepare('SELECT * FROM cs_hosts WHERE listing_id=?'); $st->execute([$lid]); return $st->fetch(); }
+function host_new_key($hostId) { $k = bin2hex(random_bytes(20)); db()->prepare('UPDATE cs_hosts SET key_hash=? WHERE id=?')->execute([hash('sha256', $k), $hostId]); return $k; }
+function need_host() {
+  hosts_init(); $k = (string)($_SERVER['HTTP_X_HOST_KEY'] ?? '');
+  if (strlen($k) < 20) fail('Sign in with your host link first.', 401);
+  $st = db()->prepare('SELECT * FROM cs_hosts WHERE key_hash=?'); $st->execute([hash('sha256', $k)]); $h = $st->fetch();
+  if (!$h) { usleep(300000); fail('That host link has expired. Ask the festival team for a new one, or request it from the host login page.', 401); }
+  return $h;
+}
+function site_base() {
+  $h = preg_replace('/[^a-z0-9.:-]/i', '', $_SERVER['HTTP_HOST'] ?? 'calmshade.in');
+  $local = preg_match('/^(127\.0\.0\.1|localhost)(:\d+)?$/', $h) && empty($_SERVER['HTTPS']);
+  return ($local ? 'http://' : 'https://').$h.'/';
+}
+/* A partner listing as a Calm Shade property, for the site */
+function cs_public_prop($l, $host) {
+  $d = json_decode($l['data'], true) ?: [];
+  $sleeps = max(1, (int)($d['sleeps'] ?? ((int)($d['rooms'] ?? 1) * (int)($d['maxGuests'] ?? 2))));
+  $pw = (int)($d['ppWith'] ?? round(($d['rate'] ?? 2000) / 2)); $po = (int)($d['ppWithout'] ?? $pw);
+  return ['id'=>'L-'.$l['id'],'owner'=>'h'.$host['id'],'name'=>$d['name'] ?? '','loc'=>trim(($d['location'] ?? '').' · near APPA Art Fest', ' ·'),'cat'=>$d['cat'] ?? 'room',
+    'cap'=>'Up to '.$sleeps.' guests · '.($d['rooms'] ?? 1).' room'.(($d['rooms'] ?? 1) > 1 ? 's' : ''),'sleeps'=>$sleeps,'ppWith'=>$pw,'ppWithout'=>$po,'pet'=>!empty($d['pet']),'villa'=>!empty($d['villa']),
+    'amen'=>$d['amen'] ?? '','desc'=>$d['desc'] ?? '','photos'=>$d['photos'] ?? [],'cover'=>(int)($d['cover'] ?? 0),'faq'=>$d['faq'] ?? [],'geo'=>$d['geo'] ?? null,
+    'maps'=>$d['maps'] ?? '','website'=>$d['website'] ?? '','link'=>$d['link'] ?? '','live'=>empty($d['paused']),'festival'=>true];
+}
 
 /* ---------- APPA Art Passport: venue stamps + timetable ---------- */
 const STAMP_SPOTS = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala','secretfarm','square','island'];
@@ -418,8 +510,11 @@ switch ($a) {
   case 'list': {
     if ($m !== 'POST') fail('Use POST');
     $b = body(); $p = $b['property'] ?? []; $c = $b['contact'] ?? [];
-    $d = ['name'=>clean($p['name'] ?? '', 80),'type'=>clean($p['type'] ?? '', 30),'location'=>clean($p['location'] ?? '', 80),'distance'=>clean($p['distance'] ?? '', 8),
-          'rooms'=>max(1,min(60,(int)($p['rooms'] ?? 1))),'maxGuests'=>max(1,min(8,(int)($p['maxGuests'] ?? 2))),'rate'=>max(500,min(200000,(int)($p['rate'] ?? 0))),'desc'=>clean($p['desc'] ?? '', 240)];
+    $p += ['yearRound'=>true];
+    $d = listing_fields($p, ['rooms'=>1,'maxGuests'=>2,'rate'=>500,'yearRound'=>true,'cat'=>'room']);
+    if (empty($d['sleeps'])) $d['sleeps'] = $d['rooms'] * $d['maxGuests'];
+    if (empty($d['ppWith'])) $d['ppWith'] = max(100, (int)round($d['rate'] / 2));
+    if (empty($d['ppWithout'])) $d['ppWithout'] = $d['ppWith'];
     $ct = ['name'=>clean($c['name'] ?? '', 80),'phone'=>clean($c['phone'] ?? '', 20),'email'=>clean($c['email'] ?? '', 120)];
     if ($d['name'] === '' || $d['location'] === '' || $ct['name'] === '' || strlen(preg_replace('/\D/', '', $ct['phone'])) < 10) fail('Fill in the property name, area, your name and a 10-digit phone number.');
     $n = (int)db()->query("SELECT COUNT(*) c FROM fest_listings WHERE status='pending'")->fetch()['c'];
@@ -427,7 +522,7 @@ switch ($a) {
     throttle('list', 5, 86400, 'Too many applications from this device today. Write to the festival team instead.');
     $id = strtoupper(bin2hex(random_bytes(4)));
     db()->prepare('INSERT INTO fest_listings (id,created_at,status,data,contact) VALUES (?,?,?,?,?)')->execute([$id,time(),'pending',json_encode($d),json_encode($ct)]);
-    notify(settings()['contact'], 'New partner stay application: '.$d['name'], [$d['name'].' ('.$d['type'].'), '.$d['location'], $d['rooms'].' rooms × '.$d['maxGuests'].' adults at '.inr($d['rate']).' a night', 'Contact: '.$ct['name'].', '.$ct['phone'].' '.$ct['email'], '', 'Approve it in the APPA Fest desk.']);
+    notify(settings()['contact'], 'New partner stay application: '.$d['name'], [$d['name'].' ('.$d['type'].'), '.$d['location'], $d['rooms'].' rooms × '.$d['maxGuests'].' adults at '.inr($d['rate']).' a night', 'All year on Calm Shade: '.(!empty($d['yearRound']) ? 'yes' : 'no').' · photos: '.count($d['photos'] ?? []), $d['maps'] ? 'Map: '.$d['maps'] : '', $d['website'] ? 'Website: '.$d['website'] : '', 'Contact: '.$ct['name'].', '.$ct['phone'].' '.$ct['email'], '', 'Approve & enroll it in the APPA Fest desk.']);
     out(['ok'=>true,'id'=>$id]);
   }
 
@@ -471,8 +566,18 @@ switch ($a) {
   case 'approve': {
     need_admin(); $b = body(); $s = (string)($b['status'] ?? '');
     if (!in_array($s, ['approved','rejected','pending'], true)) fail('Unknown status');
-    db()->prepare('UPDATE fest_listings SET status=? WHERE id=?')->execute([$s, (string)($b['id'] ?? '')]);
-    out(['ok'=>true]);
+    $lid = (string)($b['id'] ?? ''); $st = db()->prepare('SELECT * FROM fest_listings WHERE id=?'); $st->execute([$lid]); $l = $st->fetch();
+    if (!$l) fail('Listing not found.', 404);
+    db()->prepare('UPDATE fest_listings SET status=? WHERE id=?')->execute([$s, $lid]);
+    if ($s !== 'approved') out(['ok'=>true]);
+    $c = json_decode($l['contact'], true) ?: []; $h = host_for_listing($lid); $fresh = !$h;
+    if (!$h) { $hid = strtoupper(bin2hex(random_bytes(4)));
+      db()->prepare('INSERT INTO cs_hosts (id,listing_id,name,phone,email,created_at) VALUES (?,?,?,?,?,?)')->execute([$hid, $lid, $c['name'] ?? '', $c['phone'] ?? '', $c['email'] ?? '', time()]);
+      $h = host_for_listing($lid); }
+    $key = ($fresh || !empty($b['newLink'])) ? host_new_key($h['id']) : null;
+    $d = json_decode($l['data'], true) ?: [];
+    if ($key && !empty($c['email'])) notify($c['email'], 'Welcome to Calm Shade · '.($d['name'] ?? ''), ['Hi '.($c['name'] ?? '').',', '', ($d['name'] ?? 'Your stay').' is now live for APPA Art Fest 2027'.(!empty($d['yearRound']) ? ' and on Calm Shade all year' : '').'.', '', 'Your private host link (keep it to yourself; it signs you straight in):', site_base().'?host='.$key, '', 'From there you can edit your listing and photos, and confirm bookings as they come in. Hosts keep 97% of every Calm Shade booking; festival bookings pay your full nightly rate.', '', '— Calm Shade × APPA Art Fest']);
+    out(['ok'=>true,'enrolled'=>$fresh,'hostKey'=>$key,'hostPhone'=>$c['phone'] ?? '','hostName'=>$c['name'] ?? '','link'=>$key ? site_base().'?host='.$key : null]);
   }
   case 'settings': {
     need_admin(); $b = body(); $in = (array)($b['settings'] ?? []); $s = [];
@@ -598,6 +703,98 @@ switch ($a) {
     out(['content'=>array_values(array_filter($j['content'] ?? [], fn($c)=>($c['type'] ?? '') === 'text'))]);
   }
 
+
+
+  /* ---- Photo uploads (applicants, hosts, admin) ---- */
+  case 'upload': {
+    if ($m !== 'POST') fail('Use POST');
+    $isAdmin = defined('FEST_ADMIN_KEY') && hash_equals((string)FEST_ADMIN_KEY, (string)($_SERVER['HTTP_X_FEST_KEY'] ?? ''));
+    $isHost = false; if (!$isAdmin && !empty($_SERVER['HTTP_X_HOST_KEY'])) { need_host(); $isHost = true; }
+    if (!$isAdmin) throttle('upload', $isHost ? 60 : 16, 86400, 'Too many photos from this device today. Send the rest on WhatsApp.');
+    $raw = file_get_contents('php://input', false, null, 0, 4 * 1024 * 1024 + 1) ?: '';
+    if (strlen($raw) > 4 * 1024 * 1024) fail('That photo is too large. Try a smaller one.', 413);
+    $j = json_decode($raw, true); $u = (string)($j['data'] ?? '');
+    if (!preg_match('#^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$#', $u, $mm)) fail('Send a JPEG, PNG or WebP photo.');
+    $bin = base64_decode($mm[2], true); $info = $bin ? @getimagesizefromstring($bin) : false;
+    $ext = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'][$info['mime'] ?? ''] ?? null;
+    if (!$info || !$ext || $info[0] < 200 || $info[1] < 150 || $info[0] > 6000 || $info[1] > 6000) fail('That file is not a usable photo.');
+    $dir = __DIR__.'/uploads/'.gmdate('Ym');
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $root = __DIR__.'/uploads/.htaccess';
+    if (!is_file($root)) @file_put_contents($root, "Options -Indexes -ExecCGI\nRemoveHandler .php .phtml .phar .php5 .php7 .cgi .pl\nRemoveType .php .phtml .phar\n<FilesMatch \"\\.(php|phtml|phar|php5|php7|cgi|pl|htaccess)$\">\n  Require all denied\n</FilesMatch>\n<IfModule mod_php.c>\n  php_flag engine off\n</IfModule>\n");
+    $name = bin2hex(random_bytes(12)).'.'.$ext;
+    if (@file_put_contents($dir.'/'.$name, $bin) === false) fail('Could not save the photo. Try again.', 500);
+    out(['ok'=>true,'src'=>'uploads/'.gmdate('Ym').'/'.$name,'w'=>$info[0],'h'=>$info[1]]);
+  }
+
+  /* ---- Enrolled partners as Calm Shade listings (public) ---- */
+  case 'cs_props': {
+    hosts_init(); $props = []; $hosts = [];
+    foreach (listings_all() as $l) {
+      if ($l['status'] !== 'approved') continue;
+      $d = json_decode($l['data'], true) ?: []; if (empty($d['yearRound'])) continue;
+      $h = host_for_listing($l['id']); if (!$h) continue;
+      $props[] = cs_public_prop($l, $h); $hosts[] = ['id'=>'h'.$h['id'],'name'=>$h['name']];
+    }
+    out(['ok'=>true,'props'=>$props,'hosts'=>$hosts]);
+  }
+
+  /* ---- Host accounts ---- */
+  case 'host_me': {
+    $h = need_host(); cs_init(); $S = settings();
+    $st = db()->prepare('SELECT * FROM fest_listings WHERE id=?'); $st->execute([$h['listing_id']]); $l = $st->fetch();
+    if (!$l) fail('Your listing was removed. Write to the festival team.', 404);
+    $pid = 'L-'.$l['id']; $cs = []; $fest = [];
+    foreach (db()->query('SELECT * FROM cs_bookings ORDER BY created_at DESC') as $r) {
+      $items = json_decode($r['items'], true) ?: []; $mine = array_values(array_filter($items, fn($it)=>$it['prop'] === $pid)); if (!$mine) continue;
+      $g = json_decode($r['guest'], true) ?: [];
+      $cs[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'items'=>$mine,'onlyMine'=>count($mine) === count($items),'guest'=>['name'=>$g['name'] ?? '','phone'=>$g['phone'] ?? ''],'utr'=>$r['utr']];
+    }
+    foreach (db()->query("SELECT * FROM fest_bookings WHERE status IN ('pending','confirmed') ORDER BY created_at DESC") as $r) {
+      $mine = array_values(array_filter(json_decode($r['items'], true) ?: [], fn($it)=>($it['unit'] ?? '') === $pid)); if (!$mine) continue;
+      $g = json_decode($r['guest'], true) ?: [];
+      $fest[] = ['ref'=>$r['ref'],'status'=>show_status($r, $S),'items'=>$mine,'guest'=>['name'=>$g['name'] ?? '','phone'=>$r['status']==='confirmed' ? ($g['phone'] ?? '') : '']];
+    }
+    out(['ok'=>true,'host'=>['id'=>'h'.$h['id'],'name'=>$h['name'],'phone'=>$h['phone'],'email'=>$h['email']],'listing'=>['id'=>$l['id'],'status'=>$l['status'],'data'=>json_decode($l['data'], true) ?: []],'prop'=>cs_public_prop($l, $h),'csBookings'=>$cs,'festBookings'=>$fest]);
+  }
+  case 'host_save': {
+    if ($m !== 'POST') fail('Use POST');
+    $h = need_host(); $b = body();
+    $st = db()->prepare('SELECT data FROM fest_listings WHERE id=?'); $st->execute([$h['listing_id']]); $r = $st->fetch(); if (!$r) fail('Listing not found.', 404);
+    $p = (array)($b['listing'] ?? []);
+    $d = listing_fields($p, json_decode($r['data'], true) ?: []);
+    if (trim($d['name'] ?? '') === '') fail('Give your listing a name.');
+    db()->prepare('UPDATE fest_listings SET data=? WHERE id=?')->execute([json_encode($d), $h['listing_id']]);
+    out(['ok'=>true]);
+  }
+  case 'host_status': {
+    if ($m !== 'POST') fail('Use POST');
+    $h = need_host(); cs_init(); $b = body(); $s = (string)($b['status'] ?? ''); $pid = 'L-'.$h['listing_id'];
+    if (!in_array($s, ['confirmed','cancelled'], true)) fail('Unknown status');
+    $r = find_booking('cs_bookings', $b['ref'] ?? ''); if (!$r) fail('Booking not found.', 404);
+    $items = json_decode($r['items'], true) ?: [];
+    if (!$items || array_filter($items, fn($it)=>$it['prop'] !== $pid)) fail('This booking includes other hosts\' stays. The Calm Shade team confirms it.', 403);
+    if ($s === 'confirmed' && !active_booking($r, settings())) {
+      $occ = cs_occ(); foreach ($items as $it) foreach ($it['nights'] as $d) if (!empty($occ[$pid][$d])) fail('Those nights were taken after this hold lapsed.', 409);
+    }
+    db()->prepare('UPDATE cs_bookings SET status=? WHERE ref=?')->execute([$s, $r['ref']]);
+    $g = json_decode($r['guest'], true) ?: [];
+    notify($g['email'] ?? '', ($s === 'confirmed' ? 'Confirmed: ' : 'Cancelled: ').'Calm Shade booking '.$r['ref'], $s === 'confirmed' ? array_merge(['Hi '.($g['name'] ?? '').',', '', 'Your host has confirmed your stay.', ''], cs_lines($items), ['', '— Calm Shade']) : ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$r['ref'].' was cancelled by your host and its nights released. If you already paid, reply and we will arrange the refund.', '', '— Calm Shade']);
+    out(['ok'=>true]);
+  }
+  case 'host_link_request': {
+    if ($m !== 'POST') fail('Use POST');
+    throttle('hostlink', 5, 3600, 'Too many requests. Try again in an hour.');
+    hosts_init(); $ph = digits(body()['phone'] ?? ''); $sent = false;
+    if (strlen($ph) === 10) foreach (db()->query('SELECT * FROM cs_hosts') as $h) {
+      if (digits($h['phone']) !== $ph || empty($h['email'])) continue;
+      $k = host_new_key($h['id']);
+      notify($h['email'], 'Your Calm Shade host link', ['Hi '.$h['name'].',', '', 'Here is your private host link. It signs you straight in; older links stop working.', site_base().'?host='.$k, '', '— Calm Shade']);
+      $sent = true; break;
+    }
+    usleep(300000);
+    out(['ok'=>true,'message'=>'If that number belongs to a Calm Shade host with an email on file, a new sign-in link is on its way. Otherwise, message us on WhatsApp.']);
+  }
 
   /* ---- APPA Art Passport ---- */
   case 'passport': {

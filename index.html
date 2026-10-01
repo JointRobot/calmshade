@@ -819,6 +819,21 @@ body{background:var(--bg);}
 #cs-app .fx-x{color:var(--mute); font-size:12px; text-decoration:underline; font-weight:700;}
 #cs-app .fx-tot{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--display); font-weight:600; font-size:24px; border-top:2px solid var(--ink); padding-top:10px;}
 #cs-app .fx-mob{display:none;}
+#cs-app .hf-h{font-family:var(--display); font-weight:600; font-size:17px; margin-top:6px;}
+#cs-app .hf-check{display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.5; cursor:pointer;}
+#cs-app .hf-check input{margin-top:4px; width:18px; height:18px; accent-color:var(--accent); flex:none;}
+#cs-app .hf-photos{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px;}
+#cs-app .hf-ph{position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); aspect-ratio:4/3; background:var(--bg);}
+#cs-app .hf-ph img{width:100%; height:100%; object-fit:cover; display:block;}
+#cs-app .hf-x{position:absolute; top:6px; right:6px; width:26px; height:26px; border-radius:50%; background:rgba(29,26,33,.75); color:#fff; font-size:16px; line-height:1;}
+#cs-app .hf-cover{position:absolute; left:6px; bottom:6px; background:var(--accent); color:#fff; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; border-radius:4px; padding:3px 7px;}
+#cs-app .hf-mk{position:absolute; left:6px; bottom:6px; background:rgba(255,249,238,.92); color:var(--ink); font-size:10.5px; font-weight:800; border-radius:4px; padding:3px 7px;}
+#cs-app .hf-add{border:1.5px dashed var(--line-2); border-radius:8px; aspect-ratio:4/3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; color:var(--mute); font-weight:800; font-size:12.5px; background:var(--card);}
+#cs-app .hf-add b{font-size:24px; color:var(--accent);}
+#cs-app .hf-mini{display:flex; gap:4px; margin:6px 0; align-items:center;}
+#cs-app .hf-mini img{width:54px; height:40px; object-fit:cover; border-radius:4px; border:1px solid var(--line);}
+#cs-app .hf-mini span{font-size:11px; color:var(--mute); font-weight:800;}
+#cs-app .hf-selimg{width:132px; height:96px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex:none;}
 #cs-app .fx-incl{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px;}
 #cs-app .fx-status{font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:99px; border:1px solid currentColor; white-space:nowrap;}
 #cs-app .fx-status.pending{color:#9A6A14;} #cs-app .fx-status.confirmed,#cs-app .fx-status.approved{color:var(--wa-deep);} #cs-app .fx-status.cancelled,#cs-app .fx-status.rejected,#cs-app .fx-status.expired{color:#B03A22;}
@@ -846,6 +861,7 @@ body{background:var(--bg);}
   #cs-app .fx-layout{grid-template-columns:minmax(0,1fr);}
   #cs-app .fx-trip{position:fixed; left:0; right:0; bottom:0; top:auto; max-height:82vh; border-radius:16px 16px 0 0; border-width:1.5px 0 0; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); z-index:60; box-shadow:0 -10px 34px rgba(35,32,42,.22);}
   #cs-app .fx-trip:not(.open) > :not(.fx-mob){display:none;}
+  #cs-app .fx-trip.quiet{display:none;}
   #cs-app .fx-mob{display:flex; justify-content:space-between; align-items:center; gap:12px;}
   #cs-app .fx-board .rowh{min-width:134px; max-width:134px; padding:6px 8px;}
   #cs-app .fx-board .rowh small{display:none;}
@@ -1155,8 +1171,9 @@ ${kb()}`;}
     render();toast('Booking sent — sign in as host to approve it');
   }
   function decide(id,ok){
-    if(!CSB.admin){toast('Enter your desk key at the top of the dashboard to manage live bookings');return;}
-    fxCall('cs_status',{ref:id,status:ok?'confirmed':'cancelled'},true).then(()=>{
+    const remote=session&&session.remote;
+    if(!remote&&!CSB.admin){toast('Enter your desk key at the top of the dashboard to manage live bookings');return;}
+    (remote?hsCall('host_status',{ref:id,status:ok?'confirmed':'cancelled'}).then(()=>hsSignIn()):fxCall('cs_status',{ref:id,status:ok?'confirmed':'cancelled'},true)).then(()=>{
       const b=BOOKINGS.find(x=>x.id===id);
       if(ok&&b){const ow=OWNERS.find(x=>propsOf(x.id).some(p=>p.id===b.prop));
         if(ow&&ow.probation){ow.probation.left--;if(ow.probation.left<=0){toast(ow.name+(ow.rev.avg>=3.8?' completed probation — standing restored 🌱':' finished probation below the bar — flagged for admin review'));ow.probation=null;}}}
@@ -1338,7 +1355,7 @@ ${kb()}`;}
         stops=[...new Set(stops)].slice(0,days.length);
       }catch(e){stops=null;}
       if(!stops||!stops.length)
-        stops=pool.filter(p=>availOf(p).full).sort((a,b)=>b.rate-a.rate).slice(0,Math.min(3,days.length)).map(p=>p.id);
+        stops=pool.filter(p=>availOf(p).full).sort((a,b)=>(b.rate||4.5)-(a.rate||4.5)).slice(0,Math.min(3,days.length)).map(p=>p.id);
       if(!stops.length&&pool.length)
         stops=pool.slice().sort((a,b)=>availOf(b).free-availOf(a).free).slice(0,1).map(p=>p.id);
       if(!stops.length){cur.conflict='Nothing in the collective is free for those dates and group size — try different dates or fewer guests.';return null;}
@@ -1422,7 +1439,7 @@ ${kb()}`;}
           <button class="wachip" title="Chat on WhatsApp" aria-label="Chat on WhatsApp about ${esc(p.name)}" onclick="event.stopPropagation();CS.chat('${p.id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.3.4c-.1.2-.2.3 0 .6.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.5 2.8 1.7.3.1.5.1.7-.1l1-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.2Z"/></svg></button>
           <span class="cat" style="background:${hueOf(p.cat)}">${(CATS.find(c=>c.id===p.cat)||{}).label||''}</span>
           ${plogoHTML(p)}</div>
-        <div class="bd"><div class="top"><h3>${esc(p.name)}</h3><span class="rate">★ ${p.rate.toFixed(2)}</span></div>
+        <div class="bd"><div class="top"><h3>${esc(p.name)}</h3><span class="rate">${p.rate?'★ '+p.rate.toFixed(2):'New'}</span></div>
           <div class="sub">${esc(p.loc)} · hosted by ${esc(O(p.owner).name)}</div>
           <div class="pr"><b>${inr(p.ppWithout)}</b> <span>/head</span><span class="wamini"><i>●</i> WhatsApp</span></div></div>
       </article>`).join(''):`<p class="empty">No stays match — try another filter.</p>`}
@@ -1449,7 +1466,7 @@ ${kb()}`;}
         <div><h2>Host with us. Keep 97%.</h2>
         <p>If you run a stay with soul — and you'd rather your guests met a concierge than a call-you-back — join the collective. List everything yourself, approve every booking yourself, and pay only 3% when a stay actually confirms. Nothing before that. Entry is by invitation — every host is vouched for by another, three invites per property a year.</p></div>
         <span class="sp"></span>
-        <button class="cta" onclick="CS.invite()">Have an invite? Join us</button>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><button class="cta" onclick="CS.fx('openHost')">Near Kamshet? List for APPA Art Fest</button><button class="cta" style="background:transparent;color:#F3EADB;border:1px solid rgba(243,234,219,.4)" onclick="CS.invite()">Have an invite? Join us</button></div>
       </div>
     </section>
     <div class="sep rv sep-dusk right" aria-hidden="true" data-name="night"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M8 30 Q90 8 158 22 T230 18"/><path class="fl" d="M206 10 a8 8 0 1 0 8 11 a6.5 6.5 0 1 1 -8 -11z"/><circle class="ffd" cx="60" cy="18" r="2"/><circle class="ffd" cx="118" cy="26" r="2"/><circle class="ffd" cx="160" cy="12" r="2"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1466,7 +1483,7 @@ ${kb()}`;}
       <button class="crumb" onclick="CS.go('home')">← All stays &nbsp;/&nbsp; ${esc(catLabel)}</button>
       <div class="ph">${photo(p)}</div>
       <h1>${esc(p.name)}</h1>
-      <div class="sub">${esc(p.loc)} · ★ ${p.rate.toFixed(2)} · hosted by ${esc(o.name)}${p.link?' · '+esc(p.link):''}</div>
+      <div class="sub">${esc(p.loc)} · ${p.rate?'★ '+p.rate.toFixed(2):'New to Calm Shade'} · hosted by ${esc(o.name)}${p.link&&!p.remote?' · '+esc(p.link):''}</div>
 
       <div class="det-grid">
         <div class="det-main">
@@ -1493,6 +1510,8 @@ ${kb()}`;}
               <div class="drow"><span class="dk">Entire place</span><span class="dv">${p.villa?'Bookable':'Rooms only'}</span></div>
               <div class="drow"><span class="dk">Amenities</span><span class="dv">${esc(p.amen)}</span></div>
               <div class="drow"><span class="dk">Check-in / out</span><span class="dv">1 PM / 11 AM</span></div>
+              ${p.maps||p.website?`<div class="drow"><span class="dk">Find it</span><span class="dv">${[p.maps?`<a href="${esc(p.maps)}" target="_blank" rel="noopener">Google Maps ↗</a>`:'',p.website?`<a href="${esc(p.website)}" target="_blank" rel="noopener">Website ↗</a>`:''].filter(Boolean).join(' · ')}</span></div>`:''}
+              ${p.festival?`<div class="drow"><span class="dk">APPA Art Fest 2027</span><span class="dv"><button class="fx-x" onclick="CS.go('fest')">Festival partner stay · book festival nights ↗</button></span></div>`:''}
             </div>
           </section>
           ${p.geo?`<section>
@@ -1587,6 +1606,9 @@ ${kb()}`;}
       ${login.err?`<div class="lg-err">${esc(login.err)}</div>`:''}
       <button class="b-rb" onclick="CS.id()">Send code</button>
       <div class="lg-alt">Demo hosts: mira@ · ravi@ · anya@calmshade.demo<br><button onclick="CS.invite()">Have an invite code? Join the collective</button></div>
+      <div class="lg-alt" style="text-align:left;border-top:1px solid var(--line);padding-top:14px;margin-top:16px"><b style="color:var(--ink)">Hosting through APPA Art Fest?</b> Sign in with the private link we sent you. Lost it? Get a new one by email:
+        <div class="phrow"><input type="tel" placeholder="Your phone number" value="${esc(HS.linkReq.phone)}" oninput="CS.hsReqF(this.value)"><button onclick="CS.hsReq()" style="background:var(--ink)">Send link</button></div>
+        ${HS.linkReq.msg?`<div class="nt2">${esc(HS.linkReq.msg)}</div>`:''}<button onclick="CS.fx('openHost')" style="margin-top:8px">Not listed yet? List your stay</button></div>
     </div></div>`;
   }
 
@@ -1618,7 +1640,7 @@ ${kb()}`;}
 
   function editorHTML(p){
     const isNew=!p.id;
-    return `<div class="editor">
+    return `<div class="editor" data-ed="${esc(p.id||'new')}">
       <h4>${isNew?'New listing':'Edit — '+esc(p.name)}</h4>
       <div class="egrid">
         <div class="efld wide"><label>Listing title</label><input id="e-name" value="${esc(p.name||'')}" placeholder="e.g. The River Loft"></div>
@@ -1627,7 +1649,13 @@ ${kb()}`;}
         <div class="efld"><label>Longitude</label><input id="e-lon" type="number" step="any" value="${p.geo?p.geo[1]:''}" placeholder="73.487"></div>
         <div class="efld"><label>Category</label><select id="e-cat">${CATS.map(c=>`<option value="${c.id}" ${p.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select></div>
         <div class="efld"><label>Capacity line</label><input id="e-cap" value="${esc(p.cap||'')}" placeholder="Up to 4 guests · 1 room"></div>
-        <div class="efld"><label>Airbnb link (for import)</label><input id="e-link" value="${esc(p.link||'')}" placeholder="airbnb.co.in/h/…"></div>
+        <div class="efld"><label>${p.remote?'Website or listing link':'Airbnb link (for import)'}</label><input id="e-link" value="${esc(p.link||'')}" placeholder="airbnb.co.in/h/…"></div>
+        ${p.remote&&HS.me?(()=>{const d=HS.me.listing.data;return `<div class="efld"><label>Google Maps link</label><input id="e-maps" value="${esc(d.maps||'')}" placeholder="https://maps.app.goo.gl/…"></div>
+        <div class="efld"><label>Sleeps in total</label><input id="e-sleeps" type="number" min="1" max="60" value="${esc(d.sleeps||'')}"></div>
+        <div class="efld"><label>Festival: rooms to offer</label><input id="e-rooms" type="number" min="1" max="60" value="${esc(d.rooms||'')}"></div>
+        <div class="efld"><label>Festival: max adults per room</label><input id="e-maxg" type="number" min="1" max="8" value="${esc(d.maxGuests||'')}"></div>
+        <div class="efld"><label>Festival: rate per room per night, for 2 (₹)</label><input id="e-rate" type="number" min="500" step="100" value="${esc(d.rate||'')}"></div>
+        <div class="efld"><div class="tgl2"><input type="checkbox" id="e-year" ${d.yearRound!==false?'checked':''}><label for="e-year" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)">On Calm Shade all year</label></div></div>`;})():''}
         <div class="efld"><label>Price /head · with meals (₹)</label><input id="e-pw" type="number" value="${p.ppWith||''}"></div>
         <div class="efld"><label>Price /head · without meals (₹)</label><input id="e-po" type="number" value="${p.ppWithout||''}"></div>
         <div class="efld"><div class="tgl2"><input type="checkbox" id="e-pet" ${p.pet?'checked':''}><label for="e-pet" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)">Pet friendly</label></div></div>
@@ -1644,11 +1672,11 @@ ${kb()}`;}
           </div>
           <div class="nt2">The <b>cover</b> photo is what guests see on the home page. Each caption shows under its photo in the property gallery.</div>
         </div>
-        <div class="efld wide"><label>Walkthrough video — one per property, audio kept</label>
+        ${p.remote?'':`<div class="efld wide"><label>Walkthrough video — one per property, audio kept</label>
           ${edMedia&&edMedia.video?`<div class="vrow"><video controls muted playsinline preload="metadata" src="${edMedia.video.src}"></video>
             <div class="vmeta"><input placeholder="Video caption…" value="${esc(edMedia.video.cap||'')}" onchange="CS.capVid(this.value)"><div><button type="button" class="b-lt" onclick="CS.rmVid()">Remove video</button></div></div></div>`
           :`<label class="uptile wide2"><input type="file" accept="video/*" hidden onchange="CS.upVid(this)"><b>▶</b>&nbsp;Upload a walkthrough video</label>`}
-        </div>
+        </div>`}
         <div class="efld wide"><label>Guest questions — teach the concierge this property's specifics</label>
           ${(edMedia&&edMedia.faq||[]).map((f,i)=>`<div class="qarow">
             <input placeholder="Question guests ask… e.g. Is the last stretch of road rough?" value="${esc(f.q)}" onchange="CS.faqQ(${i},this.value)">
@@ -1658,19 +1686,19 @@ ${kb()}`;}
           <button type="button" class="b-lt" onclick="CS.faqAdd()">＋ Add a question</button>
           <div class="nt2">These go straight into the concierge's brain for <b>this listing only</b> — it answers guests with your exact words, any hour. They also show as "Good to know" on the property page.</div>
         </div>
-        <div class="efld wide"><label>Property logo</label>
+        ${p.remote?'':`<div class="efld wide"><label>Property logo</label>
           <div class="lgrow">${edMedia&&edMedia.logo?`<span class="plogo has big"><img src="${edMedia.logo}" alt=""></span><button type="button" class="b-lt" onclick="CS.rmLogo()">Remove logo</button>`:`<label class="uptile logol"><input type="file" accept="image/*" hidden onchange="CS.upLogo(this)"><b>◍</b>&nbsp;Upload logo</label>`}</div>
-        </div>
+        </div>`}
         <div class="efld wide"><label>Amenities (· separated)</label><input id="e-amen" value="${esc(p.amen||'')}" placeholder="WiFi · Home food · Parking"></div>
         <div class="efld wide"><label>Description</label><textarea id="e-desc">${esc(p.desc||'')}</textarea></div>
       </div>
       <div class="eacts">
         <button class="b-save" onclick="CS.save()">${isNew?'Publish listing':'Save changes'}</button>
         <button class="b-lt" onclick="CS.closeEd()">Cancel</button>
-        ${!isNew?`<button class="b-lt" onclick="CS.toggleLive('${p.id}')">${p.live?'Unlist (hide from guests)':'Relist'}</button>
-        <button class="b-del" onclick="CS.del('${p.id}')">Delete listing</button>`:''}
+        ${!isNew?`<button class="b-lt" onclick="CS.toggleLive('${p.id}')">${p.live?'Pause (hide from guests)':'Relist'}</button>
+        ${p.remote?'':`<button class="b-del" onclick="CS.del('${p.id}')">Delete listing</button>`}`:''}
       </div>
-      <p style="font-size:12px;color:var(--mute);margin-top:12px;line-height:1.6">Everything here updates the live site and the concierge's answers instantly. With the backend: photo uploads, menus, house rules, activities — and one-click import from your Airbnb link.</p>
+      <p style="font-size:12px;color:var(--mute);margin-top:12px;line-height:1.6">${p.remote?'Saving updates your listing on Calm Shade and for APPA Art Fest straight away, and the concierge learns your answers.':'Everything here updates the live site and the concierge\'s answers instantly. With the backend: photo uploads, menus, house rules, activities — and one-click import from your Airbnb link.'}</p>
     </div>`;
   }
 
@@ -1683,7 +1711,8 @@ ${kb()}`;}
     const conf=mine.filter(b=>b.status==='confirmed');
     const gross=conf.reduce((s,b)=>s+b.amt,0), payout=gross-Math.round(gross*COMM);
     const edP=editing==='new'?{owner:oid}:editing?P(editing):null;
-    return `
+    const remote=session&&session.remote;
+    return `${hsHostPanels()}
       <div class="stats">
         <div class="stat" style="--stc:var(--r2)"><div class="k">Pending approvals</div><div class="v">${pend.length} ${pend.length?'<small>action needed</small>':''}</div></div>
         <div class="stat" style="--stc:var(--r6)"><div class="k">Upcoming stays</div><div class="v">${conf.length}</div></div>
@@ -1698,12 +1727,12 @@ ${kb()}`;}
             <span>${esc(b.guest)} · ${esc(b.dates)} · ${b.head} guests${b.meals?' · meals':''} · ${inr(b.amt)} via UPI${b.status==='expired'?' · <b>hold lapsed</b>':''}</span>
             ${b.utr?`<span>UPI reference: <b>${esc(b.utr)}</b></span>`:''}
             <span>You receive ${inr(b.amt-commOf(b))} after the 3% platform fee</span></div>
-          <div class="acts2"><button class="b-ok" onclick="CS.dec('${b.id}',true)">Confirm</button>
-          <button class="b-no" onclick="CS.dec('${b.id}',false)">Reject</button></div>
+          ${b.onlyMine===false?`<span class="nt2" style="max-width:180px">Part of a multi-stay trip: the Calm Shade team confirms it.</span>`:`<div class="acts2"><button class="b-ok" onclick="CS.dec('${b.id}',true)">Confirm</button>
+          <button class="b-no" onclick="CS.dec('${b.id}',false)">Reject</button></div>`}
         </div>`).join(''):`<div class="empty">Nothing waiting. When a guest holds nights, the booking lands here with its dates already blocked; confirm once their UPI payment arrives.</div>`}
       </div></div>
 
-      <div class="pan"><div class="ph2"><h3>Your listings</h3><span class="sp"></span><button class="b-lt" onclick="CS.newListing()">＋ Add a listing</button></div><div class="pb">
+      <div class="pan"><div class="ph2"><h3>Your listings</h3><span class="sp"></span>${remote?'':`<button class="b-lt" onclick="CS.newListing()">＋ Add a listing</button>`}</div><div class="pb">
         ${myProps.map(p=>`<div class="lrow">
           <div class="thumb">${photo(p)}</div>
           <div><b>${esc(p.name)} ${p.live?'':'<span class="pill rj" style="margin-left:6px">unlisted</span>'}</b>
@@ -1713,7 +1742,7 @@ ${kb()}`;}
         ${edP?editorHTML(edP):''}
       </div></div>
 
-      <div class="pan"><div class="ph2"><h3>Moments — your video reel</h3><span class="sp"></span>
+      ${remote?'':`<div class="pan"><div class="ph2"><h3>Moments — your video reel</h3><span class="sp"></span>
         <label class="b-lt" style="cursor:pointer">＋ Add a video<input type="file" accept="video/*" hidden onchange="CS.momAdd(this)"></label></div><div class="pb">
         ${(()=>{const myMoms=MOMENTS.filter(m=>myProps.some(p=>p.id===m.prop));
         return myMoms.length?myMoms.map(m=>`<div class="movrow">
@@ -1729,7 +1758,8 @@ ${kb()}`;}
         <p style="font-size:12px;color:var(--mute);margin-top:14px;line-height:1.6">Every published video features on the site's <b>Moments</b> reel, tagged to its property. Walkthrough videos (in the listing editor) are separate — they live on the property page itself.</p>
       </div></div>
 
-      ${(()=>{const pts=pointsOf(o.id);const refs=OWNERS.filter(x=>x.invitedBy===o.id);
+`}
+      ${remote?'':(()=>{const pts=pointsOf(o.id);const refs=OWNERS.filter(x=>x.invitedBy===o.id);
         const refBad=activeRefBad(o.id);const inviter=OWNERS.find(x=>x.id===o.invitedBy);
         const canVouch=inviter&&statusOf(inviter)==='review'&&!inviter.probation&&o.rev.bad<3&&o.rev.avg>=4.2;
         return `<div class="pan"><div class="ph2"><h3>The Grove — invites &amp; trust</h3><span class="sp"></span><span class="who">Trust · ${pts} pts</span></div><div class="pb">
@@ -1976,7 +2006,7 @@ ${kb()}`;}
     tickets:(Array.isArray(fxLS('tickets'))?fxLS('tickets'):[]).filter(t=>t&&t.ref&&t.token),mine:[],arm:null,find:{open:false,ref:'',phone:'',err:''},
     checkout:false,busy:false,last:null,err:'',tripOpen:false,
     form:Object.assign({name:'',phone:'',email:'',note:''},fxLS('guest')||{}),utr:'',
-    host:{name:'',type:'Homestay',location:'',distance:'',rooms:4,maxGuests:2,rate:4500,desc:'',cname:'',phone:'',email:''},hostSent:null,
+    host:{name:'',type:'Homestay',cat:'room',location:'',distance:'',maps:'',website:'',link:'',rooms:4,maxGuests:2,rate:4500,yearRound:true,sleeps:8,ppWith:2000,ppWithout:1500,pet:false,villa:true,amen:'',desc:'',cname:'',phone:'',email:''},hostSent:null,
     desk:{key:fxLS('desk')||'',data:null,err:'',busy:false,tab:'bookings'}};
   const fxSave=()=>{fxLS('cart',FX.cart);fxLS('tickets',FX.tickets);};
   const fxD=s=>new Date(s+'T00:00:00Z');
@@ -2009,7 +2039,7 @@ ${kb()}`;}
 
   /* inventory & pricing (the server re-checks and re-prices every booking) */
   const fxTent=()=>({id:'tents',name:'VIP Tent Village',rooms:+FX.S.tents||0,cap:2,kind:'tent',blurb:'Tents inside the festival grounds'});
-  const fxPartners=()=>FX.listings.map(l=>({id:l.id,name:l.name,rooms:+l.rooms||1,cap:+l.maxGuests||2,kind:'partner',rate:+l.rate||0,
+  const fxPartners=()=>FX.listings.map(l=>({id:l.id,name:l.name,rooms:+l.rooms||1,cap:+l.maxGuests||2,kind:'partner',rate:+l.rate||0,photo:l.photo||'',maps:l.maps||'',website:l.website||'',onCS:!!l.onCalmShade,
     blurb:[l.type,l.location,l.distance?l.distance+' km away':''].filter(Boolean).join(' · '),desc:l.desc}));
   const fxUnits=()=>FX_VIP.concat([fxTent()],fxPartners());
   const fxU=id=>fxUnits().find(u=>u.id===id);
@@ -2074,7 +2104,7 @@ ${kb()}`;}
         <p>25 Jan to 25 Feb 2027 around the lake at Kamshet. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
       </div><nav class="fx-tabs">${tabs.map(([k,l])=>`<button class="fx-tab ${FX.tab===k?'on':''}" onclick="CS.fx('tab','${k}')">${l}</button>`).join('')}<button class="fx-tab" style="border-color:var(--accent);color:var(--accent)" onclick="CS.go('passport')">My passport</button></nav></header>
       ${FX.offline?`<div class="fx-err" style="margin-top:16px">We can't reach the booking desk right now, so the room counts may be out of date and booking is paused. We'll keep trying. <button class="fx-x" onclick="CS.fx('retry')">Try again now</button></div>`:''}
-      <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
+      <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}${FX.tab==='host'&&!FX.cart.stays.length&&!FX.cart.passes.length&&!FX.last&&!FX.ticket?' quiet':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
     </div>`;}
 
   function fxStayHTML(){
@@ -2131,7 +2161,9 @@ ${kb()}`;}
     const inc=u.kind==='partner'?`Host rate ${inr(u.rate)} plus festival entry ${inr(FX.S.partnerMarkup)} per guest, per night.`:u.kind==='single'?'Single room with festival entry each night.':`Includes festival entry for 2 each night. Extra adults ${inr(FX.S.extraGuest)} each per night. Kids under 10 free.`;
     return `<div class="fx-panel accent" id="fx-sel">
       <div class="fx-row between" style="align-items:flex-start"><div><span class="fx-eyebrow" style="color:var(--mute)">${u.kind==='partner'?'Partner stay':u.kind==='tent'?'VIP tent':'VIP room'}</span>
-        <h2 class="fx-h2" style="margin-top:4px">${esc(u.name)}</h2><p class="fx-note">${esc(u.blurb||'')}${u.desc?' · '+esc(u.desc):''}</p></div>
+        <h2 class="fx-h2" style="margin-top:4px">${esc(u.name)}</h2><p class="fx-note">${esc(u.blurb||'')}${u.desc?' · '+esc(u.desc):''}</p>
+        ${u.kind==='partner'&&(u.maps||u.website||u.onCS)?`<p class="fx-note">${[u.maps?`<a class="fx-link" href="${esc(u.maps)}" target="_blank" rel="noopener">Map ↗</a>`:'',u.website?`<a class="fx-link" href="${esc(u.website)}" target="_blank" rel="noopener">Website ↗</a>`:'',u.onCS&&P(u.id)?`<button class="fx-x" onclick="CS.open('${esc(u.id)}')">Photos &amp; details on Calm Shade</button>`:''].filter(Boolean).join(' · ')}</p>`:''}</div>
+        ${u.photo?`<img src="${esc(u.photo)}" alt="" class="hf-selimg">`:''}
         <button class="fx-btn ghost small" onclick="CS.fx('clearSel')">Clear</button></div>
       <div class="fx-row">
         <div class="fx-kv"><span>Check in</span><b>${fxFmt(a)}</b></div><div class="fx-kv"><span>Check out</span><b>${fxFmt(fxAdd(b,1))}</b></div>
@@ -2160,21 +2192,9 @@ ${kb()}`;}
         <div class="fx-row"><button class="fx-btn" onclick="CS.fx('addPass')" ${n?'':'disabled'}>Add passes to my trip</button>${n?`<button class="fx-btn ghost" onclick="CS.fx('clearPass')">Clear days</button>`:''}</div></div>`;}
 
   function fxHostHTML(){
-    const h=FX.host;const F=(k,l,t,extra)=>`<div class="fx-field"><label for="fxh-${k}">${l}</label><input id="fxh-${k}" type="${t||'text'}" value="${esc(h[k])}" oninput="CS.fx('hostF','${k}',this.value)" ${extra||''}></div>`;
-    return `<div><h2 class="fx-h2">List your homestay or campsite</h2><p class="fx-sub">Host festival guests near Kamshet. You set your own nightly rate for two; we add ${inr(FX.S.partnerMarkup)} per guest per night for festival entry and sell your rooms on the same calendar as the festival's own stays. You receive your full rate, with no commission. Listings go live once the festival team approves them.</p></div>
-      ${FX.hostSent?`<div class="fx-panel accent"><b class="fx-h2" style="font-size:18px">Thanks, ${esc(FX.hostSent)} is in for review</b><p class="fx-note">The festival team will call you before it goes live on the calendar.</p><div><button class="fx-btn ghost small" onclick="CS.fx('hostAgain')">List another place</button></div></div>`:
-      `<form class="fx-panel" onsubmit="event.preventDefault();CS.fx('hostSubmit')">
-        <div class="fx-grid2">${F('name','Property name','text','required maxlength="80" placeholder="Pawna Lakeside Camp"')}
-          <div class="fx-field"><label for="fxh-type">Type</label><select id="fxh-type" onchange="CS.fx('hostF','type',this.value)">${['Homestay','Campsite','Villa','Farmstay','Guest house'].map(o=>`<option ${h.type===o?'selected':''}>${o}</option>`).join('')}</select></div>
-          ${F('location','Village or area','text','required maxlength="80" placeholder="Kamshet"')}${F('distance','Distance from festival (km)','number','min="0" step="0.5"')}
-          ${F('rooms','Rooms or tents to offer','number','min="1" max="60" required')}${F('maxGuests','Max adults per room','number','min="1" max="8" required')}
-          ${F('rate','Your rate per room per night, for 2 (₹)','number','min="500" step="100" required')}</div>
-        <div class="fx-field"><label for="fxh-desc">A line about your place</label><textarea id="fxh-desc" rows="2" maxlength="240" oninput="CS.fx('hostF','desc',this.value)" placeholder="Breakfast included, 10 minutes to the festival square">${esc(h.desc)}</textarea></div>
-        <div class="fx-grid2">${F('cname','Your name','text','required maxlength="80"')}${F('phone','Phone / WhatsApp','tel','required maxlength="20"')}${F('email','Email','email','maxlength="120"')}</div>
-        <p class="fx-note">Your contact details are seen only by the festival team.</p>
-        ${FX.err&&FX.tab==='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
-        <div><button class="fx-btn" type="submit" ${FX.busy?'disabled':''}>${FX.busy?'Sending…':'Submit for approval'}</button></div>
-      </form>`}`;}
+    return `<div><h2 class="fx-h2">List your stay on Calm Shade</h2><p class="fx-sub">For APPA Art Fest 2027 and all year after it. Homestays, camps and farmstays near Kamshet: share your place once, and we sell your rooms to festival guests on the same calendar as the festival's own stays, then keep you in the Calm Shade collective when the festival ends. Approved places go live straight away and you get your own host login.</p></div>
+      ${FX.hostSent?`<div class="fx-panel accent"><b class="fx-h2" style="font-size:18px">Thanks, ${esc(FX.hostSent)} is in for review</b><p class="fx-note">We'll call you within a couple of days. Once approved, you'll get a private link on WhatsApp${FX.host.email?' and email':''} to manage your listing, photos and bookings.</p><div><button class="fx-btn ghost small" onclick="CS.fx('hostAgain')">List another place</button></div></div>`:hfHTML()}`;
+  }
 
   function fxTripHTML(){
     const t=fxTrip();const count=FX.cart.stays.length+FX.cart.passes.length;
@@ -2265,10 +2285,15 @@ ${kb()}`;}
       <td>${(b.items||[]).map(item).join('<br>')}</td><td>${b.tier?`<span class="fx-tier ${b.tier}">${b.tier}</span>`:''}</td>
       <td class="num"><b>${inr(b.total)}</b><br><span class="fx-note">hosts ${inr(b.payout)}</span></td><td><span class="fx-status ${b.status}">${b.status}</span></td>
       <td style="white-space:nowrap">${b.status==='pending'||b.status==='expired'?`<button class="fx-btn ok small" onclick="CS.fx('deskStatus','${esc(b.ref)}','confirmed')">Confirm paid</button> `:''}${b.status!=='cancelled'?`<button class="fx-btn warn small" onclick="CS.fx('deskStatus','${esc(b.ref)}','cancelled')">${FX.arm==='d'+b.ref?'Tap again to cancel':'Cancel'}</button>`:''}</td></tr>`;}).join('');
-    const lrows=ls.map(l=>{const d=l.data||{},c=l.contact||{};return `<tr><td><b>${esc(d.name)}</b><br><span class="fx-note">${esc(d.type)} · ${esc(d.location)}${d.distance?' · '+esc(d.distance)+' km':''}</span>${d.desc?`<br><span class="fx-note">${esc(d.desc)}</span>`:''}</td>
-      <td>${esc(c.name||'')}<br><span class="fx-note">${esc(c.phone||'')} ${esc(c.email||'')}</span></td><td class="num">${esc(d.rooms)} × ${esc(d.maxGuests)}</td><td class="num">${inr(d.rate)}<br><span class="fx-note">guest pays ${inr(+d.rate+2*FX.S.partnerMarkup)}</span></td>
+    const lrows=ls.map(l=>{const d=l.data||{},c=l.contact||{};const ph=(d.photos||[]).slice(0,3);
+      return `<tr><td><b>${esc(d.name)}</b><br><span class="fx-note">${esc(d.type||'')} · ${esc(d.location||'')}${d.distance?' · '+esc(d.distance)+' km':''}</span>
+        ${ph.length?`<div class="hf-mini">${ph.map(x=>`<img src="${esc(x.src)}" alt="">`).join('')}${(d.photos||[]).length>3?`<span>+${d.photos.length-3}</span>`:''}</div>`:''}
+        <div class="fx-note">${[d.maps?`<a href="${esc(d.maps)}" target="_blank" rel="noopener">Map</a>`:'',d.website?`<a href="${esc(d.website)}" target="_blank" rel="noopener">Website</a>`:'',d.link?`<a href="${esc(d.link)}" target="_blank" rel="noopener">Listing</a>`:''].filter(Boolean).join(' · ')}</div>
+        ${d.desc?`<span class="fx-note">${esc(String(d.desc).slice(0,160))}${String(d.desc).length>160?'…':''}</span>`:''}</td>
+      <td>${esc(c.name||'')}<br><span class="fx-note">${c.phone?`<a href="https://wa.me/${esc(String(c.phone).replace(/\D/g,'').replace(/^(\d{10})$/,'91$1'))}" target="_blank" rel="noopener">${esc(c.phone)}</a>`:''} ${esc(c.email||'')}</span></td>
+      <td class="num">${esc(d.rooms)} × ${esc(d.maxGuests)}<br><span class="fx-note">${d.yearRound?'all year':'festival only'}</span></td><td class="num">${inr(d.rate)}<br><span class="fx-note">guest pays ${inr(+d.rate+2*FX.S.partnerMarkup)}</span>${d.yearRound&&d.ppWith?`<br><span class="fx-note">${inr(d.ppWith)}/${inr(d.ppWithout)} per head</span>`:''}</td>
       <td><span class="fx-status ${l.status}">${l.status==='approved'?'live':l.status}</span></td>
-      <td style="white-space:nowrap">${l.status!=='approved'?`<button class="fx-btn ok small" onclick="CS.fx('deskApprove','${esc(l.id)}','approved')">Approve</button> `:''}${l.status!=='rejected'?`<button class="fx-btn warn small" onclick="CS.fx('deskApprove','${esc(l.id)}','rejected')">${l.status==='approved'?'Take down':'Reject'}</button>`:''}</td></tr>`;}).join('');
+      <td style="white-space:nowrap">${l.status!=='approved'?`<button class="fx-btn ok small" onclick="CS.hsEnroll('${esc(l.id)}')">Approve &amp; enroll</button> `:`<button class="fx-btn ghost small" onclick="CS.hsEnroll('${esc(l.id)}',1)">New host link</button> `}${l.status!=='rejected'?`<button class="fx-btn warn small" onclick="CS.fx('deskApprove','${esc(l.id)}','rejected')">${l.status==='approved'?'Take down':'Reject'}</button>`:''}</td></tr>`;}).join('');
     const SF=(k,l)=>`<div class="fx-field"><label for="fxs-${k}">${l}</label><input id="fxs-${k}" data-fxs="${k}" type="${typeof FX_DEF[k]==='number'?'number':'text'}" value="${esc(FX.S[k])}"></div>`;
     return `<div class="stats">
         <div class="stat" style="--stc:var(--r4)"><div class="k">Confirmed</div><div class="v">${conf.length}</div></div>
@@ -2280,7 +2305,7 @@ ${kb()}`;}
       <div class="pan"><div class="ph2"><h3>Festival bookings</h3><span class="sp"></span><input class="sel" style="max-width:220px" placeholder="Check a ticket: APPA-…" value="${esc(D.q||'')}" oninput="CS.fx('deskQ',this.value)" aria-label="Check a ticket by reference"><button class="b-lt" onclick="CS.fx('deskRefresh')">Refresh</button></div><div class="pb">
         ${rows?`<div class="fx-tbl"><table><thead><tr><th>Ref</th><th>Guest</th><th>Trip</th><th>Tier</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="fx-note">No festival bookings yet. They appear here the moment a guest holds rooms.</p>'}
         <p class="nt2" style="margin-top:12px">Unpaid bookings hold their rooms for ${FX.S.holdHours} hours, then release automatically. Confirm once the UPI payment lands; an expired booking can still be confirmed if its rooms are free.</p></div></div>
-      <div class="pan"><div class="ph2"><h3>Partner host applications</h3></div><div class="pb">
+      <div class="pan"><div class="ph2"><h3>Partner host applications</h3></div><div class="pb">${hsLinkBox()}
         ${lrows?`<div class="fx-tbl"><table><thead><tr><th>Property</th><th>Contact</th><th>Rooms × adults</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>${lrows}</tbody></table></div>`:'<p class="fx-note">No applications yet.</p>'}</div></div>
       <div class="pan"><div class="ph2"><h3>Festival prices and rules</h3></div><div class="pb"><form onsubmit="event.preventDefault();CS.fx('deskSettings')">
         <div class="fx-grid2">${SF('coupleNight','VIP room per couple per night (₹)')}${SF('partnerShareCouple','Venue partner share per couple-night (₹)')}${SF('singleNight','Purrom single room per night (₹)')}${SF('partnerShareSingle','Venue partner share per single-night (₹)')}${SF('extraGuest','Extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Day pass per person (₹)')}${SF('partnerMarkup','Festival entry added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipDiscount','VIP discount (₹)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipDiscount','VVIP discount (₹)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('encoreFrom','Encore starts')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
@@ -2309,7 +2334,7 @@ ${kb()}`;}
     const bw=root.querySelector('.fx-board');if(bw)fxAct.sl=bw.scrollLeft;
     switch(a){
       case 'tab':FX.tab=x;FX.err='';try{const h=x==='stay'?'#appa':'#appa-'+x;if(location.hash!==h)history.replaceState({},'',h);}catch(e){}break;
-      case 'openPasses':case 'openCurate':{const t=a==='openPasses'?'pass':'curate';FX.tab=t;
+      case 'openPasses':case 'openCurate':case 'openHost':{const t=a==='openPasses'?'pass':a==='openHost'?'host':'curate';FX.tab=t;
         try{history.pushState({},'','#appa-'+t);}catch(e){}CS.go('fest');return;}
       case 'filter':FX.filter=x;break;
       case 'cell':{const u=fxU(x);if(!u)return;if(fxLeft(u,y)===0)return toast('Sold out that night');
@@ -2334,7 +2359,7 @@ ${kb()}`;}
       case 'toggleTrip':FX.tripOpen=!FX.tripOpen;break;
       case 'guestF':FX.form[x]=y;return;
       case 'utrF':FX.utr=x;return;
-      case 'hostF':FX.host[x]=y;return;
+      case 'hostF':FX.host[x]=y;if(typeof y==='boolean')render();return;
       case 'book':fxBook();return;
       case 'done':FX.last=null;break;
       case 'copy':try{navigator.clipboard.writeText(x).then(()=>toast('Copied'),()=>toast(x));}catch(e){toast(x);}return;
@@ -2354,10 +2379,12 @@ ${kb()}`;}
         FX.arm=null;
         fxCall('cancel',{ref:t.ref,token:t.token}).then(()=>{toast('Booking cancelled and rooms released');fxLoad();},e=>toast(e.message));return;}
       case 'hostSubmit':{const h=FX.host;FX.err='';
-        if(FX.offline){FX.err='The booking desk isn\'t reachable from here. Email your details to '+FX.S.contact+'.';break;}
+        if(FX.offline){FX.err='We can\'t reach Calm Shade right now. Try again in a minute, or send your details on WhatsApp.';break;}
+        if(!HF.photos.length&&!h.website&&!h.link){FX.err='Add at least one photo, or a website or Airbnb link, so we can see your place.';break;}
         FX.busy=true;render();
-        fxCall('list',{property:{name:h.name,type:h.type,location:h.location,distance:h.distance,rooms:+h.rooms,maxGuests:+h.maxGuests,rate:+h.rate,desc:h.desc},contact:{name:h.cname,phone:h.phone,email:h.email}})
-          .then(()=>{FX.busy=false;FX.hostSent=h.name;render();window.scrollTo({top:0,behavior:'smooth'});},e=>{FX.busy=false;FX.err=e.message;render();});return;}
+        fxCall('list',{property:{name:h.name,type:h.type,cat:h.cat,location:h.location,distance:h.distance,maps:h.maps,website:h.website,link:h.link,rooms:+h.rooms,maxGuests:+h.maxGuests,rate:+h.rate,
+          yearRound:!!h.yearRound,sleeps:+h.sleeps,ppWith:+h.ppWith,ppWithout:+h.ppWithout,pet:!!h.pet,villa:!!h.villa,amen:h.amen,desc:h.desc,photos:HF.photos.map(src=>({src}))},contact:{name:h.cname,phone:h.phone,email:h.email}})
+          .then(()=>{FX.busy=false;FX.hostSent=h.name;HF.photos=[];render();window.scrollTo({top:0,behavior:'smooth'});},e=>{FX.busy=false;FX.err=e.message;render();});return;}
       case 'hostAgain':FX.hostSent=null;FX.host=Object.assign(FX.host,{name:'',desc:''});break;
       case 'deskKey':FX.desk.key=x;return;
       case 'deskQ':FX.desk.q=x;clearTimeout(fxAct.qt);fxAct.qt=setTimeout(()=>{render();const i=root.querySelector('input[aria-label="Check a ticket by reference"]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250);return;
@@ -2700,12 +2727,126 @@ ${kb()}`;}
       toast('Curated stay added · '+CU.plan.length+' nights');CU.plan=null;FX.tab='stay';FX.tripOpen=true;FX.last=null;FX.ticket=null;window.scrollTo({top:0,behavior:'smooth'});}
     render();
   }
+  /* ═════════ PARTNER HOSTS — listing form, enrolment, host accounts (fest.php upload / cs_props / host_*) ═════════ */
+  const HS={key:(()=>{try{return localStorage.getItem('cs-host-key')||'';}catch(e){return '';}})(),me:null,fest:[],busy:false,enrolled:null,linkReq:{phone:'',msg:''}};
+  async function hsCall(a,body){
+    const opt={method:body?'POST':'GET',headers:{'X-Host-Key':HS.key}};
+    if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}
+    const r=await fetch(FX_API+'?a='+a,opt);let j=null;try{j=await r.json();}catch(e){}
+    if(!r.ok||!j){const e=new Error((j&&j.error)||'Could not reach Calm Shade. Try again.');e.status=r.status;throw e;}return j;}
+  /* shrink a photo in the browser before upload: long side 1600px, JPEG */
+  function hsShrink(file){return new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{const s=Math.min(1,1600/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);let q=.84,d=c.toDataURL('image/jpeg',q);while(d.length>3200000&&q>.4){q-=.12;d=c.toDataURL('image/jpeg',q);}res(d);};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('That file is not a photo we can read.'));};img.src=url;});}
+  async function hsUpload(file,auth){const data=await hsShrink(file);
+    const h={'Content-Type':'application/json'};if(auth==='host')h['X-Host-Key']=HS.key;if(auth==='admin')h['X-Fest-Key']=FX.desk.key;
+    const r=await fetch(FX_API+'?a=upload',{method:'POST',headers:h,body:JSON.stringify({data})});let j=null;try{j=await r.json();}catch(e){}
+    if(!r.ok||!j||!j.src)throw new Error((j&&j.error)||'Upload failed. Try again.');return j.src;}
+  /* enrolled partner stays become Calm Shade listings */
+  function hsAddProp(x,host){
+    const gallery=(x.photos||[]).map(g=>({src:g.src,cap:g.cap||''}));
+    const p={id:x.id,geo:x.geo||null,owner:x.owner,name:x.name,link:x.website||x.link||'',maps:x.maps||'',website:x.website||'',loc:x.loc,cat:x.cat||'room',cap:x.cap,ppWith:x.ppWith,ppWithout:x.ppWithout,
+      pet:!!x.pet,villa:!!x.villa,rate:null,sky:['#C9B79A','#F3EADB'],land:'#7A6A4A',live:x.live!==false,desc:x.desc||'',amen:x.amen||'',gallery,cover:Math.min(x.cover||0,Math.max(0,gallery.length-1)),video:null,logo:null,faq:x.faq||[],remote:true,festival:true,sleeps:x.sleeps};
+    const i=PROPS.findIndex(q=>q.id===p.id);if(i>=0)PROPS[i]=p;else PROPS.push(p);if(!CAL[p.id])CAL[p.id]={};
+    if(host&&!OWNERS.some(o=>o.id===host.id))OWNERS.push({id:host.id,name:host.name||'Host',email:'',phone:'',hue:'var(--r5)',invitedBy:'o1',rev:{good:0,bad:0,avg:0},probation:null,festival:true});
+  }
+  async function hsLoadProps(){try{const j=await fxCall('cs_props');const hosts={};(j.hosts||[]).forEach(h=>hosts[h.id]=h);
+      (j.props||[]).forEach(x=>hsAddProp(x,hosts[x.owner]));csLoad();if(fxQuiet())render();}catch(e){}}
+  async function hsSignIn(quiet){
+    if(!HS.key)return false;
+    try{const j=await hsCall('host_me');HS.me=j;hsAddProp(j.prop,{id:j.host.id,name:j.host.name});
+      const pp=P(j.prop.id);if(j.listing.data.yearRound===false){pp.live=false;pp.festivalOnly=true;}
+      session={type:'owner',name:j.host.name||'Host',ownerId:j.host.id,remote:true};ownerCtx=j.host.id;ownerProp=j.prop.id;dashMode='host';
+      BOOKINGS=[];j.csBookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:b.items.length>1?'leg '+(i+1)+' of '+b.items.length:'',prop:it.prop,
+        guest:(b.guest.name||'Guest')+' · '+(b.guest.phone||''),dates:csDates(it.nights),head:it.heads,amt:it.total,meals:it.meals,utr:b.utr,onlyMine:b.onlyMine,
+        status:b.status==='cancelled'?'rejected':b.status})));
+      HS.fest=j.festBookings||[];csLoad();return true;}
+    catch(e){if(e.status===401){try{localStorage.removeItem('cs-host-key');}catch(x){}HS.key='';if(!quiet)toast(e.message);}return false;}
+  }
+  function hsHostPanels(){
+    if(!(session&&session.remote&&HS.me))return '';const d=HS.me.listing.data,p=P(HS.me.prop.id);
+    const fr=HS.fest.map(b=>`<tr><td>${esc(b.ref)}</td><td>${esc(b.guest.name||'')}${b.guest.phone?`<br><a href="https://wa.me/${esc(String(b.guest.phone).replace(/\D/g,'').replace(/^(\d{10})$/,'91$1'))}" target="_blank" rel="noopener">${esc(b.guest.phone)}</a>`:''}</td><td>${b.items.map(it=>`${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms} room${it.rooms>1?'s':''} × ${it.guests}`).join('<br>')}</td><td class="num">${inr(b.items.reduce((a,it)=>a+(it.payout||0),0))}</td><td><span class="pill ${b.status==='confirmed'?'ok':'pd'}">${b.status==='confirmed'?'paid':'awaiting payment'}</span></td></tr>`).join('');
+    return `<div class="pan"><div class="ph2"><h3>Welcome, ${esc(session.name)}</h3><span class="sp"></span><span class="pill ${p&&p.live?'ok':'pd'}">${p&&p.live?'live on Calm Shade':d.yearRound===false?'festival only':'paused'}</span></div><div class="pb">
+      <p class="nt2" style="margin:0 0 12px">You're part of the Calm Shade collective through APPA Art Fest 2027. ${d.yearRound===false?'Your place is listed for the festival only. Tick "all year" in the editor to stay on Calm Shade after it.':'Your place is on Calm Shade all year: hosts keep 97% of every booking. During the festival, APPA guests book your rooms at your full nightly rate.'} One calendar covers both, so a night booked anywhere is blocked everywhere.</p>
+      <div class="eacts" style="margin-top:0"><button class="b-save" onclick="CS.editL('${HS.me.prop.id}')">Edit listing &amp; photos</button>${p&&!p.festivalOnly?`<button class="b-lt" onclick="CS.open('${HS.me.prop.id}')">See it as guests do</button>`:''}<button class="b-lt" onclick="CS.hsRefresh()">Refresh bookings</button></div></div></div>
+      <div class="pan"><div class="ph2"><h3>APPA Art Fest bookings · your rooms</h3></div><div class="pb">
+      ${fr?`<div class="fx-tbl"><table><thead><tr><th>Ref</th><th>Guest</th><th>Nights</th><th>Your payout</th><th>Status</th></tr></thead><tbody>${fr}</tbody></table></div><p class="nt2" style="margin-top:10px">The festival team collects these payments and settles your full nightly rate. Guest phone numbers show once paid.</p>`:'<div class="empty">No festival bookings yet. They appear here the moment a guest holds your rooms.</div>'}
+      </div></div>`;
+  }
+  function hsLinkBox(){const e=HS.enrolled;if(!e)return '';
+    const msg=`Hi ${e.hostName||''}! ${e.name} is now on Calm Shade for APPA Art Fest 2027 🎉\n\nYour private host link (it signs you straight in, keep it to yourself):\n${e.link}\n\nEdit your listing and photos, and confirm bookings from there.`;
+    const ph=String(e.hostPhone||'').replace(/\D/g,'').replace(/^(\d{10})$/,'91$1');
+    return `<div class="fx-panel accent" style="margin-bottom:14px"><b class="fx-h2" style="font-size:18px">${esc(e.name)} is ${e.fresh?'enrolled':'ready'}: send ${esc(e.hostName||'the host')} their link</b>
+      <p class="fx-note">This link signs them in as the host of this listing. ${e.emailed?'We also emailed it to them.':'They have no email on file, so send it on WhatsApp.'} Making a new link stops the old one working.</p>
+      <div class="fx-field"><label for="hs-link">Host link</label><input id="hs-link" readonly value="${esc(e.link)}" onclick="this.select()"></div>
+      <div class="fx-row"><a class="fx-btn ok" style="text-decoration:none" href="https://wa.me/${esc(ph)}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Send on WhatsApp</a><button class="fx-btn ghost small" onclick="CS.fx('copy',document.getElementById('hs-link').value)">Copy link</button><button class="fx-x" onclick="CS.hsDone()">Done</button></div></div>`;}
+  async function hsEnroll(id,newLink){
+    try{const r=await fxCall('approve',{id,status:'approved',newLink:!!newLink},true);const l=(FX.desk.data.listings||[]).find(x=>x.id===id)||{};
+      HS.enrolled=r.link?{name:(l.data||{}).name||'This stay',hostName:r.hostName,hostPhone:r.hostPhone,link:r.link,fresh:r.enrolled,emailed:!!((l.contact||{}).email)}:null;
+      toast(r.enrolled?'Enrolled · listing is live':'Listing is live');await fxDeskLoad();hsLoadProps();window.scrollTo({top:0,behavior:'smooth'});}
+    catch(e){toast(e.message);}
+  }
+  async function hsSave(){
+    const g=i=>{const el=document.getElementById(i);return el?el.value.trim():'';};const chk=i=>{const el=document.getElementById(i);return el?el.checked:false;};
+    if(!g('e-name'))return toast('Give your listing a title');
+    try{toast('Saving…');
+      for(const gi of edMedia.gallery){if(gi.file){gi.src=await hsUpload(gi.file,'host');delete gi.file;}}
+      const photos=edMedia.gallery.filter(x=>/^uploads\//.test(x.src)).map(x=>({src:x.src,cap:x.cap||''}));
+      const L={name:g('e-name'),location:g('e-loc').replace(/\s*·\s*near APPA Art Fest$/,''),cat:(document.getElementById('e-cat')||{}).value,link:g('e-link'),maps:g('e-maps'),
+        ppWith:+g('e-pw'),ppWithout:+g('e-po'),pet:chk('e-pet'),villa:chk('e-villa'),amen:g('e-amen'),desc:g('e-desc'),photos,cover:Math.min(edMedia.cover||0,Math.max(0,photos.length-1)),
+        faq:(edMedia.faq||[]).filter(f=>f.q&&f.a),sleeps:+g('e-sleeps'),rooms:+g('e-rooms'),maxGuests:+g('e-maxg'),rate:+g('e-rate'),yearRound:chk('e-year')};
+      ['ppWith','ppWithout','sleeps','rooms','maxGuests','rate'].forEach(k=>{if(!(L[k]>0))delete L[k];});
+      if(!document.getElementById('e-year'))delete L.yearRound;
+      const la=parseFloat(g('e-lat')),lo=parseFloat(g('e-lon'));if(isFinite(la)&&isFinite(lo))L.geo=[la,lo];
+      await hsCall('host_save',{listing:L});editing=null;edMedia=null;await hsSignIn();await hsLoadProps();toast('Saved · live on Calm Shade');render();
+    }catch(e){toast(e.message);}
+  }
+  /* the List-your-stay form */
+  const HF={photos:[],uploading:0};
+  function hfHTML(){const h=FX.host;
+    const F=(k,l,t,ex)=>`<div class="fx-field"><label for="fxh-${k}">${l}</label><input id="fxh-${k}" type="${t||'text'}" value="${esc(h[k]??'')}" oninput="CS.fx('hostF','${k}',this.value)" ${ex||''}></div>`;
+    const C=(k,l)=>`<label class="hf-check"><input type="checkbox" ${h[k]?'checked':''} onchange="CS.fx('hostF','${k}',this.checked)"><span>${l}</span></label>`;
+    return `<form class="fx-panel" onsubmit="event.preventDefault();CS.fx('hostSubmit')">
+      <b class="hf-h">Your place</b>
+      <div class="fx-grid2">${F('name','Property name','text','required maxlength="80" placeholder="Pawna Lakeside Camp"')}
+        <div class="fx-field"><label for="fxh-type">Type</label><select id="fxh-type" onchange="CS.fx('hostF','type',this.value)">${['Homestay','Campsite','Villa','Farmstay','Guest house','Cottage'].map(o=>`<option ${h.type===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="fxh-cat">Calm Shade category</label><select id="fxh-cat" onchange="CS.fx('hostF','cat',this.value)">${CATS.map(c=>`<option value="${c.id}" ${h.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select></div>
+        ${F('location','Village or area','text','required maxlength="80" placeholder="Kamshet"')}${F('distance','Distance from the festival (km)','number','min="0" step="0.5"')}</div>
+      <div class="fx-grid2">${F('maps','Google Maps link','url','placeholder="https://maps.app.goo.gl/…"')}${F('website','Website or Instagram','text','placeholder="yourstay.in"')}${F('link','Airbnb / Booking.com link (optional)','text','placeholder="airbnb.co.in/rooms/…"')}</div>
+      <b class="hf-h">Photos <span class="fx-note" style="font-weight:600">· up to 8, the first is the cover</span></b>
+      <div class="hf-photos">${HF.photos.map((src,i)=>`<div class="hf-ph"><img src="${esc(src)}" alt="Photo ${i+1}">${i===0?'<span class="hf-cover">Cover</span>':`<button type="button" class="hf-mk" onclick="CS.hf('cover',${i})">Make cover</button>`}<button type="button" class="hf-x" onclick="CS.hf('rm',${i})" aria-label="Remove photo">×</button></div>`).join('')}
+        ${HF.photos.length<8?`<label class="hf-add"><input type="file" accept="image/*" multiple hidden onchange="CS.hf('add',this)"><b>＋</b><span>${HF.uploading?'Uploading '+HF.uploading+'…':'Add photos'}</span></label>`:''}</div>
+      <b class="hf-h">For APPA Art Fest · 25 Jan – 25 Feb 2027</b>
+      <div class="fx-grid2">${F('rooms','Rooms or tents to offer','number','min="1" max="60" required')}${F('maxGuests','Max adults per room','number','min="1" max="8" required')}${F('rate','Your rate per room per night, for 2 (₹)','number','min="500" step="100" required')}</div>
+      <p class="fx-note">Festival guests pay your rate plus ${inr(FX.S.partnerMarkup)} per guest per night for their festival entry. You receive your full rate, no commission.</p>
+      <b class="hf-h">On Calm Shade, all year</b>
+      ${C('yearRound','<b>Keep my place on Calm Shade after the festival.</b> Hosts keep 97% of every booking; the 3% is charged only when a stay confirms.')}
+      ${h.yearRound?`<div class="fx-grid2">${F('sleeps','Sleeps in total','number','min="1" max="60"')}${F('ppWith','Price per head per night, with all meals (₹)','number','min="100" step="50"')}${F('ppWithout','Price per head per night, without meals (₹)','number','min="100" step="50"')}</div>
+        <div class="fx-row">${C('pet','Pet friendly')}${C('villa','The whole place can be booked')}</div>
+        ${F('amen','Amenities, separated by ·','text','maxlength="300" placeholder="Lake view · Bonfire · Home food · Parking · WiFi"')}`:''}
+      <div class="fx-field"><label for="fxh-desc">Describe your place</label><textarea id="fxh-desc" rows="4" maxlength="1200" oninput="CS.fx('hostF','desc',this.value)" placeholder="What it feels like to stay, the view, the food, how far the festival is">${esc(h.desc)}</textarea></div>
+      <b class="hf-h">You</b>
+      <div class="fx-grid2">${F('cname','Your name','text','required maxlength="80"')}${F('phone','Phone / WhatsApp','tel','required maxlength="20"')}${F('email','Email (for your host link)','email','maxlength="120"')}</div>
+      <p class="fx-note">Your contact details are seen only by the Calm Shade team. Once approved, you get a private link to manage your listing and bookings.</p>
+      ${FX.err&&FX.tab==='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
+      <div><button class="fx-btn" type="submit" ${FX.busy||HF.uploading?'disabled':''}>${FX.busy?'Sending…':HF.uploading?'Waiting for photos…':'Submit for approval'}</button></div>
+    </form>`;}
+  async function hfAct(a,x){
+    if(a==='add'){const files=[...x.files].slice(0,8-HF.photos.length);x.value='';
+      for(const f of files){HF.uploading++;render();try{HF.photos.push(await hsUpload(f));}catch(e){toast(e.message);}HF.uploading--;render();}return;}
+    if(a==='rm')HF.photos.splice(x,1);
+    if(a==='cover'){const [p]=HF.photos.splice(x,1);HF.photos.unshift(p);}
+    render();
+  }
   /* ═════════ RENDER ═════════ */
   let searchFocusHack=false;
   function render(){
     const hadFocus=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.search');
+    const edEl=root.querySelector('.editor[data-ed]');const edSnap=edEl&&editing&&edEl.dataset.ed===String(editing)?[...edEl.querySelectorAll('[id^="e-"]')].map(el=>[el.id,el.type==='checkbox'?el.checked:el.value]):null;
     let body=view==='home'?home():view==='detail'?detail():view==='fest'?fest():view==='passport'?passport():view==='login'?loginView():dash();
     root.innerHTML=nav()+body+((view==='home'||view==='detail')?waChat():'');
+    if(edSnap)edSnap.forEach(([id,v])=>{const el=document.getElementById(id);if(el){if(el.type==='checkbox')el.checked=v;else el.value=v;}});
     reveal();wire();initMotion();
     {const fb=root.querySelector('.fx-board');if(fb&&fxAct.sl)fb.scrollLeft=fxAct.sl;if(view==='fest'&&FX.last)fxDrawQR();csDrawQR();}
     const sc=document.getElementById('wa-sc');if(sc)sc.scrollTop=sc.scrollHeight;
@@ -2717,6 +2858,12 @@ ${kb()}`;}
   window.CS={
     fx(a,x,y){fxAct(a,x,y);},
     cu(a,x,y){cuAct(a,x,y);},
+    hf(a,x){hfAct(a,x);},
+    hsEnroll(id,n){hsEnroll(id,n);},
+    hsDone(){HS.enrolled=null;render();},
+    async hsRefresh(){if(await hsSignIn())toast('Bookings refreshed');render();},
+    hsReqF(v){HS.linkReq.phone=v;},
+    hsReq(){fxCall('host_link_request',{phone:HS.linkReq.phone}).then(r=>{HS.linkReq.msg=r.message;render();},e=>{HS.linkReq.msg=e.message;render();});},
     pp(a,x,y){ppDo(a,x,y);},
     csOpen(){const h=CSB.hold;h.open=true;h.err='';if(!h.phone&&guestPhone)h.phone=guestPhone;render();},
     csClose(){CSB.hold.open=false;CSB.hold.err='';render();},
@@ -2777,7 +2924,7 @@ ${kb()}`;}
     editL(id){editing=id;const p=P(id);edMedia={gallery:(p.gallery||[]).map(g=>({src:g.src,cap:g.cap||''})),cover:p.cover||0,video:p.video?{src:p.video.src,cap:p.video.cap||''}:null,logo:p.logo||null,faq:(p.faq||[]).map(f=>({q:f.q,a:f.a}))};render();},
     newListing(){editing='new';edMedia={gallery:[],cover:0,video:null,logo:null,faq:[]};render();},
     closeEd(){editing=null;edMedia=null;render();},
-    save(){
+    save(){if(editing&&editing!=='new'&&P(editing)&&P(editing).remote)return hsSave();
       const g=i=>{const el=document.getElementById(i);return el?el.value.trim():'';};
       const chk=i=>{const el=document.getElementById(i);return el?el.checked:false;};
       const name=g('e-name');if(!name){toast('Give your listing a title');return;}
@@ -2794,7 +2941,7 @@ ${kb()}`;}
       }else{Object.assign(P(editing),data);toast('Saved — live site and concierge updated');}
       editing=null;edMedia=null;render();
     },
-    toggleLive(id){const p=P(id);p.live=!p.live;toast(p.live?'Relisted':'Unlisted — hidden from guests');render();},
+    toggleLive(id){const p=P(id);if(p.remote){if(p.festivalOnly)return toast('Tick "On Calm Shade all year" in the editor first');hsCall('host_save',{listing:{paused:p.live}}).then(()=>{p.live=!p.live;toast(p.live?'Relisted':'Paused — hidden from guests');render();},e=>toast(e.message));return;}p.live=!p.live;toast(p.live?'Relisted':'Unlisted — hidden from guests');render();},
     del(id){PROPS=PROPS.filter(p=>p.id!==id);delete CAL[id];editing=null;edMedia=null;toast('Listing deleted');render();},
     /* auth */
     idT(v){login.id=v;},
@@ -2874,7 +3021,7 @@ ${kb()}`;}
     },
     curName(v){cur.name=v;},
     curReset(){cur={heads:2,name:cur.name,phone:cur.phone,start:null,end:null,route:[],plan:null,busy:false,done:null,conflict:null};render();CS.jump('.curated');},
-    upImgs(inp){if(!edMedia)return;[...inp.files].forEach(f=>{if(f.type.indexOf('image/')===0)edMedia.gallery.push({src:URL.createObjectURL(f),cap:''});});toast(inp.files.length>1?inp.files.length+' photos added':'Photo added');render();},
+    upImgs(inp){if(!edMedia)return;[...inp.files].forEach(f=>{if(f.type.indexOf('image/')===0)edMedia.gallery.push({src:URL.createObjectURL(f),cap:'',file:f});});toast(inp.files.length>1?inp.files.length+' photos added':'Photo added');render();},
     upVid(inp){if(!edMedia)return;const f=inp.files[0];if(!f)return;if(f.type.indexOf('video/')!==0){toast('Please choose a video file');return;}edMedia.video={src:URL.createObjectURL(f),cap:''};toast('Video added — audio stays untouched');render();},
     setCover(i){if(edMedia){edMedia.cover=i;render();toast('Cover photo set — this shows on the home page');}},
     rmImg(i){if(edMedia){edMedia.gallery.splice(i,1);if(edMedia.cover>=edMedia.gallery.length)edMedia.cover=Math.max(0,edMedia.gallery.length-1);render();}},
@@ -2940,7 +3087,7 @@ ${kb()}`;}
       o.rev.avg=((o.rev.avg*(n-1))+(good?5:2))/n;
       if(!good&&o.rev.bad%10===0)toast(o.name+' crossed '+o.rev.bad+' bad reviews — their referrer just lost 2 trust points');
       render();},
-    signOut(){session=null;view='home';dashMode='host';editing=null;render();toast('Signed out');},
+    signOut(){if(session&&session.remote){try{localStorage.removeItem('cs-host-key');}catch(e){}HS.key='';HS.me=null;BOOKINGS=[];}session=null;view='home';dashMode='host';editing=null;render();toast('Signed out');},
   };
 
   (function deepLink(){try{
@@ -2952,8 +3099,12 @@ ${kb()}`;}
     if(stampQ&&/^[a-z]+\.[0-9a-f]{12}$/.test(stampQ)){const [sp,sg]=stampQ.split('.');view='passport';
       try{history.replaceState({},'',location.pathname+'#passport');}catch(e){}
       if(FX.tickets.length)setTimeout(()=>ppStamp(sp,sg),0);else{PP.pendingStamp={spot:sp,sig:sg};PP.data={bookings:[],pending:0,stamps:{}};PP.err='Open your passport and the stamp will be added.';}}
+    const hk=new URLSearchParams(location.search).get('host');
+    if(hk&&/^[a-f0-9]{40}$/.test(hk)){HS.key=hk;try{localStorage.setItem('cs-host-key',hk);history.replaceState({},'',location.pathname);}catch(e){}
+      setTimeout(async()=>{if(await hsSignIn()){view='dash';render();toast('Welcome, '+session.name);}else{view='login';render();}},0);}
+    else if(HS.key)setTimeout(async()=>{if(await hsSignIn(true))render();},0);
   }catch(e){}})();
-  fxLoad();csLoad();
+  fxLoad();csLoad();hsLoadProps();
 
   render();
 })();
