@@ -1003,6 +1003,7 @@ body{background:var(--bg);}
       desc:'A rooftop room above the river bend — invited into the collective by the Millhouse, and thriving.', amen:'Rooftop · River view · Breakfast'},
   ];
   const GLOBAL_FAQ=[['Availability','What dates are free between X and Y?'],['Pricing','Cost per head with / without meals?'],['Rooms','Do you have a room for 4 people?'],['Food','What is on the menu? Do you serve non-veg?'],['Activities','What can we do nearby?'],['Policies','Is it pet friendly? Check-in / check-out time?'],['Full property','Can we book the entire place?'],['Transport','Can you arrange a cab?'],['Weather','How is the weather this time of year?'],['Amenities','Is there AC / WiFi / hot water?']];
+  const CS_BUILTIN_IDS=new Set(PROPS.map(p=>p.id)); // the original built-in listings — these can save their edits to the server (cs_builtin_save)
   let CAL={p1:{},p2:{},p3:{},p4:{},p5:{},p6:{},p7:{},p8:{},p9:{}}; // filled from the booking server (csLoad)
   let BOOKINGS=[]; // filled from the booking server for the admin (csAdminLoad)
   let seq=1052, pseq=10, momSeq=2;
@@ -2753,6 +2754,14 @@ ${kb()}`;}
   }
   async function hsLoadProps(){try{const j=await fxCall('cs_props');const hosts={};(j.hosts||[]).forEach(h=>hosts[h.id]=h);
       (j.props||[]).forEach(x=>hsAddProp(x,hosts[x.owner]));csLoad();if(fxQuiet())render();}catch(e){}}
+  /* built-in listings (p1..p9): server-saved edits, laid over the defaults baked into PROPS above */
+  async function csBuiltinLoad(){try{const j=await fxCall('cs_builtin_state');const ov=j.props||{};
+      Object.keys(ov).forEach(id=>{const p=P(id);if(p)Object.assign(p,ov[id]);});
+      if(fxQuiet())render();}catch(e){}}
+  function csBuiltinSync(id,fields){
+    if(!CS_BUILTIN_IDS.has(id)||!FX.desk.key)return;
+    fxCall('cs_builtin_save',{id,listing:fields},true).catch(e=>toast('Saved here, but the server copy failed: '+e.message));
+  }
   async function hsSignIn(quiet){
     if(!HS.key)return false;
     try{const j=await hsCall('host_me');HS.me=j;hsAddProp(j.prop,{id:j.host.id,name:j.host.name});
@@ -2938,10 +2947,12 @@ ${kb()}`;}
         const id='p'+(pseq++);
         PROPS.push(Object.assign({id,owner:ownerCtx,rate:5.0,live:true,sky:[h[0],h[1]],land:h[2]},data));
         CAL[id]={};toast('Listing published — it\'s live on the site and the concierge already knows it');
-      }else{Object.assign(P(editing),data);toast('Saved — live site and concierge updated');}
+      }else{Object.assign(P(editing),data);
+        csBuiltinSync(editing,{name:data.name,loc:data.loc,cat:data.cat,cap:data.cap,link:data.link,ppWith:data.ppWith,ppWithout:data.ppWithout,pet:data.pet,villa:data.villa,amen:data.amen,desc:data.desc});
+        toast('Saved — live site and concierge updated');}
       editing=null;edMedia=null;render();
     },
-    toggleLive(id){const p=P(id);if(p.remote){if(p.festivalOnly)return toast('Tick "On Calm Shade all year" in the editor first');hsCall('host_save',{listing:{paused:p.live}}).then(()=>{p.live=!p.live;toast(p.live?'Relisted':'Paused — hidden from guests');render();},e=>toast(e.message));return;}p.live=!p.live;toast(p.live?'Relisted':'Unlisted — hidden from guests');render();},
+    toggleLive(id){const p=P(id);if(p.remote){if(p.festivalOnly)return toast('Tick "On Calm Shade all year" in the editor first');hsCall('host_save',{listing:{paused:p.live}}).then(()=>{p.live=!p.live;toast(p.live?'Relisted':'Paused — hidden from guests');render();},e=>toast(e.message));return;}p.live=!p.live;csBuiltinSync(id,{bookable:p.live});toast(p.live?'Relisted':'Unlisted — hidden from guests');render();},
     del(id){PROPS=PROPS.filter(p=>p.id!==id);delete CAL[id];editing=null;edMedia=null;toast('Listing deleted');render();},
     /* auth */
     idT(v){login.id=v;},
@@ -3104,7 +3115,7 @@ ${kb()}`;}
       setTimeout(async()=>{if(await hsSignIn()){view='dash';render();toast('Welcome, '+session.name);}else{view='login';render();}},0);}
     else if(HS.key)setTimeout(async()=>{if(await hsSignIn(true))render();},0);
   }catch(e){}})();
-  fxLoad();csLoad();hsLoadProps();
+  fxLoad();csLoad();hsLoadProps();csBuiltinLoad();
 
   render();
 })();

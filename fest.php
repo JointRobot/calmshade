@@ -249,7 +249,9 @@ function public_listings() {
 }
 
 /* ---------- Calm Shade homestays (whole place per night) ---------- */
-/* id => [name, sleeps, per head with meals, per head without meals, bookable] — keep in step with PROPS in index.html */
+/* id => [name, sleeps, per head with meals, per head without meals, bookable] — defaults; the dashboard editor
+   overrides name/price/bookable (and display fields) into cs_builtin below, so this no longer needs hand-syncing
+   with PROPS in index.html for day-to-day price changes. Sleeps stays here (no editor field for it yet). */
 const CS_PROPS = [
   'p1'=>['Calmshet Lakeview Cottage',8,1800,1200,true], 'p2'=>['Calmshet Room',3,1400,950,true],
   'p3'=>['Calmshet Room 1',4,1500,1000,true],           'p4'=>['Calmshet Triangle',4,2200,1600,true],
@@ -258,6 +260,30 @@ const CS_PROPS = [
   'p9'=>["Anya's Terrace",4,1300,900,true],
 ];
 const CS_COMM = 0.03;
+/* Built-in listing edits (dashboard → Save), keyed by CS_PROPS id. Only present fields override the default. */
+function cs_builtin_init() { db()->exec('CREATE TABLE IF NOT EXISTS cs_builtin (id VARCHAR(8) PRIMARY KEY, data TEXT NOT NULL, updated_at BIGINT NOT NULL)'); }
+function cs_builtin_overrides() {
+  static $o = null; if ($o !== null) return $o;
+  cs_builtin_init(); $o = [];
+  foreach (db()->query('SELECT id, data FROM cs_builtin') as $r) $o[$r['id']] = json_decode($r['data'], true) ?: [];
+  return $o;
+}
+function cs_builtin_clean($p, $old) {
+  $d = $old;
+  if (array_key_exists('name', $p)) $d['name'] = clean($p['name'], 80);
+  if (array_key_exists('loc', $p)) $d['loc'] = clean($p['loc'], 80);
+  if (array_key_exists('cat', $p)) $d['cat'] = in_array($p['cat'], CS_CATS, true) ? $p['cat'] : ($old['cat'] ?? 'room');
+  if (array_key_exists('cap', $p)) $d['cap'] = clean($p['cap'], 60);
+  if (array_key_exists('link', $p)) $d['link'] = clean_url($p['link']);
+  if (array_key_exists('ppWith', $p)) $d['ppWith'] = max(100, min(50000, (int)$p['ppWith']));
+  if (array_key_exists('ppWithout', $p)) $d['ppWithout'] = max(100, min(50000, (int)$p['ppWithout']));
+  if (array_key_exists('pet', $p)) $d['pet'] = !empty($p['pet']);
+  if (array_key_exists('villa', $p)) $d['villa'] = !empty($p['villa']);
+  if (array_key_exists('amen', $p)) $d['amen'] = clean($p['amen'], 300);
+  if (array_key_exists('desc', $p)) $d['desc'] = clean($p['desc'], 1200);
+  if (array_key_exists('bookable', $p)) $d['bookable'] = !empty($p['bookable']);
+  return $d;
+}
 function ist_today() { return gmdate('Y-m-d', time() + 19800); }
 function cs_init() {
   static $done = false; if ($done) return; $done = true;
@@ -284,7 +310,10 @@ function cs_raw_occ() {
 }
 /* Calm Shade property: built-in ones from CS_PROPS, plus enrolled partner listings ('L-<id>') */
 function cs_prop($id) {
-  if (isset(CS_PROPS[$id])) return CS_PROPS[$id];
+  if (isset(CS_PROPS[$id])) {
+    $base = CS_PROPS[$id]; $o = cs_builtin_overrides()[$id] ?? [];
+    return [$o['name'] ?? $base[0], $base[1], $o['ppWith'] ?? $base[2], $o['ppWithout'] ?? $base[3], array_key_exists('bookable', $o) ? $o['bookable'] : $base[4]];
+  }
   if (strpos($id, 'L-') !== 0) return null;
   $st = db()->prepare('SELECT status, data FROM fest_listings WHERE id=?'); $st->execute([substr($id, 2)]); $r = $st->fetch();
   if (!$r || $r['status'] !== 'approved') return null;
@@ -737,6 +766,26 @@ switch ($a) {
       $props[] = cs_public_prop($l, $h); $hosts[] = ['id'=>'h'.$h['id'],'name'=>$h['name']];
     }
     out(['ok'=>true,'props'=>$props,'hosts'=>$hosts]);
+  }
+
+  /* ---- Built-in Calm Shade listings (Karthik's own stays) — dashboard edits persist here ---- */
+  case 'cs_builtin_state':
+    out(['ok'=>true,'props'=>(object)cs_builtin_overrides()]);
+
+  case 'cs_builtin_save': {
+    if ($m !== 'POST') fail('Use POST');
+    need_admin();
+    $b = body(); $id = (string)($b['id'] ?? '');
+    if (!isset(CS_PROPS[$id])) fail('Unknown listing.', 404);
+    $p = (array)($b['listing'] ?? []);
+    $d = cs_builtin_clean($p, cs_builtin_overrides()[$id] ?? []);
+    if (array_key_exists('name', $p) && trim($d['name'] ?? '') === '') fail('Give the listing a name.');
+    cs_builtin_init();
+    $json = json_encode($d);
+    $st = db()->prepare('SELECT 1 FROM cs_builtin WHERE id=?'); $st->execute([$id]);
+    if ($st->fetch()) db()->prepare('UPDATE cs_builtin SET data=?, updated_at=? WHERE id=?')->execute([$json, time(), $id]);
+    else db()->prepare('INSERT INTO cs_builtin (id,data,updated_at) VALUES (?,?,?)')->execute([$id, $json, time()]);
+    out(['ok'=>true,'listing'=>$d]);
   }
 
   /* ---- Host accounts ---- */

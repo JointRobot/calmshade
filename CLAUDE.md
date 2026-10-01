@@ -53,7 +53,13 @@ this file is the current state and the rules. Read both before changing anything
   phone, 10 bookings per device per day. Payment = UPI to xtrathindesign@okicici (Karthikeyan Ramachandran), then the
   guest submits the UPI reference; staff confirm in the desk. UPI QR omits the amount above ₹1 lakh (pay in parts).
 - Calm Shade homestays: per head per night with/without meals, whole place, 3% platform fee (hosts keep 97%).
-  Built-in property prices exist in TWO places: `CS_PROPS` in `fest.php` and `PROPS` in `index.html` — keep in sync.
+  Built-in property defaults still exist in TWO places (`CS_PROPS` in `fest.php`, `PROPS` in `index.html`), but editing
+  a built-in listing in the dashboard (Save, or Pause/Relist) now persists name/location/category/price/pet/villa/
+  amenities/description/bookable to a `cs_builtin` DB table (`cs_builtin_state`/`cs_builtin_save` routes, admin-key
+  gated) and both sides read the override — so day-to-day price changes no longer need hand-editing two files.
+  Sleeps/capacity has no editor field yet and still only lives in `CS_PROPS`. Needs the desk key entered in the
+  dashboard (same key as the APPA Fest desk) for built-in edits to reach the server; without it, edits stay local-only
+  exactly as before (graceful fallback, not an error).
 - **One calendar per place**: an enrolled partner (`L-<id>`) booked whole-place on Calm Shade fills its festival rooms,
   and any festival room booked blocks that Calm Shade night.
 - Partner hosts: apply via festival page → List your stay; desk → **Approve & enroll** creates the host + listing and
@@ -85,8 +91,12 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 ## 8. Open items / ideas
 1. Change the desk key (Karthik). Optionally add `ANTHROPIC_KEY` to turn on the concierge.
 2. MySQL switch + SQLite→MySQL migration script (only if needed; SQLite is fine at festival scale).
-3. Built-in Calm Shade listing edits in the dashboard are still in-memory only (the original demo hosts); only enrolled
-   partner hosts persist. Moving built-in props to the server would remove the `CS_PROPS`/`PROPS` duplication.
+3. ~~Built-in Calm Shade listing edits in the dashboard are still in-memory only.~~ Done 1 Oct 2026: edits to an
+   existing built-in listing (name/price/location/category/pet/villa/amenities/description/bookable) now persist to
+   the server via `cs_builtin` (needs the desk key entered in the dashboard). Still open: sleeps/capacity has no
+   editor field (only in `CS_PROPS`), and adding a *new* built-in listing from the dashboard is still local-only
+   (only edits to the original p1–p9 persist) — Mira/Ravi/Anya are demo/narrative hosts for the Grove feature, not
+   real listings, so this was scoped to Karthik's own stays.
 4. Login OTP for built-in hosts is still the preview (code shown on screen).
 5. Payment is manual UPI confirmation; a payment gateway would automate it.
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters
