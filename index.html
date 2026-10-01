@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Calm Shade — a homestay collective</title>
+<title>Calm Shade — a homestay collective · APPA Art Fest 2027 stays</title>
 <meta name="description" content="Where even crows look like birds. A homestay collective for the cool & calm crowd — independent hosts, one always-awake WhatsApp concierge.">
-<meta name="theme-color" content="#26292C">
+<meta name="theme-color" content="#F6EEDD">
 </head>
 <body style="margin:0">
 <!-- ═══════════════════════════════════════════════════════════════
@@ -15,28 +15,29 @@
      ═══════════════════════════════════════════════════════════════ -->
 <div id="cs-app"></div>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Mukta:wght@400;500;600;700;800&display=swap');
 
 :root{
-  /* editorial base (reference: IdN) */
-  --bg:#F3F4F5; --card:#FFFFFF; --line:#E3E5E8; --line-2:#D7DADD;
-  --ink:#26292C; --mute:#7A8085; --faint:#A6ACB1;
-  --accent:#FF6B4A;                 /* small editorial accent, used sparingly */
-  --sky:#57C2EE;                    /* banner heading, reference-style */
+  /* APPA Art Fest look: paper, ink, vermilion and gold */
+  --bg:#F6EEDD; --card:#FFF9EE; --line:#E7D9C1; --line-2:#D9C6A6;
+  --ink:#23202A; --mute:#6A6258; --faint:#A39686;
+  --accent:#D9502F;
+  --sky:#E2A33A;
   --wa:#1EBE5D; --wa-deep:#0E9C4A; --wa-dark:#075E54; --wa-bg:#EBE5DC; --wa-out:#DCF5C8;
-  --r1:#FF5A5F; --r2:#FF8A3D; --r3:#FFC53D; --r4:#2FBF71; --r6:#3E7BFA; --r7:#8B5CF6;
+  --r1:#D9502F; --r2:#E27D3A; --r3:#E2A33A; --r4:#6F8A4C; --r5:#B5653B; --r6:#3F6E8C; --r7:#8A5A8C; --r8:#4E8A86;
   --rainbow:linear-gradient(90deg,var(--r1),var(--r2),var(--r3),var(--r4),var(--r6),var(--r7));
   --rad:6px; --rad-lg:10px;
-  --font:'Lato', system-ui, sans-serif;
+  --font:'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display:'Fraunces', Georgia, 'Times New Roman', serif;
   --ease:cubic-bezier(.22,1,.36,1);
-  --shadow:0 1px 2px rgba(38,41,44,.05), 0 6px 18px -8px rgba(38,41,44,.10);
-  --shadow-lift:0 2px 4px rgba(38,41,44,.06), 0 16px 32px -12px rgba(38,41,44,.18);
+  --shadow:0 1px 2px rgba(35,32,42,.05), 0 6px 18px -8px rgba(35,32,42,.12);
+  --shadow-lift:0 2px 4px rgba(35,32,42,.06), 0 16px 32px -12px rgba(35,32,42,.2);
 }
 :where(#cs-app, #cs-app *){box-sizing:border-box; margin:0; padding:0;}
-#cs-app{font-family:var(--font); background:var(--bg); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; overflow-x:clip; font-size:14px; line-height:1.55;}
+#cs-app{font-family:var(--font); background:var(--bg); color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; overflow-x:clip; font-size:15px; line-height:1.55;}
 html,body{overflow-x:clip;}
 #cs-app h1,#cs-app h2,#cs-app h3,#cs-app h4{font-weight:900; letter-spacing:-.01em; line-height:1.15;}
-#cs-app button{font-family:var(--font); cursor:pointer; border:none; background:none; color:inherit;}
+:where(#cs-app) button{font-family:var(--font); cursor:pointer; border:none; background:none; color:inherit;}
 #cs-app input,#cs-app select,#cs-app textarea{font-family:var(--font);}
 #cs-app button:focus-visible,#cs-app input:focus-visible,#cs-app select:focus-visible,#cs-app textarea:focus-visible{outline:2px solid var(--sky); outline-offset:2px; border-radius:4px;}
 .seclabel{font-size:10.5px; font-weight:900; letter-spacing:.22em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; display:block;}
@@ -52,28 +53,28 @@ html,body{overflow-x:clip;}
 @media (prefers-reduced-motion:reduce){#cs-app *{animation:none!important; transition:none!important;} .rv{opacity:1; transform:none;}}
 
 /* ── slim utility nav ────────────────── */
-.nav{position:sticky; top:0; z-index:70; background:#fff; border-bottom:1px solid var(--line);}
+.nav{position:sticky; top:0; z-index:70; background:var(--card); border-bottom:1px solid var(--line);}
 .nav-in{max-width:1290px; margin:0 auto; padding:0 22px; display:flex; align-items:center; gap:6px; height:52px;}
 .logo{display:flex; align-items:center; gap:9px; cursor:pointer; padding-right:16px; border-right:1px solid var(--line); height:100%;}
 .logo .mark{width:22px; height:22px; border-radius:50%; background:conic-gradient(var(--r1),var(--r2),var(--r3),var(--r4),var(--r6),var(--r7),var(--r1)); position:relative; animation:spinSlow 16s linear infinite;}
-.logo .mark::after{content:''; position:absolute; inset:4px; border-radius:50%; background:#fff;}
+.logo .mark::after{content:''; position:absolute; inset:4px; border-radius:50%; background:var(--card);}
 @keyframes spinSlow{to{transform:rotate(360deg)}}
 .logo b{font-size:15.5px; font-weight:900; color:var(--ink); letter-spacing:-.01em;}
 .menu{display:flex; height:100%;}
-.menu button{font-size:13px; font-weight:700; color:#4A5055; padding:0 15px; height:100%; border-right:1px solid var(--line); transition:background .2s, color .2s; position:relative;}
+.menu button{font-size:13px; font-weight:700; color:#4A4250; padding:0 15px; height:100%; border-right:1px solid var(--line); transition:background .2s, color .2s; position:relative;}
 .menu button:hover{background:var(--bg); color:var(--ink);}
 .menu button::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent); transform:scaleX(0); transition:transform .3s var(--ease);}
 .menu button:hover::after{transform:scaleX(1);}
 .search{flex:1; max-width:300px; margin-left:auto; display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:4px; padding:6px 6px 6px 12px; background:var(--bg); transition:border-color .25s, background .25s;}
-.search:focus-within{border-color:var(--line-2); background:#fff;}
+.search:focus-within{border-color:var(--line-2); background:var(--card);}
 .search input{flex:1; border:none; font-size:12.5px; background:none; color:var(--ink);}
 .search input::placeholder{color:var(--faint);}
 .search input:focus{outline:none;}
 .search .go{width:24px; height:24px; border-radius:4px; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; flex:none;}
 .nav .sp{flex:0 0 8px;}
-.nav .lnk{font-size:13px; font-weight:700; color:#4A5055; padding:8px 12px; transition:color .2s;}
+.nav .lnk{font-size:13px; font-weight:700; color:#4A4250; padding:8px 12px; transition:color .2s;}
 .nav .lnk:hover{color:var(--ink);}
-.nav .host{border:1px solid var(--line-2); border-radius:4px; padding:8px 15px; font-weight:800; font-size:12.5px; background:#fff; display:flex; align-items:center; gap:7px; transition:background .25s, border-color .25s;}
+.nav .host{border:1px solid var(--line-2); border-radius:4px; padding:8px 15px; font-weight:800; font-size:12.5px; background:var(--card); display:flex; align-items:center; gap:7px; transition:background .25s, border-color .25s;}
 .nav .host:hover{background:var(--ink); border-color:var(--ink); color:#fff;}
 .rainbow-hair{height:2px; background:var(--rainbow); background-size:200% 100%; animation:slideHue 9s linear infinite;}
 @keyframes slideHue{to{background-position:200% 0}}
@@ -81,24 +82,24 @@ html,body{overflow-x:clip;}
 /* ── chips as editorial filter row ───── */
 .chips{max-width:1290px; margin:0 auto; padding:24px 22px 0; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;}
 .chips::-webkit-scrollbar{display:none;}
-.chip{flex:none; display:flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:4px; padding:7px 13px; font-size:12px; font-weight:700; color:var(--mute); background:#fff; transition:all .25s var(--ease);}
+.chip{flex:none; display:flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:4px; padding:7px 13px; font-size:12px; font-weight:700; color:var(--mute); background:var(--card); transition:all .25s var(--ease);}
 .chip i{width:7px; height:7px; border-radius:50%; display:inline-block;}
 .chip:hover{border-color:var(--line-2); color:var(--ink);}
 .chip.on{color:#fff !important; border-color:transparent;}
 
 /* ── dark feature banner (reference style) ── */
 .hero{max-width:1290px; margin:0 auto; padding:28px 22px 6px;}
-.banner{background:linear-gradient(115deg,#2C3136,#22262A 70%); border-radius:var(--rad-lg); padding:72px 72px; display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:center; position:relative; overflow:hidden; box-shadow:var(--shadow-lift);}
-.banner::before{content:''; position:absolute; inset:0; background:radial-gradient(560px 260px at 85% 0%, rgba(87,194,238,.10), transparent 60%);}
+.banner{background:linear-gradient(115deg,#2A2530,#1D1A21 70%); border-radius:var(--rad-lg); padding:72px 72px; display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:center; position:relative; overflow:hidden; box-shadow:var(--shadow-lift);}
+.banner::before{content:''; position:absolute; inset:0; background:radial-gradient(560px 260px at 85% 0%, rgba(217,80,47,.18), transparent 60%);}
 .btxt{position:relative;}
 .btxt h1{font-size:clamp(28px,4.4vw,50px); color:var(--sky); font-weight:900; letter-spacing:-.02em;}
 .btxt h1 .rb{background:var(--rainbow); background-size:200% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:slideHue 6s linear infinite;}
-.btxt p{color:#C9CED2; font-size:14.5px; line-height:1.85; margin-top:20px; max-width:56ch;}
+.btxt p{color:#D9CCB8; font-size:14.5px; line-height:1.85; margin-top:20px; max-width:56ch;}
 .btxt p b{color:#fff;}
 .bact{display:flex; align-items:center; gap:14px; margin-top:32px;}
-.barrow{width:46px; height:46px; border-radius:50%; background:var(--sky); color:#14171A; font-size:22px; font-weight:900; display:flex; align-items:center; justify-content:center; transition:transform .3s var(--ease), box-shadow .3s; box-shadow:0 8px 20px -6px rgba(87,194,238,.55);}
+.barrow{width:46px; height:46px; border-radius:50%; background:var(--sky); color:#1D1A21; font-size:22px; font-weight:900; display:flex; align-items:center; justify-content:center; transition:transform .3s var(--ease), box-shadow .3s; box-shadow:0 8px 20px -6px rgba(226,163,58,.5);}
 .barrow:hover{transform:translateX(4px);}
-.bact span{color:#AEB4B9; font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;}
+.bact span{color:#B9AC9A; font-size:12.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;}
 .bshot{position:relative;}
 .bshot{box-shadow:0 20px 44px -18px rgba(0,0,0,.6);}
 .bshot .cap{position:absolute; left:10px; bottom:10px; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); color:#fff; font-size:10.5px; font-weight:700; border-radius:4px; padding:5px 10px; letter-spacing:.03em;}
@@ -136,7 +137,7 @@ html,body{overflow-x:clip;}
 
 /* ── shade separators — light fading bands, the Calm Shade signature ── */
 .sep{max-width:1290px; margin:0 auto; padding:64px 22px; display:flex; align-items:center; gap:10px;}
-.sep i{display:block; width:38px; height:16px; border-radius:4px; background:var(--sc,#C9CED2); border:1px solid rgba(38,41,44,.07); box-shadow:0 1px 3px rgba(38,41,44,.06); transition:transform .3s var(--ease);}
+.sep i{display:block; width:38px; height:16px; border-radius:4px; background:var(--sc,#D9CCB8); border:1px solid rgba(35,32,42,.07); box-shadow:0 1px 3px rgba(35,32,42,.06); transition:transform .3s var(--ease);}
 .sep i:hover{transform:translateY(-3px);}
 .sep i:nth-child(1){background:color-mix(in srgb, var(--sc) 88%, #fff);}
 .sep i:nth-child(2){background:color-mix(in srgb, var(--sc) 66%, #fff);}
@@ -160,12 +161,12 @@ html,body{overflow-x:clip;}
 .bk-mtog{display:none;}
 .steprow{display:flex; align-items:center; gap:12px; margin-bottom:13px;}
 .steprow .bplbl{margin-right:auto;}
-.steprow button{width:30px; height:30px; border:1px solid var(--line); border-radius:4px; background:#fff; font-weight:900; font-size:15px; transition:border-color .25s, background .25s;}
+.steprow button{width:30px; height:30px; border:1px solid var(--line); border-radius:4px; background:var(--card); font-weight:900; font-size:15px; transition:border-color .25s, background .25s;}
 .steprow button:hover{border-color:var(--ink);}
 .steprow b{font-size:15px; font-weight:900; min-width:20px; text-align:center;}
 .bplbl{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); font-weight:900;}
 .gcal .dy{cursor:pointer; user-select:none; transition:transform .2s var(--ease), background .25s, color .25s;}
-.gcal .dy:hover:not(.dis):not(.bl){transform:scale(1.08); background:#E9F0EC;}
+.gcal .dy:hover:not(.dis):not(.bl){transform:scale(1.08); background:#F1E4CC;}
 .gcal .dy.dis{background:var(--bg); color:var(--faint); text-decoration:line-through; cursor:not-allowed; opacity:.55;}
 .gcal .dy.sel{background:var(--wa); color:#fff; font-weight:900;}
 .gcal .dy.sel em{color:#EAFBF1;}
@@ -179,7 +180,7 @@ html,body{overflow-x:clip;}
   .bk-plan.open{display:block; max-height:44vh; overflow:auto; padding-right:4px;}
 }
 .wxrow{display:flex; gap:12px; overflow-x:auto; padding:4px 2px 10px; scrollbar-width:thin;}
-.wxd{flex:none; min-width:66px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:13px 10px; text-align:center; transition:transform .3s var(--ease), box-shadow .3s;}
+.wxd{flex:none; min-width:66px; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:13px 10px; text-align:center; transition:transform .3s var(--ease), box-shadow .3s;}
 .wxd:hover{transform:translateY(-2px); box-shadow:var(--shadow);}
 .wxd b{font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--mute); font-weight:900; white-space:nowrap;}
 .wxd .wi{display:block; font-size:21px; margin:8px 0 6px;}
@@ -198,7 +199,7 @@ html,body{overflow-x:clip;}
 .vouch b{font-size:13px; font-weight:900;}
 .vouch span{font-size:12px; color:var(--mute); line-height:1.65;}
 .ishare{display:inline-flex; gap:7px; margin:8px 8px 0 0; flex-wrap:wrap;}
-.ishare button{border:1px solid var(--line); border-radius:3px; background:#fff; padding:5px 11px; font-size:10px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:var(--mute); transition:border-color .25s, color .25s, transform .25s var(--ease);}
+.ishare button{border:1px solid var(--line); border-radius:3px; background:var(--card); padding:5px 11px; font-size:10px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:var(--mute); transition:border-color .25s, color .25s, transform .25s var(--ease);}
 .ishare button:hover{transform:translateY(-1px); color:var(--ink); border-color:var(--faint);}
 .ishare button:first-child{border-color:#BFE5CD; color:var(--wa-deep);}
 .ishare button:first-child:hover{border-color:var(--wa);}
@@ -223,7 +224,7 @@ html,body{overflow-x:clip;}
 .m-card video{width:100%; height:100%; object-fit:cover; display:block;}
 .m-card .mcap{font-size:12.5px; font-weight:900; margin-top:8px; color:var(--ink);}
 .m-card .msub{font-size:11px; color:var(--mute); margin-top:2px;}
-.m-card.ghost .mv{border:1.5px dashed var(--line-2); background:#fff; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:7px; color:var(--mute); font-size:12px; font-weight:800; box-shadow:none;}
+.m-card.ghost .mv{border:1.5px dashed var(--line-2); background:var(--card); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:7px; color:var(--mute); font-size:12px; font-weight:800; box-shadow:none;}
 .m-card.ghost .mv b{font-size:24px; color:var(--accent); font-weight:900;}
 .movrow{display:flex; gap:14px; align-items:center; padding:20px 0; border-bottom:1px solid var(--bg);}
 .movrow:last-child{border-bottom:0;}
@@ -232,20 +233,20 @@ html,body{overflow-x:clip;}
 .movrow span{display:block; font-size:11.5px; color:var(--mute); margin-top:2px;}
 .movrow .sp{flex:1;}
 .mocap{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:10px 12px; font-size:12.5px; font-weight:600;}
-.mocap:focus{outline:none; border-color:var(--sky); background:#fff;}
+.mocap:focus{outline:none; border-color:var(--sky); background:var(--card);}
 @media (max-width:700px){ .movrow{flex-wrap:wrap;} .movrow .acts2{width:100%;} }
 
 /* ── become host strip ───────────────── */
 .becomehost{max-width:1290px; margin:0 auto 72px; padding:0 22px;}
-.bh-in{border-radius:var(--rad-lg); padding:64px 72px; color:#fff; background:linear-gradient(115deg,#2C3136,#22262A); display:flex; gap:24px; align-items:center; flex-wrap:wrap; position:relative; overflow:hidden;}
+.bh-in{border-radius:var(--rad-lg); padding:64px 72px; color:#fff; background:linear-gradient(115deg,#2A2530,#1D1A21); display:flex; gap:24px; align-items:center; flex-wrap:wrap; position:relative; overflow:hidden;}
 .bh-in::before{content:''; position:absolute; left:0; right:0; top:0; height:3px; background:var(--rainbow); background-size:200% 100%; animation:slideHue 9s linear infinite;}
 .bh-in h2{font-size:clamp(20px,2.8vw,28px); color:#fff;}
 .bh-in p{font-size:13px; opacity:.8; max-width:56ch; margin-top:16px; line-height:1.85;}
 .bh-in .sp{flex:1;}
-.bh-in .cta{position:relative; overflow:hidden; background:var(--sky); color:#14171A; border-radius:4px; padding:13px 24px; font-weight:900; font-size:13.5px; transition:transform .3s var(--ease), box-shadow .3s;}
-.bh-in .cta:hover{transform:translateY(-2px); box-shadow:0 14px 28px -10px rgba(87,194,238,.5);}
+.bh-in .cta{position:relative; overflow:hidden; background:var(--sky); color:#1D1A21; border-radius:4px; padding:13px 24px; font-weight:900; font-size:13.5px; transition:transform .3s var(--ease), box-shadow .3s;}
+.bh-in .cta:hover{transform:translateY(-2px); box-shadow:0 14px 28px -10px rgba(226,163,58,.45);}
 
-.foot{border-top:1px solid var(--line); background:#fff; padding:22px; }
+.foot{border-top:1px solid var(--line); background:var(--card); padding:22px; }
 .foot-in{max-width:1290px; margin:0 auto; display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--mute);}
 .foot-in .sp{flex:1;}
 .foot-in button{font-weight:900; color:var(--ink);}
@@ -260,19 +261,19 @@ html,body{overflow-x:clip;}
 .det .sub{font-size:12.5px; color:var(--mute); margin-top:7px; font-weight:600;}
 .det-grid{display:grid; grid-template-columns:1fr 320px; gap:46px; margin-top:32px; align-items:start;}
 .det-main section{margin-bottom:48px;}
-.det p.desc{font-size:15px; line-height:1.85; color:#3A3F44; max-width:62ch;}
+.det p.desc{font-size:15px; line-height:1.85; color:#3A3440; max-width:62ch;}
 .drows{border-top:1px solid var(--line);}
 .drow{display:flex; justify-content:space-between; gap:18px; padding:19px 2px; border-bottom:1px solid var(--line); font-size:13.5px;}
 .drow .dk{color:var(--mute); font-weight:700;}
 .drow .dv{font-weight:800; text-align:right;}
-.hostline{display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--line); border-radius:var(--rad); background:#fff;}
+.hostline{display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--line); border-radius:var(--rad); background:var(--card);}
 .hostline .hav{width:40px; height:40px; border-radius:50%; color:#fff; font-weight:900; display:flex; align-items:center; justify-content:center; font-size:14px; flex:none;}
 .hostline b{font-size:13.5px; display:block; font-weight:900;}
 .hostline span{font-size:11.5px; color:var(--mute);}
 .logoline{display:flex; align-items:center; gap:11px; margin-top:12px;}
 .logoline .lnote{font-size:11.5px; color:var(--mute);}
 /* the WhatsApp booking card — the highlight */
-.book-card{position:sticky; top:72px; background:#fff; border:1px solid var(--line); border-radius:var(--rad-lg); padding:20px; box-shadow:var(--shadow); max-height:calc(100vh - 92px); overflow:auto; overscroll-behavior:contain;}
+.book-card{position:sticky; top:72px; background:var(--card); border:1px solid var(--line); border-radius:var(--rad-lg); padding:20px; box-shadow:var(--shadow); max-height:calc(100vh - 92px); overflow:auto; overscroll-behavior:contain;}
 .book-card .bk-price{display:flex; align-items:baseline; gap:7px;}
 .book-card .bk-price b{font-size:24px; font-weight:900;}
 .book-card .bk-price span{font-size:12px; color:var(--mute); font-weight:600;}
@@ -289,7 +290,7 @@ html,body{overflow-x:clip;}
 .wa-note{font-size:11px; color:var(--mute); margin-top:12px; line-height:1.65; text-align:center;}
 @media (max-width:900px){
   .det-grid{grid-template-columns:1fr;}
-  .book-card{position:fixed; left:10px; right:10px; bottom:10px; top:auto; z-index:50; box-shadow:0 -6px 40px rgba(38,41,44,.22); padding:14px 16px; border-radius:var(--rad-lg);}
+  .book-card{position:fixed; left:10px; right:10px; bottom:10px; top:auto; z-index:50; box-shadow:0 -6px 40px rgba(35,32,42,.22); padding:14px 16px; border-radius:var(--rad-lg);}
   .book-card .bk-rows{display:none;}
   .book-card .bk-price{margin-bottom:10px;}
   .det{padding-bottom:150px;}
@@ -297,19 +298,19 @@ html,body{overflow-x:clip;}
 
 /* ── login ───────────────────────────── */
 .login{min-height:72vh; display:flex; align-items:center; justify-content:center; padding:40px 22px;}
-.lg{width:100%; max-width:400px; background:#fff; border:1px solid var(--line); border-radius:var(--rad-lg); padding:32px 30px; box-shadow:var(--shadow-lift); position:relative; overflow:hidden;}
+.lg{width:100%; max-width:400px; background:var(--card); border:1px solid var(--line); border-radius:var(--rad-lg); padding:32px 30px; box-shadow:var(--shadow-lift); position:relative; overflow:hidden;}
 .lg::before{content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--rainbow); background-size:200% 100%; animation:slideHue 8s linear infinite;}
 .lg h2{font-size:21px;}
 .lg .s{font-size:12.5px; color:var(--mute); margin:9px 0 22px; line-height:1.65;}
 .fld{margin-bottom:14px;}
 .fld label{display:block; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--mute); font-weight:900; margin-bottom:7px;}
 .fld input{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:12px 14px; font-size:14px; color:var(--ink); transition:border-color .25s, background .25s;}
-.fld input:focus{border-color:var(--sky); background:#fff; outline:none;}
+.fld input:focus{border-color:var(--sky); background:var(--card); outline:none;}
 .lg-err{font-size:12px; color:#C23A2B; margin:-4px 0 12px; font-weight:700;}
 .otp{display:flex; gap:8px; justify-content:space-between; margin-bottom:16px;}
 .otp input{width:50px; text-align:center; font-size:20px; font-weight:900; background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:12px 0;}
-.otp input:focus{border-color:var(--sky); background:#fff; outline:none;}
-.demo-otp{font-size:11.5px; background:#FFF7E0; border:1px solid #F0E0AC; color:#8a6a12; border-radius:4px; padding:9px 12px; margin-bottom:14px; line-height:1.55;}
+.otp input:focus{border-color:var(--sky); background:var(--card); outline:none;}
+.demo-otp{font-size:11.5px; background:#FBF0D9; border:1px solid #F0E0AC; color:#8a6a12; border-radius:4px; padding:9px 12px; margin-bottom:14px; line-height:1.55;}
 .b-rb{position:relative; overflow:hidden; width:100%; background:var(--ink); color:#fff; border-radius:4px; padding:14px; font-weight:900; font-size:13.5px; transition:background .25s, transform .3s var(--ease);}
 .b-rb:hover{background:#000; transform:translateY(-1px);}
 .lg-alt{margin-top:15px; text-align:center; font-size:11.5px; color:var(--mute); line-height:1.65;}
@@ -319,21 +320,21 @@ html,body{overflow-x:clip;}
 .con{max-width:1290px; margin:0 auto; padding:12px 22px 80px;}
 .con-hd{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:14px 0 20px;}
 .con-hd h1{font-size:clamp(20px,2.8vw,27px);}
-.who{font-size:11px; font-weight:900; letter-spacing:.04em; color:var(--mute); background:#fff; border:1px solid var(--line); border-radius:4px; padding:7px 13px;}
+.who{font-size:11px; font-weight:900; letter-spacing:.04em; color:var(--mute); background:var(--card); border:1px solid var(--line); border-radius:4px; padding:7px 13px;}
 .con-hd .sp{flex:1;}
-.sel{background:#fff; border:1px solid var(--line); border-radius:4px; padding:9px 14px; font-size:12.5px; font-weight:700; color:var(--ink);}
+.sel{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:9px 14px; font-size:12.5px; font-weight:700; color:var(--ink);}
 .modetabs{display:flex; border:1px solid var(--line); border-radius:4px; overflow:hidden;}
-.modetabs button{padding:9px 16px; font-size:12px; font-weight:800; color:var(--mute); background:#fff; transition:all .25s;}
+.modetabs button{padding:9px 16px; font-size:12px; font-weight:800; color:var(--mute); background:var(--card); transition:all .25s;}
 .modetabs button+button{border-left:1px solid var(--line);}
 .modetabs button.on{background:var(--ink); color:#fff;}
 .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:16px; margin-bottom:26px;}
-.stat{background:#fff; border:1px solid var(--line); border-radius:var(--rad); padding:15px 17px; border-top:3px solid var(--stc,var(--sky)); transition:transform .3s var(--ease), box-shadow .3s;}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:var(--rad); padding:15px 17px; border-top:3px solid var(--stc,var(--sky)); transition:transform .3s var(--ease), box-shadow .3s;}
 .stat:hover{transform:translateY(-2px); box-shadow:var(--shadow);}
 .stat .k{font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); font-weight:900;}
 .stat .v{font-size:24px; font-weight:900; margin-top:6px;}
 .stat .v small{font-size:10.5px; font-weight:900; color:var(--wa-deep);}
-.pan{background:#fff; border:1px solid var(--line); border-radius:var(--rad); margin-bottom:26px; overflow:hidden;}
-.ph2{padding:13px 17px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff;}
+.pan{background:var(--card); border:1px solid var(--line); border-radius:var(--rad); margin-bottom:26px; overflow:hidden;}
+.ph2{padding:13px 17px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--card);}
 .ph2 h3{font-size:14px; font-weight:900; letter-spacing:.01em;}
 .cnt{background:var(--accent); color:#fff; font-size:10px; font-weight:900; border-radius:3px; padding:2px 8px;}
 .ph2 .sp{flex:1;}
@@ -345,8 +346,8 @@ html,body{overflow-x:clip;}
 .acts2{display:flex; gap:8px;}
 .b-ok{position:relative; overflow:hidden; background:var(--wa); color:#fff; border-radius:4px; padding:10px 16px; font-size:12px; font-weight:900; transition:transform .25s var(--ease), background .25s;}
 .b-ok:hover{transform:translateY(-1px); background:var(--wa-deep);}
-.b-no{border:1px solid #D8A39B; color:#C23A2B; border-radius:4px; padding:10px 16px; font-size:12px; font-weight:900; background:#fff;}
-.b-lt{border:1px solid var(--line-2); border-radius:4px; padding:9px 14px; font-size:12px; font-weight:900; background:#fff; transition:box-shadow .25s, border-color .25s;}
+.b-no{border:1px solid #D8A39B; color:#C23A2B; border-radius:4px; padding:10px 16px; font-size:12px; font-weight:900; background:var(--card);}
+.b-lt{border:1px solid var(--line-2); border-radius:4px; padding:9px 14px; font-size:12px; font-weight:900; background:var(--card); transition:box-shadow .25s, border-color .25s;}
 .b-lt:hover{box-shadow:var(--shadow); border-color:var(--faint);}
 .cal{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
 .cal .dw{font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); text-align:center; padding:4px 0; font-weight:900;}
@@ -354,7 +355,7 @@ html,body{overflow-x:clip;}
 .cal .dy:hover{transform:scale(1.06);}
 .cal .dy.bk{background:var(--ink); color:#fff;}
 .cal .dy.tn{background:var(--accent); color:#fff; animation:pulse2 2.2s ease infinite;}
-@keyframes pulse2{0%,100%{box-shadow:0 0 0 0 rgba(255,107,74,.45)} 55%{box-shadow:0 0 0 7px rgba(255,107,74,0)}}
+@keyframes pulse2{0%,100%{box-shadow:0 0 0 0 rgba(217,80,47,.45)} 55%{box-shadow:0 0 0 7px rgba(217,80,47,0)}}
 .cal .dy.bl{background:transparent;}
 .leg{display:flex; gap:16px; font-size:11px; color:var(--mute); margin-top:12px; font-weight:700;}
 .leg i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
@@ -382,7 +383,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 .editor h4{font-size:13.5px; font-weight:900; margin-bottom:14px;}
 .egrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:13px;}
 .efld label{display:block; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--mute); font-weight:900; margin-bottom:6px;}
-.efld input,.efld select,.efld textarea{width:100%; background:#fff; border:1px solid var(--line); border-radius:4px; padding:11px 13px; font-size:13.5px; transition:border-color .25s;}
+.efld input,.efld select,.efld textarea{width:100%; background:var(--card); border:1px solid var(--line); border-radius:4px; padding:11px 13px; font-size:13.5px; transition:border-color .25s;}
 .efld input:focus,.efld select:focus,.efld textarea:focus{border-color:var(--sky); outline:none;}
 .efld.wide{grid-column:1/-1;}
 .efld textarea{resize:vertical; min-height:76px;}
@@ -400,7 +401,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 .cur-head p{font-size:14px; color:var(--mute); line-height:1.8; max-width:72ch;}
 .cur-grid{display:grid; grid-template-columns:1.02fr .98fr; gap:46px; margin-top:34px; align-items:start;}
 @media (max-width:900px){ .cur-grid{grid-template-columns:1fr;} }
-.cmap{background:#fff; border:1px solid var(--line); border-radius:var(--rad-lg); padding:18px; box-shadow:var(--shadow);}
+.cmap{background:var(--card); border:1px solid var(--line); border-radius:var(--rad-lg); padding:18px; box-shadow:var(--shadow);}
 .cmap svg{width:100%; height:auto; display:block; border-radius:6px;}
 .cmap .cnote{font-size:11px; color:var(--mute); margin-top:12px; line-height:1.6;}
 .cdot{cursor:pointer;}
@@ -409,14 +410,14 @@ table.tb tbody tr:hover{background:var(--bg);}
 .cdot.dead .ring{animation:none; opacity:.4;}
 .conflict{margin-top:16px; padding:14px 16px; background:#FDF3EC; border:1px solid #F0D3BC; border-radius:6px; font-size:12.5px; font-weight:700; color:#8A5A1E; line-height:1.6;}
 @keyframes mapPulse{0%,100%{opacity:.55} 50%{opacity:.1}}
-.cpanel{background:#fff; border:1px solid var(--line); border-radius:var(--rad-lg); padding:26px; box-shadow:var(--shadow);}
+.cpanel{background:var(--card); border:1px solid var(--line); border-radius:var(--rad-lg); padding:26px; box-shadow:var(--shadow);}
 .cfields{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
 .cf{flex:1; min-width:110px;}
 .cf label{display:block; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); font-weight:900; margin-bottom:7px;}
 .cf input{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:12px 13px; font-size:14px; font-weight:700;}
-.cf input:focus{outline:none; border-color:var(--sky); background:#fff;}
+.cf input:focus{outline:none; border-color:var(--sky); background:var(--card);}
 .routebox{background:var(--bg); border:1px dashed var(--line-2); border-radius:4px; padding:13px 14px; font-size:12.5px; font-weight:700; color:var(--ink); min-height:44px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
-.routebox .rstop{background:#fff; border:1px solid var(--line); border-radius:3px; padding:4px 9px; font-size:11px; font-weight:900;}
+.routebox .rstop{background:var(--card); border:1px solid var(--line); border-radius:3px; padding:4px 9px; font-size:11px; font-weight:900;}
 .routebox .rar{color:var(--faint);}
 .routebox .rempty{color:var(--faint); font-weight:600;}
 .routebox .rclear{margin-left:auto; font-size:10.5px; font-weight:900; color:var(--accent); letter-spacing:.06em; text-transform:uppercase;}
@@ -428,7 +429,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 .prow .pd{font-size:10px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; color:var(--accent);}
 .prow .pd small{display:block; font-size:8.5px; color:var(--faint); letter-spacing:.05em; margin-top:3px; text-transform:none; font-weight:700;}
 .prow select,.prow input{background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:10px 11px; font-size:12.5px; font-weight:700; width:100%;}
-.prow select:focus,.prow input:focus{outline:none; border-color:var(--sky); background:#fff;}
+.prow select:focus,.prow input:focus{outline:none; border-color:var(--sky); background:var(--card);}
 .prow .pp{font-size:12px; font-weight:900; white-space:nowrap;}
 @media (max-width:640px){ .prow{grid-template-columns:48px 1fr;} .prow .pp{grid-column:2;} .cpanel{padding:18px;} .cmap{padding:12px;} .cfields{gap:10px;} }
 .ptotal{display:flex; justify-content:space-between; align-items:baseline; padding:18px 0 6px; font-size:13px; color:var(--mute); font-weight:700;}
@@ -443,7 +444,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 .dtotal{display:flex; justify-content:space-between; padding-top:14px; margin-top:6px; border-top:1px solid #CBE8D6; font-size:13px; font-weight:900;}
 
 /* ── logos, phone capture, host FAQ ── */
-.plogo.has{border:1px solid var(--line); background:#fff; overflow:hidden;}
+.plogo.has{border:1px solid var(--line); background:var(--card); overflow:hidden;}
 .plogo.has img{width:88%; height:88%; object-fit:contain; display:block; border-radius:50%;}
 .plogo.big{width:64px; height:64px;}
 .lgrow{display:flex; align-items:center; gap:16px;}
@@ -453,9 +454,9 @@ table.tb tbody tr:hover{background:var(--bg);}
 .phrow input:focus{outline:none; border-color:var(--wa);}
 .phrow button{background:var(--wa); color:#fff; border-radius:6px; padding:0 18px; font-weight:900; font-size:12.5px;}
 .qarow{display:grid; grid-template-columns:1fr 1.25fr auto; gap:10px; margin-bottom:11px;}
-.qarow input{background:#fff; border:1px solid var(--line); border-radius:4px; padding:11px 13px; font-size:12.5px;}
+.qarow input{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:11px 13px; font-size:12.5px;}
 .qarow input:focus{outline:none; border-color:var(--sky);}
-.mx2{width:34px; border:1px solid var(--line); border-radius:4px; background:#fff; color:var(--mute); font-size:15px; font-weight:900;}
+.mx2{width:34px; border:1px solid var(--line); border-radius:4px; background:var(--card); color:var(--mute); font-size:15px; font-weight:900;}
 .mx2:hover{color:#C23A2B; border-color:#D8A39B;}
 @media (max-width:640px){ .qarow{grid-template-columns:1fr auto;} .qarow input:nth-child(2){grid-column:1;} }
 .gtk{padding:16px 2px; border-bottom:1px solid var(--line);}
@@ -472,22 +473,22 @@ table.tb tbody tr:hover{background:var(--bg);}
 .vcap{font-size:11.5px; color:var(--mute); margin-top:9px;}
 .lbox{position:fixed; inset:0; background:rgba(20,22,24,.93); z-index:80; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; padding:28px; animation:fadeIn .25s ease both;}
 .lbox img{max-width:92vw; max-height:74vh; border-radius:6px; box-shadow:0 30px 80px rgba(0,0,0,.6);}
-.lbox .lcap{color:#C9CED2; font-size:12.5px; font-weight:700;}
+.lbox .lcap{color:#D9CCB8; font-size:12.5px; font-weight:700;}
 .lbox .lnav{display:flex; gap:10px;}
 .lbox .lnav button{border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:4px; padding:9px 16px; font-size:12px; font-weight:900; transition:background .25s;}
 .lbox .lnav button:hover{background:rgba(255,255,255,.12);}
 
 /* ── media manager (listing editor) ── */
 .mgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:14px;}
-.mth{position:relative; border:1px solid var(--line); border-radius:4px; overflow:hidden; background:#fff;}
+.mth{position:relative; border:1px solid var(--line); border-radius:4px; overflow:hidden; background:var(--card);}
 .mth img{width:100%; aspect-ratio:4/3; object-fit:cover; display:block;}
-.mth input{border:none; border-top:1px solid var(--line); padding:9px 10px; font-size:11px; width:100%; background:#fff;}
+.mth input{border:none; border-top:1px solid var(--line); padding:9px 10px; font-size:11px; width:100%; background:var(--card);}
 .mth input:focus{outline:none; background:var(--bg);}
 .mth .mx{position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:3px; background:rgba(20,22,24,.72); color:#fff; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center;}
 .mth .mcov{position:absolute; top:6px; left:6px; background:rgba(255,255,255,.94); border:1px solid var(--line); border-radius:3px; padding:4px 8px; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--ink); opacity:0; transition:opacity .25s;}
 .mth:hover .mcov{opacity:1;}
 .mcpill{position:absolute; top:6px; left:6px; background:var(--wa); color:#fff; border-radius:3px; padding:4px 8px; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase;}
-.uptile{border:1.5px dashed var(--line-2); border-radius:4px; aspect-ratio:4/3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; color:var(--mute); font-size:11px; font-weight:900; letter-spacing:.04em; cursor:pointer; background:#fff; transition:border-color .25s, color .25s;}
+.uptile{border:1.5px dashed var(--line-2); border-radius:4px; aspect-ratio:4/3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; color:var(--mute); font-size:11px; font-weight:900; letter-spacing:.04em; cursor:pointer; background:var(--card); transition:border-color .25s, color .25s;}
 .uptile:hover{border-color:var(--accent); color:var(--ink);}
 .uptile b{font-size:22px; color:var(--accent); font-weight:900;}
 .uptile.wide2{aspect-ratio:auto; flex-direction:row; padding:20px;}
@@ -495,7 +496,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 .vrow{display:flex; gap:16px; align-items:flex-start;}
 .vrow video{width:140px; aspect-ratio:9/16; object-fit:cover; border-radius:4px; border:1px solid var(--line); background:#000;}
 .vmeta{flex:1; display:flex; flex-direction:column; gap:12px;}
-.vmeta input{background:#fff; border:1px solid var(--line); border-radius:4px; padding:11px 13px; font-size:13px;}
+.vmeta input{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:11px 13px; font-size:13px;}
 .vmeta input:focus{outline:none; border-color:var(--sky);}
 
 /* ── WhatsApp simulator (unchanged language) ── */
@@ -512,26 +513,26 @@ table.tb tbody tr:hover{background:var(--bg);}
 .wa-sc{flex:1; overflow-y:auto; padding:15px 12px; display:flex; flex-direction:column; gap:8px; background-image:radial-gradient(rgba(0,0,0,.045) 1px, transparent 1px); background-size:18px 18px;}
 .m{max-width:82%; border-radius:9px; padding:8px 12px; font-size:13.5px; line-height:1.5; box-shadow:0 1px 1px rgba(0,0,0,.07); white-space:pre-wrap; word-wrap:break-word; animation:bub .35s var(--ease) both;}
 @keyframes bub{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
-.m.in{background:#fff; align-self:flex-start; border-top-left-radius:3px;}
+.m.in{background:var(--card); align-self:flex-start; border-top-left-radius:3px;}
 .m.out{background:var(--wa-out); align-self:flex-end; border-top-right-radius:3px;}
 .m.sys{align-self:center; background:#E4EEE6; color:#2c5c46; font-size:11px; border-radius:5px; padding:5px 12px; max-width:92%; text-align:center; box-shadow:none;}
 .m .tm{display:block; font-size:9px; color:#8b978f; text-align:right; margin-top:3px;}
-.pay{align-self:flex-start; background:#fff; border-radius:10px; border-top-left-radius:3px; padding:14px; width:84%; box-shadow:0 1px 2px rgba(0,0,0,.08); animation:bub .4s var(--ease) both;}
+.pay{align-self:flex-start; background:var(--card); border-radius:10px; border-top-left-radius:3px; padding:14px; width:84%; box-shadow:0 1px 2px rgba(0,0,0,.08); animation:bub .4s var(--ease) both;}
 .pay .h{font-size:10px; letter-spacing:.16em; text-transform:uppercase; font-weight:900; margin-bottom:8px; color:var(--wa-deep);}
 .pay .r{display:flex; justify-content:space-between; font-size:13px; padding:3px 0;}
 .pay .r b{font-size:15px; font-weight:900;}
 .pay .qr{margin:11px auto 5px; display:block;}
 .pay .upi{text-align:center; font-size:12px; background:var(--bg); border-radius:4px; padding:7px; font-weight:900;}
 .shot{align-self:flex-end; background:var(--wa-out); padding:6px; border-radius:9px; border-top-right-radius:3px; animation:bub .35s var(--ease) both;}
-.typing{align-self:flex-start; background:#fff; border-radius:9px; padding:10px 14px; display:flex; gap:5px;}
+.typing{align-self:flex-start; background:var(--card); border-radius:9px; padding:10px 14px; display:flex; gap:5px;}
 .typing i{width:6px; height:6px; border-radius:50%; background:#a8b2ab; animation:blink 1.2s infinite;}
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
 .wa-att{margin:0 12px 8px;}
-.wa-att button{width:100%; border:1.5px dashed var(--wa-dark); color:var(--wa-dark); background:#fff; border-radius:6px; padding:10px; font-size:12.5px; font-weight:900; transition:background .25s;}
+.wa-att button{width:100%; border:1.5px dashed var(--wa-dark); color:var(--wa-dark); background:var(--card); border-radius:6px; padding:10px; font-size:12.5px; font-weight:900; transition:background .25s;}
 .wa-att button:hover{background:#F0FAF4;}
 .wa-cm{display:flex; gap:8px; padding:10px 11px 5px; background:#F2EFE9; align-items:center;}
-.wa-cm input{flex:1; border:none; border-radius:20px; padding:12px 16px; font-size:13.5px; background:#fff;}
+.wa-cm input{flex:1; border:none; border-radius:20px; padding:12px 16px; font-size:13.5px; background:var(--card);}
 .wa-cm input:focus{outline:none;}
 .wa-cm .snd{width:42px; height:42px; border-radius:50%; background:var(--wa-dark); color:#fff; font-size:16px; flex:none; transition:transform .2s var(--ease);}
 .wa-cm .snd:active{transform:scale(.88);}
@@ -573,14 +574,14 @@ table.tb tbody tr:hover{background:var(--bg);}
 /* custom cursor — soft trailing ring */
 .curdot,.curring{position:fixed; top:0; left:0; pointer-events:none; z-index:210; border-radius:50%; will-change:transform;}
 .curdot{width:5px; height:5px; background:var(--ink); margin:-2.5px 0 0 -2.5px;}
-.curring{width:34px; height:34px; margin:-17px 0 0 -17px; border:1.5px solid rgba(38,41,44,.35); transition:width .3s var(--ease), height .3s var(--ease), margin .3s var(--ease), border-color .3s, background .3s;}
-.curring.big{width:56px; height:56px; margin:-28px 0 0 -28px; border-color:rgba(38,41,44,.5); background:rgba(255,255,255,.12); backdrop-filter:blur(1px);}
+.curring{width:34px; height:34px; margin:-17px 0 0 -17px; border:1.5px solid rgba(35,32,42,.35); transition:width .3s var(--ease), height .3s var(--ease), margin .3s var(--ease), border-color .3s, background .3s;}
+.curring.big{width:56px; height:56px; margin:-28px 0 0 -28px; border-color:rgba(35,32,42,.5); background:rgba(255,255,255,.12); backdrop-filter:blur(1px);}
 .curring.wa{border-color:rgba(14,156,74,.65);}
 @media (pointer:coarse){.curdot,.curring{display:none;}}
 
 /* nav — blur & shrink on scroll */
 .nav{transition:box-shadow .4s var(--ease), background .4s;}
-.nav.shr{background:rgba(255,255,255,.86); backdrop-filter:blur(12px); box-shadow:0 1px 0 var(--line), 0 8px 24px -18px rgba(38,41,44,.25);}
+.nav.shr{background:rgba(255,249,238,.9); backdrop-filter:blur(12px); box-shadow:0 1px 0 var(--line), 0 8px 24px -18px rgba(35,32,42,.25);}
 .nav.shr .nav-in{height:46px;}
 .nav-in{transition:height .4s var(--ease);}
 
@@ -605,7 +606,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 .ffs i:nth-child(5){left:90%; top:55%; --d:12s; --dl:5.4s;}
 .ffs i:nth-child(6){left:67%; top:25%; --d:14s; --dl:3.1s;}
 @keyframes firefly{0%{transform:translate(0,0); opacity:0} 12%{opacity:.85} 45%{transform:translate(13px,-20px)} 70%{opacity:.5} 100%{transform:translate(-8px,-42px); opacity:0}}
-.shint{position:absolute; left:74px; bottom:20px; display:flex; align-items:center; gap:10px; color:#8A9298; font-size:9.5px; font-weight:900; letter-spacing:.28em; text-transform:uppercase;}
+.shint{position:absolute; left:74px; bottom:20px; display:flex; align-items:center; gap:10px; color:#9A8E80; font-size:9.5px; font-weight:900; letter-spacing:.28em; text-transform:uppercase;}
 .shint span{width:1.5px; height:26px; background:rgba(255,255,255,.16); position:relative; overflow:hidden; display:block;}
 .shint span::after{content:''; position:absolute; left:0; top:-8px; width:100%; height:8px; background:var(--sky); animation:shdrop 2.2s var(--ease) infinite;}
 @keyframes shdrop{to{top:30px}}
@@ -683,6 +684,168 @@ table.tb tbody tr:hover{background:var(--bg);}
   .sep i,.gal figure,.m-card{opacity:1!important; transform:none!important;}
   .becomehost .bh-in{clip-path:none!important;}
   .separt .dr{stroke-dashoffset:0!important;}
+}
+
+
+/* ═══ APPA look — type and surfaces ═══ */
+body{background:var(--bg);}
+#cs-app h1,#cs-app h2,#cs-app h3,#cs-app h4{font-family:var(--display); font-weight:600; letter-spacing:-.005em;}
+#cs-app .btxt h1{color:#FFF9EE; font-weight:600; letter-spacing:-.01em; line-height:1.05;}
+#cs-app .btxt h1 .rb,#cs-app .btxt h1 .rb .w{font-style:italic; font-weight:500; background:none; color:var(--sky); -webkit-text-fill-color:currentColor; animation:none;}
+#cs-app .mo-hd h2 .rb,#cs-app .mo-hd h2 .rb .w{font-style:italic; background:none; color:var(--accent); -webkit-text-fill-color:currentColor; animation:none;}
+#cs-app .logo b{font-family:var(--display); font-weight:600; font-size:17px; letter-spacing:0;}
+#cs-app .loader .lname{font-family:var(--display); font-weight:600; font-size:20px;}
+#cs-app .pcard .pr b,#cs-app .book-card .bk-price b,#cs-app .stat .v,#cs-app .ptotal b{font-family:var(--display); font-weight:600;}
+#cs-app .det p.desc{font-size:16px;}
+#cs-app .menu .fx-nav{color:var(--accent);}
+#cs-app .menu .fx-nav span{font-size:9px; font-weight:800; letter-spacing:.12em; border:1px solid currentColor; border-radius:3px; padding:1px 5px; margin-left:6px; vertical-align:2px;}
+#cs-app .nav .fx-navm{display:none; color:var(--accent);}
+@media (max-width:860px){#cs-app .nav .fx-navm{display:inline-flex;}}
+@media (max-width:860px){#cs-app .logo b,#cs-app .nav .lnk,#cs-app .nav .host{white-space:nowrap;} #cs-app .nav .lnk{padding:8px 8px;} #cs-app .logo{padding-right:10px;}}
+@media (max-width:480px){#cs-app .nav .lnk:not(.fx-navm){display:none;} #cs-app .nav .host{padding:7px 10px; font-size:12px;}}
+/* ═══ APPA ART FEST 2027 — festival stays (VIP tier) ═══ */
+#cs-app .fx-band{max-width:1290px; margin:0 auto; padding:34px 22px 0;}
+#cs-app .fx-band-in{background:linear-gradient(120deg,#2A2530,#1D1A21 70%); color:#F3EADB; border-radius:var(--rad-lg); padding:56px 64px; display:grid; grid-template-columns:1.1fr .9fr; gap:40px; align-items:center; position:relative; overflow:hidden; box-shadow:var(--shadow-lift);}
+#cs-app .fx-band-in::before{content:''; position:absolute; inset:0; background:radial-gradient(520px 260px at 92% 8%, rgba(217,80,47,.22), transparent 62%), radial-gradient(420px 220px at 6% 100%, rgba(226,163,58,.16), transparent 60%); pointer-events:none;}
+#cs-app .fx-band-txt{position:relative; display:flex; flex-direction:column; gap:14px;}
+#cs-app .fx-logo{width:56px; height:auto; opacity:.95;}
+#cs-app .fx-eyebrow{font-size:10.5px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:var(--sky);}
+#cs-app .fx-band h2{font-family:var(--display); font-weight:600; font-size:clamp(28px,4vw,46px); line-height:1.05; color:#FFF9EE; text-wrap:balance;}
+#cs-app .fx-band h2 em{font-style:italic; font-weight:500; color:var(--sky);}
+#cs-app .fx-band p{color:#D9CCB8; font-size:15px; line-height:1.75; max-width:56ch;}
+#cs-app .fx-band-cta{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin-top:8px;}
+#cs-app .fx-venues{position:relative; display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+#cs-app .fx-venue{border:1px solid rgba(243,234,219,.16); border-radius:8px; padding:12px 14px; background:rgba(255,249,238,.04); display:flex; flex-direction:column; gap:2px;}
+#cs-app .fx-venue b{font-family:var(--display); font-weight:600; font-size:15px; color:#FFF9EE;}
+#cs-app .fx-venue span{font-size:12px; color:#B9AC9A;}
+#cs-app .fx-venue.tent{grid-column:1/-1; border-style:dashed;}
+@media (max-width:900px){#cs-app .fx-band-in{grid-template-columns:1fr; padding:36px 26px;} #cs-app .fx-venues{grid-template-columns:1fr 1fr;}}
+
+#cs-app .fx-btn{display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#FFF9EE; border-radius:6px; padding:12px 18px; font-weight:800; font-size:13.5px; transition:transform .25s var(--ease), background .25s; position:relative; overflow:hidden;}
+#cs-app .fx-btn:hover{transform:translateY(-1px); background:#C2441F;}
+#cs-app .fx-btn.ghost{background:transparent; color:inherit; border:1px solid currentColor;}
+#cs-app .fx-btn.ghost:hover{background:rgba(127,110,90,.12);}
+#cs-app .fx-btn.small{padding:7px 11px; font-size:12px;}
+#cs-app .fx-btn.ok{background:var(--wa-deep);}
+#cs-app .fx-btn.warn{background:transparent; color:#B03A22; border:1px solid #DDB1A3;}
+#cs-app .fx-btn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+#cs-app .fx-link{font-size:12.5px; font-weight:800; color:inherit; text-decoration:underline; text-underline-offset:3px; opacity:.9;}
+
+/* page */
+#cs-app .fx{max-width:1360px; margin:0 auto; padding:10px 22px 120px;}
+#cs-app .fx-mast{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px 32px; padding:26px 0 20px; border-bottom:2px solid var(--ink);}
+#cs-app .fx-mast h1{font-family:var(--display); font-weight:600; font-size:clamp(34px,5.2vw,60px); line-height:1; letter-spacing:-.01em; margin:10px 0 12px; text-wrap:balance;}
+#cs-app .fx-mast h1 em{font-style:italic; font-weight:500; color:var(--accent);}
+#cs-app .fx-mast p{color:var(--mute); max-width:62ch; font-size:14.5px; line-height:1.7;}
+#cs-app .fx-mast .fx-eyebrow{color:var(--mute);}
+#cs-app .fx-tabs{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+#cs-app .fx-tab{border:1.5px solid var(--ink); border-radius:999px; padding:8px 16px; font-weight:800; font-size:13px;}
+#cs-app .fx-tab.on{background:var(--ink); color:var(--card);}
+#cs-app .fx-layout{display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:26px; margin-top:24px; align-items:start;}
+#cs-app .fx-main{min-width:0; display:flex; flex-direction:column; gap:18px;}
+#cs-app .fx-h2{font-family:var(--display); font-weight:600; font-size:22px; line-height:1.2;}
+#cs-app .fx-sub{color:var(--mute); max-width:72ch; margin-top:4px; line-height:1.65;}
+#cs-app .fx-row{display:flex; flex-wrap:wrap; gap:12px 20px; align-items:center;}
+#cs-app .fx-row.between{justify-content:space-between;}
+#cs-app .fx-chips{display:flex; flex-wrap:wrap; gap:6px;}
+#cs-app .fx-chip{border:1px solid var(--line); background:var(--card); border-radius:999px; padding:5px 12px; font-size:12.5px; font-weight:700; color:var(--mute);}
+#cs-app .fx-chip.on{border-color:var(--accent); color:var(--accent);}
+#cs-app .fx-legend{display:flex; flex-wrap:wrap; gap:6px 16px; font-size:12px; color:var(--mute); font-weight:600;}
+#cs-app .fx-legend span{display:inline-flex; align-items:center; gap:6px;}
+#cs-app .fx-sw{width:14px; height:14px; border-radius:3px; display:inline-block; border:1px solid var(--line);}
+#cs-app .fx-warn{font-size:13px; border-left:3px solid var(--sky); padding:8px 12px; background:#FBF0D9; color:#6A4A12; border-radius:0 6px 6px 0;}
+#cs-app .fx-err{font-size:13px; border-left:3px solid var(--accent); padding:8px 12px; background:#FBE4DB; color:#7A2A16; border-radius:0 6px 6px 0;}
+#cs-app .fx-note{font-size:13px; color:var(--mute); line-height:1.6;}
+
+/* board */
+#cs-app .fx-board{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--card); overscroll-behavior-x:contain;}
+#cs-app .fx-board table{border-collapse:separate; border-spacing:0; font-variant-numeric:tabular-nums;}
+#cs-app .fx-board th,#cs-app .fx-board td{padding:0;}
+#cs-app .fx-board thead th{position:sticky; top:0; background:var(--card); z-index:2; font-weight:700; font-size:10.5px; color:var(--mute); text-align:center; padding:6px 0 4px; border-bottom:1px solid var(--line); min-width:44px; text-transform:uppercase; letter-spacing:.04em;}
+#cs-app .fx-board thead th .dn{display:block; font-family:var(--display); font-size:15px; color:var(--ink); text-transform:none; letter-spacing:0;}
+#cs-app .fx-board .wk{border-left:1px solid var(--line);}
+#cs-app .fx-board thead th.enc,#cs-app .fx-board thead th.enc .dn{color:var(--accent);}
+#cs-app .fx-board .rowh{position:sticky; left:0; z-index:1; background:var(--card); text-align:left; padding:8px 12px; min-width:206px; max-width:206px; border-right:1px solid var(--line); vertical-align:middle;}
+#cs-app .fx-board thead .rowh{z-index:3; font-size:10px; letter-spacing:.16em;}
+#cs-app .fx-board .rowh b{display:block; font-family:var(--display); font-weight:600; font-size:14px; line-height:1.25; color:var(--ink);}
+#cs-app .fx-board .rowh small{display:block; font-size:11.5px; color:var(--mute); line-height:1.35; font-weight:600;}
+#cs-app .fx-board tr.grp th{position:sticky; left:0; text-align:left; background:var(--bg); font-size:10.5px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--mute); padding:10px 12px 6px; border-top:1px solid var(--line);}
+#cs-app .fx-board tr.grp th span{color:var(--ink);}
+#cs-app .fx-board td{border-bottom:1px solid var(--line); padding:3px 2px; text-align:center;}
+#cs-app .fx-board td.fx-empty{text-align:left; padding:14px 12px; color:var(--mute); font-size:13px;}
+#cs-app .fx-cell{width:40px; height:34px; border-radius:6px; border:1px solid transparent; font-size:13px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; background:#F1E7D4; color:var(--ink);}
+#cs-app .fx-cell.mid{background:#F3DCAB;}
+#cs-app .fx-cell.low{background:#F2C2AE;}
+#cs-app .fx-cell.sold{background:repeating-linear-gradient(135deg,transparent 0 4px,rgba(176,58,34,.22) 4px 6px); color:#B03A22; cursor:not-allowed;}
+#cs-app .fx-cell.mine{border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink);}
+#cs-app .fx-cell.sel{background:var(--accent); color:#FFF9EE;}
+#cs-app .fx-cell:hover:not(.sold){border-color:var(--accent);}
+#cs-app .fx-cell:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+/* panels */
+#cs-app .fx-panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:14px;}
+#cs-app .fx-panel.accent{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent);}
+#cs-app .fx-kv{display:flex; flex-direction:column; gap:3px;}
+#cs-app .fx-kv > span{font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--mute);}
+#cs-app .fx-kv b{font-weight:700; font-size:14.5px;}
+#cs-app .fx-step{display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--bg);}
+#cs-app .fx-step button{width:34px; height:34px; font-size:18px; font-weight:700;}
+#cs-app .fx-step button:disabled{opacity:.3; cursor:default;}
+#cs-app .fx-step output{min-width:30px; text-align:center; font-weight:800; font-size:15px;}
+#cs-app .fx-lines{font-size:13px; line-height:1.7; color:var(--mute); font-variant-numeric:tabular-nums;}
+#cs-app .fx-lines div{display:flex; justify-content:space-between; gap:12px;}
+#cs-app .fx-lines b{color:var(--ink); font-weight:700;}
+#cs-app .fx-money{font-family:var(--display); font-weight:600; font-size:16px; font-variant-numeric:tabular-nums;}
+#cs-app .fx-grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px;}
+#cs-app .fx-field{display:flex; flex-direction:column; gap:5px; font-size:13px;}
+#cs-app .fx-field label{font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--mute);}
+#cs-app .fx-field input,#cs-app .fx-field select,#cs-app .fx-field textarea{border:1px solid var(--line); background:var(--bg); border-radius:6px; padding:10px 12px; font-size:14px; width:100%; min-width:0; color:var(--ink);}
+#cs-app .fx-field input:focus,#cs-app .fx-field select:focus,#cs-app .fx-field textarea:focus{outline:none; border-color:var(--accent); background:var(--card);}
+
+/* trip */
+#cs-app .fx-trip{position:sticky; top:66px; max-height:calc(100vh - 84px); overflow:auto; background:var(--card); border:1.5px solid var(--ink); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:14px; overscroll-behavior:contain;}
+#cs-app .fx-trip-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;}
+#cs-app .fx-tier{display:inline-flex; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; padding:4px 9px; border-radius:999px; border:1px solid var(--line); color:var(--mute);}
+#cs-app .fx-tier.vip,#cs-app .fx-tier.vvip{border-color:var(--sky); color:#9A6A14; background:#FBF0D9;}
+#cs-app .fx-meter{height:6px; border-radius:99px; background:var(--line); overflow:hidden;}
+#cs-app .fx-meter i{display:block; height:100%; background:var(--sky);}
+#cs-app .fx-items{border-top:1px solid var(--line);}
+#cs-app .fx-item{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 10px; padding:11px 0; border-bottom:1px solid var(--line);}
+#cs-app .fx-item .what{font-family:var(--display); font-weight:600; font-size:15px;}
+#cs-app .fx-item .when{font-size:12.5px; color:var(--mute); line-height:1.5;}
+#cs-app .fx-x{color:var(--mute); font-size:12px; text-decoration:underline; font-weight:700;}
+#cs-app .fx-tot{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--display); font-weight:600; font-size:24px; border-top:2px solid var(--ink); padding-top:10px;}
+#cs-app .fx-mob{display:none;}
+#cs-app .fx-status{font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:99px; border:1px solid currentColor; white-space:nowrap;}
+#cs-app .fx-status.pending{color:#9A6A14;} #cs-app .fx-status.confirmed,#cs-app .fx-status.approved{color:var(--wa-deep);} #cs-app .fx-status.cancelled,#cs-app .fx-status.rejected,#cs-app .fx-status.expired{color:#B03A22;}
+#cs-app .fx-qr{background:#FFFFFF; padding:10px; border-radius:8px; width:max-content; max-width:100%; border:1px solid var(--line);}
+#cs-app .fx-ref{font-family:var(--display); font-weight:600; font-size:24px; letter-spacing:.02em;}
+
+/* day passes */
+#cs-app .fx-cal{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; max-width:520px;}
+#cs-app .fx-cal .dw{font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--mute); text-align:center;}
+#cs-app .fx-day{border:1px solid var(--line); background:var(--bg); border-radius:8px; padding:6px 0; font-family:var(--display); font-weight:600; font-size:15px; text-align:center;}
+#cs-app .fx-day small{display:block; font-family:var(--font); font-size:9.5px; color:var(--mute); font-weight:700;}
+#cs-app .fx-day.on{background:var(--accent); color:#FFF9EE; border-color:var(--accent);}
+#cs-app .fx-day.on small{color:#FFF9EE;}
+#cs-app .fx-day.blank{visibility:hidden;}
+
+/* desk */
+#cs-app .fx-kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px;}
+#cs-app .fx-tbl{overflow-x:auto;}
+#cs-app .fx-tbl table{width:100%; border-collapse:collapse; font-size:12.5px;}
+#cs-app .fx-tbl th{text-align:left; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); padding:10px 8px; border-bottom:1px solid var(--line); font-weight:800; white-space:nowrap;}
+#cs-app .fx-tbl td{padding:12px 8px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5;}
+#cs-app .fx-tbl td.num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums;}
+
+@media (max-width:1020px){
+  #cs-app .fx-layout{grid-template-columns:minmax(0,1fr);}
+  #cs-app .fx-trip{position:fixed; left:0; right:0; bottom:0; top:auto; max-height:82vh; border-radius:16px 16px 0 0; border-width:1.5px 0 0; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); z-index:60; box-shadow:0 -10px 34px rgba(35,32,42,.22);}
+  #cs-app .fx-trip:not(.open) > :not(.fx-mob){display:none;}
+  #cs-app .fx-mob{display:flex; justify-content:space-between; align-items:center; gap:12px;}
+  #cs-app .fx-board .rowh{min-width:134px; max-width:134px; padding:6px 8px;}
+  #cs-app .fx-board .rowh small{display:none;}
+  #cs-app .fx-mast{padding-top:16px;}
 }
 
 </style>
@@ -991,8 +1154,8 @@ ${kb()}`;}
     const stops=tripStops();const ds=tripDates();
     const pts=stops.map(id=>xyOf(id).join(',')).join(' ');
     return `<svg viewBox="0 0 520 330" role="img" aria-label="Map of the collective's stays">
-      <rect width="520" height="330" fill="#EDF3F6"/>
-      <path d="M28 210 Q90 120 60 60 Q140 10 250 38 Q360 8 430 52 Q505 90 488 170 Q500 250 400 282 Q300 312 190 292 Q70 300 28 210 Z" fill="#F6F7F3" stroke="#E0E4E0" stroke-width="1.5"/>
+      <rect width="520" height="330" fill="#EFE4CF"/>
+      <path d="M28 210 Q90 120 60 60 Q140 10 250 38 Q360 8 430 52 Q505 90 488 170 Q500 250 400 282 Q300 312 190 292 Q70 300 28 210 Z" fill="#FFF9EE" stroke="#E2D3BA" stroke-width="1.5"/>
       <path d="M40 236 q46 -14 92 2 q40 14 84 4" stroke="#CFE2EC" stroke-width="7" fill="none" stroke-linecap="round" opacity=".8"/>
       <path d="M330 262 q40 -10 76 4" stroke="#CFE2EC" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>
       ${stops.length>1?`<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="7 6" stroke-linecap="round"/>`:''}
@@ -1133,14 +1296,14 @@ ${kb()}`;}
     const inDash=view==='dash';
     return `<nav class="nav"><div class="nav-in">
       <div class="logo" onclick="CS.go('home')"><span class="mark"></span><b>Calm Shade</b></div>
-      ${!inDash?`<div class="menu"><button onclick="CS.jump('.grid')">Stays</button><button onclick="CS.jump('.curated')">Curated</button><button onclick="CS.jump('.moments')">Moments</button><button onclick="CS.jump('.becomehost')">Host with us</button></div>`:''}
+      ${!inDash?`<div class="menu"><button class="fx-nav" onclick="CS.go('fest')">APPA Fest<span>VIP</span></button><button onclick="CS.jump('.grid')">Stays</button><button onclick="CS.jump('.curated')">Curated</button><button onclick="CS.jump('.moments')">Moments</button><button onclick="CS.jump('.becomehost')">Host with us</button></div>`:''}
       ${!inDash?`<div class="search"><input placeholder="Search stays… anywhere" value="${esc(query)}" oninput="CS.q(this.value)"><span class="go">⌕</span></div>`:''}
       <div class="sp"></div>
       ${inDash
         ? `<button class="lnk" onclick="CS.go('home')">View site</button><button class="host" onclick="CS.signOut()">Sign out</button>`
         : session
           ? `<button class="lnk" onclick="CS.go('login')" style="display:none"></button><button class="host" onclick="CS.go('dash')">☰ &nbsp;${esc(session.name)}</button>`
-          : `<button class="lnk" onclick="CS.invite()">Become a host</button><button class="host" onclick="CS.go('login')">☰ &nbsp;Host login</button>`}
+          : `<button class="lnk fx-navm" onclick="CS.go('fest')">APPA Fest</button><button class="lnk" onclick="CS.invite()">Become a host</button><button class="host" onclick="CS.go('login')">☰ &nbsp;Host login</button>`}
     </div><div class="rainbow-hair"></div></nav>`;
   }
 
@@ -1172,6 +1335,7 @@ ${kb()}`;}
         <div class="shint" aria-hidden="true"><span></span>scroll</div>
       </div>
     </section>
+    ${festBand()}
 
     <div class="sep rv sep-warm" aria-hidden="true" data-name="dawn"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M6 34 H74 M162 34 H230"/><path class="dr" d="M92 34 a26 26 0 0 1 52 0"/><path class="dr" d="M118 12 v-7 M98 18 l-5-5 M138 18 l5-5"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="dirhead"><span class="seclabel">The collective</span><h2>Stays</h2><span>${list.length} of ${PROPS.filter(x=>x.live).length} showing · live availability</span></div>
@@ -1571,15 +1735,16 @@ ${kb()}`;}
     const isSuper=session&&session.type==='super';
     return `<div class="page con">
       <div class="con-hd">
-        <h1>${dashMode==='creator'?'Creator console':'Host dashboard'}</h1>
-        <span class="who">${esc(dashMode==='creator'?'Karthik · super admin':O(ownerCtx).name+(isSuper&&ownerCtx!==session.ownerId?' · viewed as admin':''))}</span>
+        <h1>${dashMode==='creator'?'Creator console':dashMode==='fest'?'APPA Fest desk':'Host dashboard'}</h1>
+        <span class="who">${esc(dashMode==='creator'||dashMode==='fest'?'Karthik · super admin':O(ownerCtx).name+(isSuper&&ownerCtx!==session.ownerId?' · viewed as admin':''))}</span>
         <div class="sp"></div>
         ${isSuper?`<div class="modetabs">
           <button class="${dashMode==='host'?'on':''}" onclick="CS.mode('host')">My listings</button>
           <button class="${dashMode==='creator'?'on':''}" onclick="CS.mode('creator')">Creator console</button>
+          <button class="${dashMode==='fest'?'on':''}" onclick="CS.mode('fest')">APPA Fest desk</button>
         </div>`:''}
       </div>
-      ${dashMode==='creator'?creatorDash():hostDash(ownerCtx)}
+      ${dashMode==='creator'?creatorDash():dashMode==='fest'&&isSuper?festDesk():hostDash(ownerCtx)}
     </div>`;
   }
 
@@ -1710,13 +1875,383 @@ ${kb()}`;}
     else render();
   }
 
+  /* ═════════ APPA ART FEST 2027 — festival stays, a VIP tier on Calm Shade ═════════ */
+  const FX_API='fest.php';
+  const FX_DEF={coupleNight:12000,singleNight:6000,extraGuest:2000,partnerShareCouple:8000,partnerShareSingle:4000,
+    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:1000,surgeMax:20,vipNights:7,vipDiscount:7000,vvipNights:30,vvipDiscount:40000,
+    holdHours:48,firstNight:'2027-01-25',lastNight:'2027-02-28',passLast:'2027-02-25',encoreFrom:'2027-02-26',
+    upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in'};
+  const FX_VIP=[
+    {id:'calmshet',name:'Calmshet',rooms:5,cap:4,kind:'room',blurb:'K. N. Ramachandran paintings, fashion, sunset sets'},
+    {id:'lefarm',name:'Le Farm',rooms:8,cap:4,kind:'room',blurb:'Big concerts, farm visits, sunrise yoga'},
+    {id:'shambhala',name:'Shambhala by the Lake',rooms:6,cap:4,kind:'room',blurb:'Lakeside pavilion, carpentry workshop'},
+    {id:'theeya',name:'Theeya',rooms:4,cap:4,kind:'room',blurb:'Singers, theatre, fine dining'},
+    {id:'ctheatre',name:'The Company Theatre',rooms:8,cap:4,kind:'room',blurb:'Theatre performances and workshops'},
+    {id:'purrom',name:'Purrom',rooms:4,cap:1,kind:'single',blurb:'Single rooms by the horror film festival'}];
+  const FMON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],FDOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const fxLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem('appa-'+k)||'null');localStorage.setItem('appa-'+k,JSON.stringify(v));}catch(e){return null;}};
+  const FX={S:Object.assign({},FX_DEF),occ:{},listings:[],loaded:false,offline:false,deskReady:false,
+    tab:'stay',filter:'all',sel:null,rooms:1,guests:2,passDays:[],passQty:2,
+    cart:fxLS('cart')||{stays:[],passes:[]},tickets:fxLS('tickets')||[],mine:[],
+    checkout:false,busy:false,last:null,err:'',tripOpen:false,
+    form:Object.assign({name:'',phone:'',email:'',note:''},fxLS('guest')||{}),utr:'',
+    host:{name:'',type:'Homestay',location:'',distance:'',rooms:4,maxGuests:2,rate:4500,desc:'',cname:'',phone:'',email:''},hostSent:null,
+    desk:{key:fxLS('desk')||'',data:null,err:'',busy:false,tab:'bookings'}};
+  const fxSave=()=>{fxLS('cart',FX.cart);fxLS('tickets',FX.tickets);};
+  const fxD=s=>new Date(s+'T00:00:00Z');
+  const fxAdd=(s,n)=>{const d=fxD(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
+  const fxDiff=(a,b)=>Math.round((fxD(b)-fxD(a))/864e5);
+  const fxFmt=s=>{const d=fxD(s);return FDOW[d.getUTCDay()]+' '+d.getUTCDate()+' '+FMON[d.getUTCMonth()];};
+  const fxShort=s=>{const d=fxD(s);return d.getUTCDate()+' '+FMON[d.getUTCMonth()];};
+  const fxRange=(a,n)=>Array.from({length:Math.max(0,n)},(_,i)=>fxAdd(a,i));
+  const fxNights=()=>fxRange(FX.S.firstNight,fxDiff(FX.S.firstNight,FX.S.lastNight)+1);
+  const fxEnc=d=>d>=FX.S.encoreFrom;
+  const fxKey=()=>Math.random().toString(36).slice(2,10);
+
+  async function fxCall(a,body,admin){
+    const opt={method:body?'POST':'GET',headers:{}};
+    if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}
+    if(admin)opt.headers['X-Fest-Key']=FX.desk.key;
+    const r=await fetch(FX_API+'?a='+a,opt);let j=null;try{j=await r.json();}catch(e){}
+    if(!r.ok||!j){const e=new Error((j&&j.error)||'Could not reach the booking desk. Check your connection and try again.');e.status=r.status;e.data=j;throw e;}
+    return j;}
+  function fxQuiet(){const a=document.activeElement;return !(a&&a.closest&&a.closest('#cs-app')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));}
+  async function fxLoad(){
+    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;}
+    catch(e){if(!FX.loaded)FX.offline=true;}
+    FX.loaded=true;
+    if(FX.tickets.length&&!FX.offline){try{FX.mine=(await fxCall('mine',{tickets:FX.tickets})).bookings||[];}catch(e){}}
+    if((view==='fest'||view==='home')&&fxQuiet())render();}
+  setInterval(()=>{if(view==='fest'&&!FX.busy&&document.visibilityState==='visible')fxLoad();},45000);
+
+  /* inventory & pricing (the server re-checks and re-prices every booking) */
+  const fxTent=()=>({id:'tents',name:'VIP Tent Village',rooms:+FX.S.tents||0,cap:2,kind:'tent',blurb:'Tents inside the festival grounds'});
+  const fxPartners=()=>FX.listings.map(l=>({id:l.id,name:l.name,rooms:+l.rooms||1,cap:+l.maxGuests||2,kind:'partner',rate:+l.rate||0,
+    blurb:[l.type,l.location,l.distance?l.distance+' km away':''].filter(Boolean).join(' · '),desc:l.desc}));
+  const fxUnits=()=>FX_VIP.concat([fxTent()],fxPartners());
+  const fxU=id=>fxUnits().find(u=>u.id===id);
+  const fxPrem=u=>!!u&&u.kind!=='partner';
+  const fxOcc=(id,d)=>(FX.occ[id]&&FX.occ[id][d])||0;
+  function fxCartOcc(id,d,skip){let n=0;FX.cart.stays.forEach(s=>{if(s.unit===id&&s.key!==skip&&d>=s.from&&d<fxAdd(s.from,s.n))n+=s.rooms;});return n;}
+  const fxLeft=(u,d)=>Math.max(0,u.rooms-fxOcc(u.id,d));
+  const r100=x=>Math.round(x/100)*100;
+  function fxSurge(u,d){if(!fxPrem(u)||u.rooms<=1)return 1;return 1+(+FX.S.surgeMax/100)*Math.min(1,fxOcc(u.id,d)/(u.rooms-1));}
+  function fxPrice(u,d,g){const S=FX.S;
+    if(u.kind==='single')return r100(S.singleNight*fxSurge(u,d));
+    if(u.kind==='room')return r100(S.coupleNight*fxSurge(u,d))+Math.max(0,g-2)*S.extraGuest;
+    if(u.kind==='tent')return r100(S.tentNight*fxSurge(u,d))+Math.max(0,g-2)*S.extraGuest;
+    return u.rate+S.partnerMarkup*g;}
+  const fxFrom=u=>u.kind==='single'?FX.S.singleNight:u.kind==='room'?FX.S.coupleNight:u.kind==='tent'?FX.S.tentNight:u.rate+FX.S.partnerMarkup*2;
+  function fxPriceStay(s){const u=fxU(s.unit);if(!u)return null;const nights=fxRange(s.from,s.n);const per=nights.map(d=>fxPrice(u,d,s.guests));
+    return {u,nights,per,total:per.reduce((a,b)=>a+b,0)*s.rooms};}
+  function fxTrip(){const prem=new Set();let stays=0;const lines=[];
+    FX.cart.stays.forEach(s=>{const p=fxPriceStay(s);if(!p)return;lines.push({s,p});stays+=p.total;if(fxPrem(p.u))p.nights.forEach(d=>prem.add(d));});
+    const passes=FX.cart.passes.reduce((a,p)=>a+p.qty*FX.S.dayPass,0);const pn=prem.size;
+    const tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
+    const discount=tier==='vvip'?+FX.S.vvipDiscount:tier==='vip'?+FX.S.vipDiscount:0;
+    return {lines,stays,passes,discount,total:Math.max(0,stays+passes-discount),tier,pn};}
+  const fxEncOpen=()=>fxTrip().tier!=='';
+  function fxIssues(t){const w=[],e=[],byNight={};
+    t.lines.forEach(({p})=>p.nights.forEach(d=>{(byNight[d]=byNight[d]||[]).push(p.u.name);}));
+    const dbl=Object.keys(byNight).filter(d=>new Set(byNight[d]).size>1).sort();
+    if(dbl.length)w.push('Two different places on '+dbl.map(fxShort).join(', ')+'. Fine for a group; otherwise remove one.');
+    const ns=Object.keys(byNight).sort();
+    if(ns.length>1){const gaps=[];for(let d=ns[0];d<ns[ns.length-1];d=fxAdd(d,1))if(!byNight[d])gaps.push(d);if(gaps.length)w.push('No stay booked on '+gaps.map(fxShort).join(', ')+'.');}
+    const enc=ns.filter(fxEnc);
+    if(enc.length&&!t.tier)e.push('The Encore nights are for VIP and VVIP guests. Add '+(FX.S.vipNights-t.pn)+' more nights inside the festival, or remove them.');
+    for(const {s,p} of t.lines)for(const d of p.nights){const l=fxLeft(p.u,d)-fxCartOcc(s.unit,d,s.key);if(l<s.rooms){e.push(p.u.name+' has only '+Math.max(0,l)+' left on '+fxShort(d)+'.');break;}}
+    return {w,e};}
+
+  /* home band */
+  function festBand(){
+    const total=FX_VIP.reduce((s,u)=>s+u.rooms,0);
+    return `<section class="fx-band rv"><div class="fx-band-in">
+      <div class="fx-band-txt">
+        <span class="fx-eyebrow">VIP tier · 25 Jan – 25 Feb 2027 · Kamshet</span>
+        <h2>Stay <em>inside</em> APPA Art Fest</h2>
+        <p>${total} rooms and a tent village inside the festival, plus partner homestays and camps nearby. Every night includes festival entry for two. Mix venues night by night: three nights at Le Farm, three at Calmshet, two at Theeya.</p>
+        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
+      </div>
+      <div class="fx-venues">${FX_VIP.map(u=>`<div class="fx-venue"><b>${esc(u.name)}</b><span>${u.rooms} ${u.kind==='single'?'single rooms':'rooms'} · from ${inr(fxFrom(u))}</span></div>`).join('')}
+        <div class="fx-venue tent"><b>VIP Tent Village</b><span>${+FX.S.tents||0} tents inside the grounds · from ${inr(FX.S.tentNight)}</span></div></div>
+    </div></section>`;}
+
+  /* festival page */
+  function fest(){
+    const tabs=[['stay','Stay + festival'],['pass','Day passes'],['host','List your stay']];
+    const body=FX.tab==='pass'?fxPassHTML():FX.tab==='host'?fxHostHTML():fxStayHTML();
+    return `<div class="page fx">
+      <header class="fx-mast"><div>
+        <span class="fx-eyebrow">APPA Art Fest 2027 · VIP tier on Calm Shade</span>
+        <h1>Stays <em>&amp;</em> passes</h1>
+        <p>25 Jan to 25 Feb 2027 around the lake at Kamshet. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
+      </div><nav class="fx-tabs">${tabs.map(([k,l])=>`<button class="fx-tab ${FX.tab===k?'on':''}" onclick="CS.fx('tab','${k}')">${l}</button>`).join('')}</nav></header>
+      ${FX.offline?`<div class="fx-warn" style="margin-top:16px">Preview mode: the booking desk isn't reachable from here, so bookings in this window are not saved.</div>`:''}
+      <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
+    </div>`;}
+
+  function fxStayHTML(){
+    const enc=fxEncOpen();const nights=fxNights().filter(d=>enc||!fxEnc(d));
+    const groups=[];const f=FX.filter;
+    if(f==='all'||f==='rooms')groups.push(['VIP rooms','inside the festival · '+inr(FX.S.coupleNight)+' per couple per night with 2 festival entries',FX_VIP]);
+    if(f==='all'||f==='tents')groups.push(['VIP tents','inside the festival grounds',[fxTent()]]);
+    if(f==='all'||f==='partners')groups.push(['Partner stays','homestays and camps nearby · festival entry included',fxPartners()]);
+    let head='<tr><th class="rowh">Night of</th>';
+    nights.forEach((d,i)=>{const dt=fxD(d);const wk=i>0&&dt.getUTCDay()===1;
+      head+=`<th class="${wk?'wk ':''}${fxEnc(d)?'enc':''}">${FDOW[dt.getUTCDay()].slice(0,2)}<span class="dn">${dt.getUTCDate()}</span>${(i===0||dt.getUTCDate()===1)?FMON[dt.getUTCMonth()]:(d===FX.S.encoreFrom?'Encore':'&nbsp;')}</th>`;});
+    head+='</tr>';
+    let rows='';
+    groups.forEach(([g,sub,us])=>{
+      rows+=`<tr class="grp"><th colspan="${nights.length+1}"><span>${esc(g)}</span> · ${esc(sub)}</th></tr>`;
+      if(!us.length){rows+=`<tr><td class="fx-empty" colspan="${nights.length+1}">No partner stays are live yet. Hosts can apply under “List your stay”.</td></tr>`;return;}
+      us.forEach(u=>{
+        rows+=`<tr><th class="rowh" scope="row"><b>${esc(u.name)}</b><small>${u.rooms} ${u.kind==='tent'?'tents':'rooms'} · ${u.kind==='single'?'single rooms':'up to '+u.cap+' adults'} · from ${inr(fxFrom(u))}</small></th>`;
+        nights.forEach((d,i)=>{const l=fxLeft(u,d);const wk=i>0&&fxD(d).getUTCDay()===1;const fr=u.rooms?l/u.rooms:0;
+          let c=l===0?'sold':(l===1||fr<=.34)?'low':fr<=.67?'mid':'';
+          if(fxCartOcc(u.id,d)>0)c+=' mine';
+          const s=FX.sel;if(s&&s.u===u.id&&d>=s.a&&d<=(s.b||s.a))c+=' sel';
+          rows+=`<td class="${wk?'wk':''}"><button class="fx-cell ${c}" data-fxu="${esc(u.id)}" data-fxd="${d}" title="${esc(u.name)} · ${fxFmt(d)} · ${l} of ${u.rooms} left${l?' · '+inr(fxPrice(u,d,u.kind==='single'?1:2)):''}" aria-label="${esc(u.name)}, ${fxFmt(d)}, ${l} left">${l||'–'}</button></td>`;});
+        rows+='</tr>';});});
+    const chip=(k,l)=>`<button class="fx-chip ${FX.filter===k?'on':''}" onclick="CS.fx('filter','${k}')">${l}</button>`;
+    return `<div><h2 class="fx-h2">Pick your nights</h2><p class="fx-sub">Each square is one night and the number is rooms left. Tap a night, then a later night in the same row to select a run. Prices rise up to ${FX.S.surgeMax}% as a place fills, so earlier is cheaper. ${FX.S.vipNights}+ nights inside the festival makes your trip VIP (${inr(FX.S.vipDiscount)} off); ${FX.S.vvipNights}+ makes it VVIP (${inr(FX.S.vvipDiscount)} off)${enc?'':' and opens a few extra nights at the end'}.</p></div>
+      <div class="fx-row between"><div class="fx-chips">${chip('all','All')}${chip('rooms','VIP rooms')}${chip('tents','VIP tents')}${chip('partners','Partner stays')}</div>
+        <div class="fx-legend"><span><i class="fx-sw" style="background:#F1E7D4"></i>Plenty</span><span><i class="fx-sw" style="background:#F3DCAB"></i>Filling</span><span><i class="fx-sw" style="background:#F2C2AE"></i>Last few</span><span><i class="fx-sw" style="border-color:var(--ink)"></i>In your trip</span>${enc?'<span style="color:var(--accent)">Encore nights open</span>':''}</div></div>
+      ${FX.loaded?'':'<p class="fx-note">Loading live availability…</p>'}
+      <div class="fx-board"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+      ${fxSelHTML()}`;}
+
+  function fxSelHTML(){
+    const s=FX.sel;
+    if(!s)return `<div class="fx-panel"><b class="fx-h2" style="font-size:18px">Nothing selected yet</b><p class="fx-note">Tap a night on the board to start. Add each run of nights separately; your trip on the right puts them in order and adds up the total.</p></div>`;
+    const u=fxU(s.u);if(!u){FX.sel=null;return '';}
+    const a=s.a,b=s.b||s.a,n=fxDiff(a,b)+1,nights=fxRange(a,n);
+    const avail=Math.min(...nights.map(d=>fxLeft(u,d)-fxCartOcc(u.id,d)));
+    const blocked=nights.find(d=>fxLeft(u,d)-fxCartOcc(u.id,d)<=0);
+    const encLock=!fxEncOpen()&&nights.some(fxEnc);
+    FX.rooms=Math.max(1,Math.min(FX.rooms,Math.max(1,avail)));
+    if(u.kind==='single')FX.guests=1;else FX.guests=Math.max(1,Math.min(FX.guests,u.cap));
+    const per=nights.map(d=>fxPrice(u,d,FX.guests));const grp={};per.forEach(p=>grp[p]=(grp[p]||0)+1);
+    const sub=per.reduce((x,y)=>x+y,0)*FX.rooms;const word=u.kind==='tent'?'Tents':'Rooms';
+    const inc=u.kind==='partner'?`Host rate ${inr(u.rate)} plus festival entry ${inr(FX.S.partnerMarkup)} per guest, per night.`:u.kind==='single'?'Single room with festival entry each night.':`Includes festival entry for 2 each night. Extra adults ${inr(FX.S.extraGuest)} each per night. Kids under 10 free.`;
+    return `<div class="fx-panel accent" id="fx-sel">
+      <div class="fx-row between" style="align-items:flex-start"><div><span class="fx-eyebrow" style="color:var(--mute)">${u.kind==='partner'?'Partner stay':u.kind==='tent'?'VIP tent':'VIP room'}</span>
+        <h2 class="fx-h2" style="margin-top:4px">${esc(u.name)}</h2><p class="fx-note">${esc(u.blurb||'')}${u.desc?' · '+esc(u.desc):''}</p></div>
+        <button class="fx-btn ghost small" onclick="CS.fx('clearSel')">Clear</button></div>
+      <div class="fx-row">
+        <div class="fx-kv"><span>Check in</span><b>${fxFmt(a)}</b></div><div class="fx-kv"><span>Check out</span><b>${fxFmt(fxAdd(b,1))}</b></div>
+        <div class="fx-kv"><span>Nights</span><b>${n}</b></div>
+        <div class="fx-kv"><span>${word}</span><div class="fx-step"><button onclick="CS.fx('rooms',-1)" ${FX.rooms<=1?'disabled':''} aria-label="Fewer">−</button><output>${FX.rooms}</output><button onclick="CS.fx('rooms',1)" ${FX.rooms>=avail?'disabled':''} aria-label="More">+</button></div></div>
+        ${u.kind==='single'?'':`<div class="fx-kv"><span>Adults each</span><div class="fx-step"><button onclick="CS.fx('guests',-1)" ${FX.guests<=1?'disabled':''} aria-label="Fewer">−</button><output>${FX.guests}</output><button onclick="CS.fx('guests',1)" ${FX.guests>=u.cap?'disabled':''} aria-label="More">+</button></div></div>`}
+      </div>
+      ${!s.b?'<p class="fx-note">Tap a later night in the same row to stay longer.</p>':''}
+      <div class="fx-lines">${Object.keys(grp).sort((x,y)=>x-y).map(p=>`<div><span>${grp[p]} night${grp[p]>1?'s':''} × ${inr(p)}${FX.rooms>1?' × '+FX.rooms+' '+word.toLowerCase():''}</span><b>${inr(p*grp[p]*FX.rooms)}</b></div>`).join('')}</div>
+      <p class="fx-note">${inc}</p>
+      ${blocked?`<div class="fx-err">Sold out on ${fxFmt(blocked)}. Pick a different run of nights.</div>`:''}
+      ${encLock?`<div class="fx-err">These nights are for VIP and VVIP trips only.</div>`:''}
+      <div class="fx-row between"><span class="fx-money" style="font-size:22px">${inr(sub)}</span><button class="fx-btn" onclick="CS.fx('add')" ${blocked||encLock?'disabled':''}>Add to my trip</button></div>
+    </div>`;}
+
+  function fxPassHTML(){
+    const days=fxRange(FX.S.firstNight,fxDiff(FX.S.firstNight,FX.S.passLast)+1);const pad=(fxD(days[0]).getUTCDay()+6)%7;
+    let c=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="dw">${d}</div>`).join('');
+    for(let i=0;i<pad;i++)c+='<div class="fx-day blank"></div>';
+    days.forEach(d=>{const dt=fxD(d);const on=FX.passDays.includes(d);c+=`<button class="fx-day ${on?'on':''}" onclick="CS.fx('passDay','${d}')" aria-pressed="${on}">${dt.getUTCDate()}<small>${FMON[dt.getUTCMonth()]}</small></button>`;});
+    const n=FX.passDays.length;
+    return `<div><h2 class="fx-h2">Day passes</h2><p class="fx-sub">Open festival entry for one day, any day of the festival. No stay included. ${inr(FX.S.dayPass)} per person per day; kids under 10 enter free. Booking a stay? Your entry is already included.</p></div>
+      <div class="fx-panel"><div class="fx-cal">${c}</div>
+        <div class="fx-row"><div class="fx-kv"><span>People 10 and over</span><div class="fx-step"><button onclick="CS.fx('passQty',-1)" ${FX.passQty<=1?'disabled':''} aria-label="Fewer">−</button><output>${FX.passQty}</output><button onclick="CS.fx('passQty',1)" ${FX.passQty>=20?'disabled':''} aria-label="More">+</button></div></div>
+          <div class="fx-kv"><span>Days</span><b>${n}</b></div><div class="fx-kv"><span>Total</span><b class="fx-money">${inr(n*FX.passQty*FX.S.dayPass)}</b></div></div>
+        <div class="fx-row"><button class="fx-btn" onclick="CS.fx('addPass')" ${n?'':'disabled'}>Add passes to my trip</button>${n?`<button class="fx-btn ghost" onclick="CS.fx('clearPass')">Clear days</button>`:''}</div></div>`;}
+
+  function fxHostHTML(){
+    const h=FX.host;const F=(k,l,t,extra)=>`<div class="fx-field"><label for="fxh-${k}">${l}</label><input id="fxh-${k}" type="${t||'text'}" value="${esc(h[k])}" oninput="CS.fx('hostF','${k}',this.value)" ${extra||''}></div>`;
+    return `<div><h2 class="fx-h2">List your homestay or campsite</h2><p class="fx-sub">Host festival guests near Kamshet. You set your own nightly rate for two; we add ${inr(FX.S.partnerMarkup)} per guest per night for festival entry and sell your rooms on the same calendar as the festival's own stays. You receive your full rate, with no commission. Listings go live once the festival team approves them.</p></div>
+      ${FX.hostSent?`<div class="fx-panel accent"><b class="fx-h2" style="font-size:18px">Thanks, ${esc(FX.hostSent)} is in for review</b><p class="fx-note">The festival team will call you before it goes live on the calendar.</p><div><button class="fx-btn ghost small" onclick="CS.fx('hostAgain')">List another place</button></div></div>`:
+      `<form class="fx-panel" onsubmit="event.preventDefault();CS.fx('hostSubmit')">
+        <div class="fx-grid2">${F('name','Property name','text','required maxlength="80" placeholder="Pawna Lakeside Camp"')}
+          <div class="fx-field"><label for="fxh-type">Type</label><select id="fxh-type" onchange="CS.fx('hostF','type',this.value)">${['Homestay','Campsite','Villa','Farmstay','Guest house'].map(o=>`<option ${h.type===o?'selected':''}>${o}</option>`).join('')}</select></div>
+          ${F('location','Village or area','text','required maxlength="80" placeholder="Kamshet"')}${F('distance','Distance from festival (km)','number','min="0" step="0.5"')}
+          ${F('rooms','Rooms or tents to offer','number','min="1" max="60" required')}${F('maxGuests','Max adults per room','number','min="1" max="8" required')}
+          ${F('rate','Your rate per room per night, for 2 (₹)','number','min="500" step="100" required')}</div>
+        <div class="fx-field"><label for="fxh-desc">A line about your place</label><textarea id="fxh-desc" rows="2" maxlength="240" oninput="CS.fx('hostF','desc',this.value)" placeholder="Breakfast included, 10 minutes to the festival square">${esc(h.desc)}</textarea></div>
+        <div class="fx-grid2">${F('cname','Your name','text','required maxlength="80"')}${F('phone','Phone / WhatsApp','tel','required maxlength="20"')}${F('email','Email','email','maxlength="120"')}</div>
+        <p class="fx-note">Your contact details are seen only by the festival team.</p>
+        ${FX.err&&FX.tab==='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
+        <div><button class="fx-btn" type="submit" ${FX.busy?'disabled':''}>${FX.busy?'Sending…':'Submit for approval'}</button></div>
+      </form>`}`;}
+
+  function fxTripHTML(){
+    const t=fxTrip();const count=FX.cart.stays.length+FX.cart.passes.length;
+    const mob=`<div class="fx-mob"><div><b>Your trip</b> <span class="fx-note">${count} item${count===1?'':'s'}${t.tier?' · '+t.tier.toUpperCase():''}</span><div class="fx-money">${inr(t.total)}</div></div><button class="fx-btn small" onclick="CS.fx('toggleTrip')">${FX.tripOpen?'Close':'Review'}</button></div>`;
+    if(FX.last)return mob+fxConfirmHTML();
+    const items=t.lines.map(({s,p})=>({k:s.from,h:`<div class="fx-item"><div><div class="what">${esc(p.u.name)}</div><div class="when">${fxFmt(s.from)} → ${fxFmt(fxAdd(s.from,s.n))} · ${s.n} night${s.n>1?'s':''}<br>${s.rooms} ${p.u.kind==='tent'?'tent':'room'}${s.rooms>1?'s':''}${p.u.kind==='single'?'':' · '+s.guests+' adult'+(s.guests>1?'s':'')+' each'}</div></div><div style="text-align:right"><div class="fx-money">${inr(p.total)}</div><button class="fx-x" onclick="CS.fx('rmStay','${s.key}')">Remove</button></div></div>`}))
+      .concat(FX.cart.passes.map((p,i)=>({k:p.date,h:`<div class="fx-item"><div><div class="what">Day pass</div><div class="when">${fxFmt(p.date)} · ${p.qty} ${p.qty>1?'people':'person'}</div></div><div style="text-align:right"><div class="fx-money">${inr(p.qty*FX.S.dayPass)}</div><button class="fx-x" onclick="CS.fx('rmPass',${i})">Remove</button></div></div>`})))
+      .sort((a,b)=>a.k<b.k?-1:1).map(x=>x.h).join('');
+    const {w,e}=fxIssues(t);
+    const toV=Math.max(0,FX.S.vipNights-t.pn),toVV=Math.max(0,FX.S.vvipNights-t.pn);
+    const tier=t.tier?`<span class="fx-tier ${t.tier}">${t.tier.toUpperCase()} · ${t.pn} nights inside</span>`:`<span class="fx-tier">${t.pn} of ${FX.S.vipNights} nights to VIP</span>`;
+    const goal=t.tier==='vvip'?'':t.tier==='vip'?`${toVV} more nights inside the festival for VVIP: ${inr(FX.S.vvipDiscount)} off and all-access moments.`:`${toV} more night${toV===1?'':'s'} inside the festival for VIP: ${inr(FX.S.vipDiscount)} off and every show.`;
+    const meter=Math.min(1,t.pn/(t.tier?FX.S.vvipNights:FX.S.vipNights));
+    const f=FX.form;const FF=(k,l,ty,ex)=>`<div class="fx-field"><label for="fxg-${k}">${l}</label><input id="fxg-${k}" type="${ty}" value="${esc(f[k])}" oninput="CS.fx('guestF','${k}',this.value)" ${ex||''}></div>`;
+    const checkout=FX.checkout?`<form style="display:flex;flex-direction:column;gap:10px" onsubmit="event.preventDefault();CS.fx('book')">
+        ${FF('name','Full name','text','required maxlength="80" autocomplete="name"')}${FF('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${FF('email','Email','email','maxlength="120" autocomplete="email"')}
+        <div class="fx-field"><label for="fxg-note">Anything we should know?</label><textarea id="fxg-note" rows="2" maxlength="300" oninput="CS.fx('guestF','note',this.value)" placeholder="Kids' ages, arrival time, food preferences">${esc(f.note)}</textarea></div>
+        <p class="fx-note">We hold your rooms for ${FX.S.holdHours} hours while you pay by UPI.</p>
+        ${FX.err&&FX.tab!=='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
+        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy?'disabled':''}>${FX.busy?'Holding your rooms…':'Hold my rooms'}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
+      :`<button class="fx-btn" style="justify-content:center" onclick="CS.fx('checkout')" ${e.length?'disabled':''}>Book this trip</button>`;
+    const mine=FX.mine.length?`<div><b class="fx-h2" style="font-size:17px">Your bookings</b><div class="fx-items" style="margin-top:8px">${FX.mine.map(b=>`<div class="fx-item"><div><div class="what">${esc(b.ref)}</div><div class="when">${(b.items||[]).length} item${(b.items||[]).length===1?'':'s'} · ${inr(b.total)}</div></div><div style="text-align:right"><span class="fx-status ${b.status}">${b.status}</span>${b.status==='pending'?`<br><button class="fx-x" onclick="CS.fx('pay','${esc(b.ref)}')">Pay</button> · <button class="fx-x" onclick="CS.fx('myCancel','${esc(b.ref)}')">Cancel</button>`:''}</div></div>`).join('')}</div></div>`:'';
+    return mob+`<div class="fx-trip-head"><h2 class="fx-h2">Your trip</h2>${tier}</div>
+      ${goal?`<div><div class="fx-meter"><i style="width:${meter*100}%"></i></div><p class="fx-note" style="margin-top:6px">${goal}</p></div>`:''}
+      ${count?`<div class="fx-items">${items}</div>`:'<p class="fx-note">Your trip is empty. Pick nights on the board or add day passes. You can combine several places across the festival.</p>'}
+      ${w.map(x=>`<div class="fx-warn">${esc(x)}</div>`).join('')}${e.map(x=>`<div class="fx-err">${esc(x)}</div>`).join('')}
+      ${count?`<div class="fx-lines"><div><span>Stays</span><b>${inr(t.stays)}</b></div><div><span>Day passes</span><b>${inr(t.passes)}</b></div>${t.discount?`<div><span>${t.tier.toUpperCase()} discount</span><b>−${inr(t.discount)}</b></div>`:''}</div>
+        <div class="fx-tot"><span>Total</span><span>${inr(t.total)}</span></div>${checkout}`:''}
+      ${mine}`;}
+
+  const fxUpi=b=>`upi://pay?pa=${encodeURIComponent(FX.S.upi)}&pn=${encodeURIComponent(FX.S.payee)}&am=${Math.round(b.total)}&cu=INR&tn=${encodeURIComponent('APPA '+b.ref)}`;
+  const fxUntil=ts=>new Date(ts*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+  function fxConfirmHTML(){const b=FX.last;
+    return `<div class="fx-trip-head"><h2 class="fx-h2">Rooms held</h2><span class="fx-status pending">awaiting payment</span></div>
+      <div class="fx-kv"><span>Booking reference</span><b class="fx-ref">${esc(b.ref)}</b></div>
+      <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div><div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div></div>
+      <div class="fx-qr" id="fx-qr" aria-label="UPI payment QR code"></div>
+      <div class="fx-lines"><div><span>UPI ID</span><b>${esc(FX.S.upi)}</b></div><div><span>Payee</span><b>${esc(FX.S.payee)}</b></div></div>
+      <div class="fx-row"><button class="fx-btn ghost small" onclick="CS.fx('copy','${esc(FX.S.upi)}')">Copy UPI ID</button><a class="fx-btn ghost small" href="${esc(fxUpi(b))}">Open UPI app</a></div>
+      ${b.utrSent?`<div class="fx-warn">Payment reference received. The team will confirm your booking shortly.</div>`:`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('utr')"><div class="fx-field"><label for="fxg-utr">After paying, enter the UPI reference number</label><input id="fxg-utr" value="${esc(FX.utr)}" oninput="CS.fx('utrF',this.value)" maxlength="40" inputmode="numeric" required></div><button class="fx-btn" type="submit">Send payment reference</button></form>`}
+      <p class="fx-note">Add ${esc(b.ref)} in the payment note. The team confirms once the payment arrives. Questions: ${esc(FX.S.contact)} or WhatsApp +91 87999 38193.</p>
+      <button class="fx-btn ghost" onclick="CS.fx('done')">Back to the board</button>`;}
+  function fxDrawQR(){const q=document.getElementById('fx-qr');if(!q||!FX.last)return;
+    const go=()=>{q.innerHTML='';try{new window.QRCode(q,{text:fxUpi(FX.last),width:168,height:168,colorDark:'#111111',colorLight:'#FFFFFF'});}catch(e){q.textContent='Pay to '+FX.S.upi;}};
+    if(window.QRCode)return go();
+    if(!fxDrawQR.loading){fxDrawQR.loading=true;const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=()=>fxDrawQR();s.onerror=()=>{q.textContent='Pay to '+FX.S.upi;};document.head.appendChild(s);}}
+
+  /* festival desk — inside the Creator console */
+  function festDesk(){
+    const D=FX.desk;
+    if(!D.data)return `<div class="pan"><div class="ph2"><h3>APPA Fest desk</h3></div><div class="pb">
+      <p class="fx-note" style="margin-bottom:14px">Bookings, host applications and prices for the festival live on the server. Enter the desk key from <b>fest-config.php</b> to open them on this device.</p>
+      ${FX.deskReady||FX.offline?'':`<div class="fx-warn" style="margin-bottom:14px">The desk key isn't set on the server yet. Upload fest-config.php with FEST_ADMIN_KEY first.</div>`}
+      <form class="fx-row" onsubmit="event.preventDefault();CS.fx('deskOpen')"><div class="fx-field" style="flex:1;min-width:220px"><label for="fx-dk">Desk key</label><input id="fx-dk" type="password" autocomplete="current-password" value="${esc(D.key)}" oninput="CS.fx('deskKey',this.value)"></div><button class="fx-btn" type="submit" style="align-self:flex-end" ${D.busy?'disabled':''}>${D.busy?'Opening…':'Open desk'}</button></form>
+      ${D.err?`<div class="fx-err" style="margin-top:12px">${esc(D.err)}</div>`:''}</div></div>`;
+    const bs=D.data.bookings,ls=D.data.listings;
+    const conf=bs.filter(b=>b.status==='confirmed'),pend=bs.filter(b=>b.status==='pending');
+    const gross=conf.reduce((s,b)=>s+b.total,0),pay=conf.reduce((s,b)=>s+b.payout,0);
+    let invT=0,invS=0;const ns=fxNights();FX_VIP.concat([fxTent()]).forEach(u=>{invT+=u.rooms*ns.length;ns.forEach(d=>invS+=fxOcc(u.id,d));});
+    const item=it=>it.kind==='stay'?`${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms}×${it.guests}`:`Day pass · ${fxShort(it.date)} · ${it.qty}`;
+    const rows=bs.map(b=>{const g=b.guest||{};return `<tr><td><b>${esc(b.ref)}</b><br><span class="fx-note">${new Date(b.createdAt*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
+      <td><b>${esc(g.name||'')}</b><br><span class="fx-note">${esc(g.phone||'')} ${esc(g.email||'')}</span>${g.note?`<br><span class="fx-note">“${esc(g.note)}”</span>`:''}${b.utr?`<br><span class="fx-note">UPI ref <b>${esc(b.utr)}</b></span>`:''}</td>
+      <td>${(b.items||[]).map(item).join('<br>')}</td><td>${b.tier?`<span class="fx-tier ${b.tier}">${b.tier}</span>`:''}</td>
+      <td class="num"><b>${inr(b.total)}</b><br><span class="fx-note">hosts ${inr(b.payout)}</span></td><td><span class="fx-status ${b.status}">${b.status}</span></td>
+      <td style="white-space:nowrap">${b.status==='pending'||b.status==='expired'?`<button class="fx-btn ok small" onclick="CS.fx('deskStatus','${esc(b.ref)}','confirmed')">Confirm paid</button> `:''}${b.status!=='cancelled'?`<button class="fx-btn warn small" onclick="CS.fx('deskStatus','${esc(b.ref)}','cancelled')">Cancel</button>`:''}</td></tr>`;}).join('');
+    const lrows=ls.map(l=>{const d=l.data||{},c=l.contact||{};return `<tr><td><b>${esc(d.name)}</b><br><span class="fx-note">${esc(d.type)} · ${esc(d.location)}${d.distance?' · '+esc(d.distance)+' km':''}</span>${d.desc?`<br><span class="fx-note">${esc(d.desc)}</span>`:''}</td>
+      <td>${esc(c.name||'')}<br><span class="fx-note">${esc(c.phone||'')} ${esc(c.email||'')}</span></td><td class="num">${esc(d.rooms)} × ${esc(d.maxGuests)}</td><td class="num">${inr(d.rate)}<br><span class="fx-note">guest pays ${inr(+d.rate+2*FX.S.partnerMarkup)}</span></td>
+      <td><span class="fx-status ${l.status}">${l.status==='approved'?'live':l.status}</span></td>
+      <td style="white-space:nowrap">${l.status!=='approved'?`<button class="fx-btn ok small" onclick="CS.fx('deskApprove','${esc(l.id)}','approved')">Approve</button> `:''}${l.status!=='rejected'?`<button class="fx-btn warn small" onclick="CS.fx('deskApprove','${esc(l.id)}','rejected')">${l.status==='approved'?'Take down':'Reject'}</button>`:''}</td></tr>`;}).join('');
+    const SF=(k,l)=>`<div class="fx-field"><label for="fxs-${k}">${l}</label><input id="fxs-${k}" data-fxs="${k}" type="${typeof FX_DEF[k]==='number'?'number':'text'}" value="${esc(FX.S[k])}"></div>`;
+    return `<div class="stats">
+        <div class="stat" style="--stc:var(--r4)"><div class="k">Confirmed</div><div class="v">${conf.length}</div></div>
+        <div class="stat" style="--stc:var(--r3)"><div class="k">Awaiting payment</div><div class="v">${pend.length}</div></div>
+        <div class="stat" style="--stc:var(--r1)"><div class="k">Confirmed revenue</div><div class="v">${inr(gross)}</div></div>
+        <div class="stat" style="--stc:var(--r6)"><div class="k">Owed to hosts</div><div class="v">${inr(pay)}</div></div>
+        <div class="stat" style="--stc:var(--r2)"><div class="k">APPA keeps</div><div class="v">${inr(gross-pay)}</div></div>
+        <div class="stat" style="--stc:var(--r7)"><div class="k">VIP nights sold</div><div class="v">${invS} <small style="color:var(--mute)">/ ${invT}</small></div></div></div>
+      <div class="pan"><div class="ph2"><h3>Festival bookings</h3><span class="sp"></span><button class="b-lt" onclick="CS.fx('deskRefresh')">Refresh</button></div><div class="pb">
+        ${rows?`<div class="fx-tbl"><table><thead><tr><th>Ref</th><th>Guest</th><th>Trip</th><th>Tier</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="fx-note">No festival bookings yet. They appear here the moment a guest holds rooms.</p>'}
+        <p class="nt2" style="margin-top:12px">Unpaid bookings hold their rooms for ${FX.S.holdHours} hours, then release automatically. Confirm once the UPI payment lands; an expired booking can still be confirmed if its rooms are free.</p></div></div>
+      <div class="pan"><div class="ph2"><h3>Partner host applications</h3></div><div class="pb">
+        ${lrows?`<div class="fx-tbl"><table><thead><tr><th>Property</th><th>Contact</th><th>Rooms × adults</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>${lrows}</tbody></table></div>`:'<p class="fx-note">No applications yet.</p>'}</div></div>
+      <div class="pan"><div class="ph2"><h3>Festival prices and rules</h3></div><div class="pb"><form onsubmit="event.preventDefault();CS.fx('deskSettings')">
+        <div class="fx-grid2">${SF('coupleNight','VIP room per couple per night (₹)')}${SF('partnerShareCouple','Venue partner share per couple-night (₹)')}${SF('singleNight','Purrom single room per night (₹)')}${SF('partnerShareSingle','Venue partner share per single-night (₹)')}${SF('extraGuest','Extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Day pass per person (₹)')}${SF('partnerMarkup','Festival entry added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipDiscount','VIP discount (₹)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipDiscount','VVIP discount (₹)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('encoreFrom','Encore starts')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
+        <div class="eacts"><button class="b-save" type="submit">Save festival prices</button><span class="fx-note" style="align-self:center">Stored in ${esc(D.data.store==='mysql'?'MySQL':'the built-in SQLite file')}.</span></div></form></div></div>`;}
+  async function fxDeskLoad(){const D=FX.desk;if(!D.key){D.err='Enter the desk key.';render();return;}
+    D.busy=true;D.err='';render();
+    try{D.data=await fxCall('admin',null,true);fxLS('desk',D.key);await fxLoad();}catch(e){D.data=null;D.err=e.message;}
+    D.busy=false;render();}
+
+  async function fxBook(){
+    if(FX.busy)return;const f=FX.form;FX.err='';
+    if(!f.name.trim()){FX.err='Add your name.';return render();}
+    if(f.phone.replace(/\D/g,'').length<10){FX.err='Add a 10-digit phone number.';return render();}
+    const t=fxTrip();if(fxIssues(t).e.length){FX.err=fxIssues(t).e[0];return render();}
+    FX.busy=true;render();fxLS('guest',{name:f.name,phone:f.phone,email:f.email});
+    const payload={stays:FX.cart.stays.map(s=>({unit:s.unit,from:s.from,n:s.n,rooms:s.rooms,guests:s.guests})),passes:FX.cart.passes,guest:f,expectTotal:t.total};
+    try{
+      let r;
+      if(FX.offline){r={ref:'PREVIEW-'+fxKey().slice(0,4).toUpperCase(),token:'',total:t.total,holdUntil:Math.floor(Date.now()/1000)+FX.S.holdHours*3600,preview:true};
+        t.lines.forEach(({s,p})=>p.nights.forEach(d=>{(FX.occ[s.unit]=FX.occ[s.unit]||{})[d]=fxOcc(s.unit,d)+s.rooms;}));}
+      else{r=await fxCall('book',payload);FX.tickets.push({ref:r.ref,token:r.token});}
+      FX.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,utrSent:false};
+      FX.cart={stays:[],passes:[]};FX.checkout=false;FX.form.note='';FX.utr='';FX.tripOpen=true;fxSave();
+      FX.busy=false;await fxLoad();render();fxDrawQR();toast('Rooms held · '+r.ref);
+    }catch(e){FX.busy=false;FX.err=e.message;if(e.data&&(e.data.priceChanged||e.status===409))await fxLoad();render();}
+  }
+
+  function fxAct(a,x,y){
+    const bw=root.querySelector('.fx-board');if(bw)fxAct.sl=bw.scrollLeft;
+    switch(a){
+      case 'tab':FX.tab=x;FX.err='';break;
+      case 'openPasses':FX.tab='pass';view='fest';window.scrollTo({top:0});break;
+      case 'filter':FX.filter=x;break;
+      case 'cell':{const u=fxU(x);if(!u)return;if(fxLeft(u,y)===0)return toast('Sold out that night');
+        const s=FX.sel;
+        if(!s||s.u!==x||s.b||y<s.a){FX.sel={u:x,a:y,b:null};FX.rooms=1;FX.guests=u.kind==='single'?1:2;}
+        else FX.sel.b=y;
+        render();const sp=document.getElementById('fx-sel');if(sp&&window.innerWidth<1020)sp.scrollIntoView({behavior:'smooth',block:'nearest'});return;}
+      case 'clearSel':FX.sel=null;break;
+      case 'rooms':FX.rooms+=x;break;
+      case 'guests':FX.guests+=x;break;
+      case 'add':{const s=FX.sel;if(!s)return;const n=fxDiff(s.a,s.b||s.a)+1;
+        FX.cart.stays.push({key:fxKey(),unit:s.u,from:s.a,n,rooms:FX.rooms,guests:FX.guests});FX.sel=null;FX.last=null;fxSave();toast(fxU(s.u).name+' added to your trip');break;}
+      case 'rmStay':FX.cart.stays=FX.cart.stays.filter(s=>s.key!==x);fxSave();break;
+      case 'rmPass':FX.cart.passes.splice(x,1);fxSave();break;
+      case 'passDay':{const i=FX.passDays.indexOf(x);i>=0?FX.passDays.splice(i,1):FX.passDays.push(x);break;}
+      case 'passQty':FX.passQty=Math.max(1,Math.min(20,FX.passQty+x));break;
+      case 'clearPass':FX.passDays=[];break;
+      case 'addPass':FX.passDays.slice().sort().forEach(d=>{const e=FX.cart.passes.find(p=>p.date===d);e?e.qty+=FX.passQty:FX.cart.passes.push({date:d,qty:FX.passQty});});
+        FX.passDays=[];FX.last=null;fxSave();toast('Day passes added to your trip');break;
+      case 'checkout':FX.checkout=true;FX.err='';break;
+      case 'noCheckout':FX.checkout=false;FX.err='';break;
+      case 'toggleTrip':FX.tripOpen=!FX.tripOpen;break;
+      case 'guestF':FX.form[x]=y;return;
+      case 'utrF':FX.utr=x;return;
+      case 'hostF':FX.host[x]=y;return;
+      case 'book':fxBook();return;
+      case 'done':FX.last=null;break;
+      case 'copy':try{navigator.clipboard.writeText(x).then(()=>toast('Copied'),()=>toast(x));}catch(e){toast(x);}return;
+      case 'pay':{const b=FX.mine.find(m=>m.ref===x);const t=FX.tickets.find(m=>m.ref===x);if(!b)return;
+        FX.last={ref:b.ref,token:t&&t.token,total:b.total,holdUntil:b.holdUntil,utrSent:b.utrSent};FX.tripOpen=true;render();fxDrawQR();return;}
+      case 'utr':{const b=FX.last;if(!b||FX.utr.trim().length<6)return toast('Enter the full UPI reference number');
+        if(FX.offline){b.utrSent=true;render();return;}
+        fxCall('utr',{ref:b.ref,token:b.token,utr:FX.utr.trim()}).then(()=>{b.utrSent=true;FX.utr='';toast('Payment reference sent');fxLoad();render();fxDrawQR();},e=>toast(e.message));return;}
+      case 'myCancel':{const t=FX.tickets.find(m=>m.ref===x);if(!t)return;
+        fxCall('cancel',{ref:t.ref,token:t.token}).then(()=>{toast('Booking cancelled and rooms released');fxLoad();},e=>toast(e.message));return;}
+      case 'hostSubmit':{const h=FX.host;FX.err='';
+        if(FX.offline){FX.err='The booking desk isn\'t reachable from here. Email your details to '+FX.S.contact+'.';break;}
+        FX.busy=true;render();
+        fxCall('list',{property:{name:h.name,type:h.type,location:h.location,distance:h.distance,rooms:+h.rooms,maxGuests:+h.maxGuests,rate:+h.rate,desc:h.desc},contact:{name:h.cname,phone:h.phone,email:h.email}})
+          .then(()=>{FX.busy=false;FX.hostSent=h.name;render();window.scrollTo({top:0,behavior:'smooth'});},e=>{FX.busy=false;FX.err=e.message;render();});return;}
+      case 'hostAgain':FX.hostSent=null;FX.host=Object.assign(FX.host,{name:'',desc:''});break;
+      case 'deskKey':FX.desk.key=x;return;
+      case 'deskOpen':case 'deskRefresh':fxDeskLoad();return;
+      case 'deskStatus':fxCall('status',{ref:x,status:y},true).then(()=>{toast(y==='confirmed'?x+' confirmed':x+' cancelled');fxDeskLoad();},e=>toast(e.message));return;
+      case 'deskApprove':fxCall('approve',{id:x,status:y},true).then(()=>{toast(y==='approved'?'Listing is live on the calendar':'Listing hidden');fxDeskLoad();},e=>toast(e.message));return;
+      case 'deskSettings':{const s={};root.querySelectorAll('[data-fxs]').forEach(i=>{s[i.dataset.fxs]=i.value;});
+        fxCall('settings',{settings:s},true).then(()=>{toast('Festival prices saved');fxDeskLoad();},e=>toast(e.message));return;}
+    }
+    render();
+    if(FX.last&&view==='fest')fxDrawQR();
+  }
+  document.addEventListener('click',ev=>{const c=ev.target.closest&&ev.target.closest('.fx-cell');if(c&&root.contains(c))fxAct('cell',c.dataset.fxu,c.dataset.fxd);});
+
   /* ═════════ RENDER ═════════ */
   let searchFocusHack=false;
   function render(){
     const hadFocus=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.search');
-    let body=view==='home'?home():view==='detail'?detail():view==='login'?loginView():dash();
+    let body=view==='home'?home():view==='detail'?detail():view==='fest'?fest():view==='login'?loginView():dash();
     root.innerHTML=nav()+body+((view==='home'||view==='detail')?waChat():'');
     reveal();wire();initMotion();
+    {const fb=root.querySelector('.fx-board');if(fb&&fxAct.sl)fb.scrollLeft=fxAct.sl;if(view==='fest'&&FX.last)fxDrawQR();}
     const sc=document.getElementById('wa-sc');if(sc)sc.scrollTop=sc.scrollHeight;
     const wi=document.getElementById('wa-in');if(wi&&chat&&!chat.busy&&document.querySelector('.wa-ov'))wi.focus();
     if(hadFocus){const s=root.querySelector('.search input');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
@@ -1724,7 +2259,8 @@ ${kb()}`;}
 
   /* ═════════ PUBLIC API ═════════ */
   window.CS={
-    go(v){if(v==='dash'&&!session){view='login';}else{view=v;}editing=null;edMedia=null;lbState=null;vtRender();window.scrollTo({top:0});},
+    fx(a,x,y){fxAct(a,x,y);},
+    go(v){if(v==='fest')fxLoad();if(v==='dash'&&!session){view='login';}else{view=v;}editing=null;edMedia=null;lbState=null;vtRender();window.scrollTo({top:0});},
     open(id){if(activeProp!==id)bk={heads:2,days:[],sent:false};bkOpen=false;activeProp=id;view='detail';lbState=null;vtRender();window.scrollTo({top:0});},
     cat(c){filterCat=c;render();},
     q(v){query=v;clearTimeout(this._t);this._t=setTimeout(render,250);},
@@ -1790,7 +2326,7 @@ ${kb()}`;}
     otp(){tryOtp();},
     hop(el){if(el.value.length===1){const n=el.nextElementSibling;if(n&&n.tagName==='INPUT')n.focus();else CS.otp();}},
     backId(){login.step='id';login.err='';render();},
-    mode(m){dashMode=m;if(m==='host')ownerCtx=session.ownerId;editing=null;render();},
+    mode(m){dashMode=m;if(m==='host')ownerCtx=session.ownerId;if(m==='fest'&&FX.desk.key&&!FX.desk.data)fxDeskLoad();editing=null;render();},
     asHost(oid){dashMode='host';ownerCtx=oid;ownerProp=(propsOf(oid)[0]||{}).id;editing=null;render();window.scrollTo({top:0});},
     momAdd(inp){const f=inp.files[0];if(!f)return;if(f.type.indexOf('video/')!==0){toast('Please choose a video file');return;}
       const firstProp=(propsOf(ownerCtx)[0]||{}).id;
@@ -1930,7 +2466,9 @@ ${kb()}`;}
   (function deepLink(){try{
     const q=new URLSearchParams(location.search).get('invite')||((location.hash.match(/#join-([A-Za-z0-9-]+)/i)||[])[1]);
     if(q)CS.invite(q);
+    else if(/^#(appa|fest)/i.test(location.hash)||new URLSearchParams(location.search).has('fest'))view='fest';
   }catch(e){}})();
+  fxLoad();
 
   render();
 })();

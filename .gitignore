@@ -1,3 +1,5 @@
 secrets.php
 .env
 *.key
+fest-config.php
+fest-data/

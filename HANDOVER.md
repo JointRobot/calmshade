@@ -111,3 +111,22 @@ Favicon + OG image (grab the rainbow mark / hero photo from the embedded media),
 Supabase (auth+db+storage) or Node/Postgres · WhatsApp Business API on 8799938193 (360dialog/Gullak/Twilio) wired to the same concierge prompts in `sysPrompt()`/`kb()` · real OTP · UPI verification · Airbnb import tool (listing URLs are in each property's `link` field) · real geo-pins for the Curated map (properties already carry `geo:[lat,lng]`) · review collection via post-checkout WhatsApp message feeding the Grove's `rev` objects.
 
 *Prepared July 2026 from the Claude chat build. The chat transcript is the design authority; this file is the operational authority.*
+
+
+---
+
+## 6. October 2026 — APPA look + APPA Art Fest stays (owner-approved change)
+Karthik asked for the whole site to take the APPA Art Fest look (paper, ink, vermilion and gold; Fraunces + Mukta) and for APPA Art Fest 2027 to sit on Calm Shade as a VIP tier. This supersedes the "do not redesign" rule in §4 for the visual language only; every existing feature is unchanged.
+
+- **Reskin:** tokens in the first `<style>` block; the old `#cs-app button{…background:none}` reset now uses `:where(#cs-app) button` so class fills (WhatsApp CTA, hero arrow, approve buttons) render as designed.
+- **Festival pages:** nav "APPA Fest", home band, view `fest` (deep link `#appa`), module banner `APPA ART FEST 2027` in the script. Night-by-night board for the VIP rooms (Calmshet 5, Le Farm 8, Shambhala 6, Theeya 4, The Company Theatre 8, Purrom 4 single), the VIP tent village and approved partner stays; day passes; partner applications; trip builder across venues; UPI hold-and-pay.
+- **Rules:** ₹12,000 per couple-night incl. 2 entries (₹8,000 to the venue partner); Purrom single ₹6,000 (₹4,000 partner); +₹2,000 per extra adult; up to +20% as a place fills; 7+ nights inside = VIP (−₹7,000); 30+ = VVIP (−₹40,000); Encore 26–28 Feb only for VIP/VVIP; partner stays = host rate + ₹1,000 per guest-night; day pass ₹2,000. All editable in Creator console → APPA Fest desk.
+- **Server:** `fest.php` (PHP) keeps live inventory, re-prices and validates every booking server-side, holds unpaid bookings for 48 h. Storage = MySQL when `fest-config.php` defines `FEST_DB_DSN`, else SQLite in `fest-data/` (auto-created, .htaccess-denied). `fest-config.php` and `fest-data/` are gitignored; upload the config by hand:
+```php
+<?php
+define('FEST_DB_DSN','mysql:host=localhost;dbname=YOUR_DB;charset=utf8mb4');
+define('FEST_DB_USER','YOUR_DB_USER');
+define('FEST_DB_PASS','YOUR_DB_PASSWORD');
+define('FEST_ADMIN_KEY','a long random phrase');   // unlocks the APPA Fest desk
+```
+- Calm Shade's own homestay bookings are still the in-memory demo described in §1.
