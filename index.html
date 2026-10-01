@@ -689,6 +689,7 @@ table.tb tbody tr:hover{background:var(--bg);}
 
 /* ═══ APPA look — type and surfaces ═══ */
 body{background:var(--bg);}
+#cs-app .page{animation-fill-mode:backwards;} /* a lingering transform would trap position:fixed bars (phone booking card, trip sheet) */
 #cs-app h1,#cs-app h2,#cs-app h3,#cs-app h4{font-family:var(--display); font-weight:600; letter-spacing:-.005em;}
 #cs-app .btxt h1{color:#FFF9EE; font-weight:600; letter-spacing:-.01em; line-height:1.05;}
 #cs-app .btxt h1 .rb,#cs-app .btxt h1 .rb .w{font-style:italic; font-weight:500; background:none; color:var(--sky); -webkit-text-fill-color:currentColor; animation:none;}
@@ -848,6 +849,7 @@ body{background:var(--bg);}
   #cs-app .fx-mast{padding-top:16px;}
   #cs-app .fx-trip-head h2{display:none;}
 }
+@media (max-width:900px){#cs-app .book-card{max-height:78vh; overflow:auto; overscroll-behavior:contain;}}
 
 </style>
 
@@ -908,13 +910,8 @@ body{background:var(--bg);}
       desc:'A rooftop room above the river bend — invited into the collective by the Millhouse, and thriving.', amen:'Rooftop · River view · Breakfast'},
   ];
   const GLOBAL_FAQ=[['Availability','What dates are free between X and Y?'],['Pricing','Cost per head with / without meals?'],['Rooms','Do you have a room for 4 people?'],['Food','What is on the menu? Do you serve non-veg?'],['Activities','What can we do nearby?'],['Policies','Is it pet friendly? Check-in / check-out time?'],['Full property','Can we book the entire place?'],['Transport','Can you arrange a cab?'],['Weather','How is the weather this time of year?'],['Amenities','Is there AC / WiFi / hot water?']];
-  let CAL={p1:{10:'bk',11:'bk',18:'bk'},p2:{12:'bk'},p3:{},p4:{4:'bk',5:'bk',25:'bk',26:'bk'},p5:{19:'bk'},p6:{11:'bk',12:'bk'},p7:{8:'bk'},p8:{},p9:{}};
-  let BOOKINGS=[
-    {id:'B-1042',prop:'p4',guest:'Sneha K.',dates:'4–5 '+BM.mon+'',head:2,amt:8800,status:'confirmed'},
-    {id:'B-1046',prop:'p1',guest:'Arjun M.',dates:'10–11 '+BM.mon+'',head:6,amt:21600,status:'confirmed'},
-    {id:'B-1051',prop:'p6',guest:'Trek Club Pune',dates:'11–12 '+BM.mon+'',head:12,amt:26400,status:'confirmed'},
-    {id:'B-1049',prop:'p7',guest:'Devika R.',dates:'8 '+BM.mon+'',head:3,amt:4800,status:'confirmed'},
-  ];
+  let CAL={p1:{},p2:{},p3:{},p4:{},p5:{},p6:{},p7:{},p8:{},p9:{}}; // filled from the booking server (csLoad)
+  let BOOKINGS=[]; // filled from the booking server for the admin (csAdminLoad)
   let seq=1052, pseq=10, momSeq=2;
   let MOMENTS=[];
 
@@ -1039,7 +1036,7 @@ ${kb()}`;}
   async function askAI(t){
     chatHistory.push({role:'user',content:t});
     try{
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      const r=await fetch('fest.php?a=ai',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:sysPrompt(P(chat.propId).name),messages:chatHistory})});
       const d=await r.json();
       let x=(d.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
@@ -1058,8 +1055,7 @@ ${kb()}`;}
     if(m){let d=null;try{d=JSON.parse(m[1])}catch(e){}
       const p=PROPS.find(q=>d&&q.name===d.property)||P(chat.propId);
       chat.draft={prop:p.id,dates:(d&&d.dates)||'dates as discussed',head:(d&&d.headcount)||2,amt:(d&&d.amount)||p.ppWith*2};
-      chat.msgs.push({k:'pay',amt:chat.draft.amt,prop:p.name,dates:chat.draft.dates,head:chat.draft.head});
-      chat.awaitShot=true;}
+      chat.msgs.push({k:'pay',amt:chat.draft.amt,prop:p.name,propId:p.id,dates:chat.draft.dates,head:chat.draft.head});}
     render();
   }
   async function guestSend(){
@@ -1082,20 +1078,15 @@ ${kb()}`;}
     render();toast('Booking sent — sign in as host to approve it');
   }
   function decide(id,ok){
-    const b=BOOKINGS.find(x=>x.id===id);if(!b)return;
-    b.status=ok?'confirmed':'rejected';
-    Object.keys(CAL[b.prop]||{}).forEach(k=>{if(CAL[b.prop][k]==='tn'){if(ok)CAL[b.prop][k]='bk';else delete CAL[b.prop][k];}});
-    if(ok){const ow=OWNERS.find(x=>propsOf(x.id).some(p=>p.id===b.prop));
-      if(ow&&ow.probation){ow.probation.left--;
-        if(ow.probation.left<=0){const saved=ow.rev.avg>=3.8;
-          toast(ow.name+(saved?' completed probation — standing restored 🌱':' finished probation below the bar — flagged for admin review'));ow.probation=null;}
-        else toast(ow.name+' · probation: '+ow.probation.left+' booking'+(ow.probation.left>1?'s':'')+' to go');}}
-    if(chat&&chat.pendingId===id){
-      chat.msgs.push(ok
-        ?{k:'in',t:`Good news — your host has confirmed booking ${id} ✅ You're set for ${b.dates} at ${P(b.prop).name}. We'll send directions and the day's menu closer to your stay!`,tm:now()}
-        :{k:'in',t:`I'm sorry — your host couldn't confirm ${id} for those dates. Your payment will be refunded within 24 hours. Want me to check other dates or another stay in the collective?`,tm:now()});}
-    render();toast(ok?id+' confirmed · 3% platform fee logged':id+' rejected — guest notified');
+    if(!CSB.admin){toast('Enter your desk key at the top of the dashboard to manage live bookings');return;}
+    fxCall('cs_status',{ref:id,status:ok?'confirmed':'cancelled'},true).then(()=>{
+      const b=BOOKINGS.find(x=>x.id===id);
+      if(ok&&b){const ow=OWNERS.find(x=>propsOf(x.id).some(p=>p.id===b.prop));
+        if(ow&&ow.probation){ow.probation.left--;if(ow.probation.left<=0){toast(ow.name+(ow.rev.avg>=3.8?' completed probation — standing restored 🌱':' finished probation below the bar — flagged for admin review'));ow.probation=null;}}}
+      toast(ok?id+' confirmed · guest notified':id+' cancelled · nights released');csLoad();
+    },e=>toast(e.message));
   }
+
 
   /* ═════════ LOGIN ═════════ */
   function tryId(){
@@ -1215,16 +1206,17 @@ ${kb()}`;}
         </div>`;}).join('')}
         <div class="ptotal"><span>${trLabel()} · ${ds.length} night${ds.length>1?'s':''} · ${new Set(cur.plan.map(d=>d.prop)).size} stay${new Set(cur.plan.map(d=>d.prop)).size>1?'s':''} · ${cur.heads} guests · all meals</span><b>${inr(cur.plan.reduce((s,d)=>s+P(d.prop).ppWith*cur.heads,0))}</b></div>
         <p class="pnote">Edit any day — the dropdowns only offer stays that are actually free that night and sleep your group. Finalise and each host is messaged <b>individually</b> on WhatsApp with their leg, while the full itinerary lands in your chat.</p>
-        <button class="wa-cta" onclick="CS.curFinalize()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.3.4c-.1.2-.2.3 0 .6.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.5 2.8 1.7.3.1.5.1.7-.1l1-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.2Z"/></svg>
-        Finalise ${trLabel()} &amp; book on WhatsApp</button>
+        <button class="wa-cta" onclick="CS.curFinalize()" ${cur.busy?'disabled':''}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.3.4c-.1.2-.2.3 0 .6.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.5 2.8 1.7.3.1.5.1.7-.1l1-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.2Z"/></svg>
+        ${cur.busy?'Holding your stays…':'Hold '+trLabel()+' &amp; pay by UPI'}</button>
       </div>`:'';
     const conflict=cur.conflict?`<div class="conflict">⚠ ${esc(cur.conflict)}</div>`:'';
     const done=cur.done?`
       <div class="cur-done">
-        <h4>✓ Itinerary finalised — sent to your WhatsApp (+${(cur.phone||'').replace(/\D/g,'').slice(-10)}) &amp; to ${cur.done.legs.length} host${cur.done.legs.length>1?'s':''} individually</h4>
-        ${cur.done.legs.map(l=>`<div class="dleg"><div><b>${esc(P(l.prop).name)}</b><br><span>${esc(l.dates)} · ${l.n} night${l.n>1?'s':''} · ${esc(O(P(l.prop).owner).name)} notified · ${l.id}</span></div><b>${inr(l.amt)}</b></div>`).join('')}
-        <div class="dtotal"><span>Trip total (awaiting host approvals)</span><span>${inr(cur.done.total)}</span></div>
-        <p class="pnote" style="margin:12px 0 0">Each leg holds its exact dates on that host's calendar until they approve. In production this button opens <b>wa.me/918799938193</b> with your full itinerary pre-filled. <button style="font-weight:900;text-decoration:underline" onclick="CS.curReset()">Plan another trip</button></p>
+        <h4>✓ ${cur.done.legs.length} stay${cur.done.legs.length>1?'s':''} held for ${esc(cur.done.label)}</h4>
+        ${cur.done.legs.map(l=>`<div class="dleg"><div><b>${esc(P(l.prop).name)}</b><br><span>${esc(l.dates)} · ${l.n} night${l.n>1?'s':''} · host: ${esc(O(P(l.prop).owner).name)}</span></div><b>${inr(l.amt)}</b></div>`).join('')}
+        <div class="dtotal"><span>Trip total · each host confirms after payment</span><span>${inr(cur.done.total)}</span></div>
+        <div style="margin-top:16px">${csPayBlock(cur.done)}</div>
+        <p class="pnote" style="margin:12px 0 0"><button style="font-weight:900;text-decoration:underline" onclick="CS.curReset()">Plan another trip</button></p>
       </div>`:'';
     return `
     <section class="curated rv">
@@ -1240,6 +1232,7 @@ ${kb()}`;}
         <div class="cpanel">
           <div class="cfields">
             <div class="cf"><label>Guests</label><input type="number" min="1" max="20" value="${cur.heads}" onchange="CS.curHeads(this.value)"></div>
+            <div class="cf" style="flex:1.4; min-width:160px"><label>Your name</label><input value="${esc(cur.name||'')}" placeholder="Full name" oninput="CS.curName(this.value)"></div>
             <div class="cf" style="flex:1.6; min-width:190px"><label>Your WhatsApp number</label><input type="tel" inputmode="tel" placeholder="98XXX XXXXX" value="${esc(cur.phone||guestPhone)}" onchange="CS.curPhone(this.value)"></div>
           </div>
           <div class="bplbl" style="margin-bottom:9px">Travel dates · ${BM.name} ${BM.y} ${cur.start?`<span style="color:var(--ink)">· ${trLabel()} · ${ds.length} night${ds.length>1?'s':''}</span>`:'<span style="font-weight:600;color:var(--faint)">· tap start, then end</span>'}</div>
@@ -1257,7 +1250,7 @@ ${kb()}`;}
     const pool=PROPS.filter(p=>p.live&&availOf(p).okCap&&!availOf(p).none);
     if(!stops){
       try{
-        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+        const r=await fetch('fest.php?a=ai',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,
             system:'You are the Calm Shade trip curator. Choose ONLY from these available properties: '+pool.map(p=>p.name).join('; ')+'\n'+kb(),
             messages:[{role:'user',content:`Pick the best stops for a ${days.length}-night trip (${trLabel()}) for ${cur.heads} guests — at most ${Math.min(days.length,4)} distinct properties, in travel order, from the available list only. Respond ONLY with JSON: {"stops":["<exact property name>",...]}`}]})});
@@ -1285,7 +1278,7 @@ ${kb()}`;}
     const seq=[];blocks.forEach((bl,si)=>bl.forEach((d,k)=>seq.push({prop:stops[si],date:d,note:k===0?'Arrive by afternoon, settle in, eat well.':'Full day here — slow morning, explore nearby.'})));
     try{
       const dayList=seq.map((d,i)=>`Day ${i+1} (${dowOf(d.date)} ${d.date} ${BM.mon}): ${P(d.prop).name}`).join('; ');
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      const r=await fetch('fest.php?a=ai',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,
           system:'You are the Calm Shade trip curator for a homestay collective.\n'+kb(),
           messages:[{role:'user',content:`This itinerary is fixed: ${dayList}. For ${cur.heads} guests in ${BM.name}, write one short line (max 14 words) for each day. Respond ONLY with JSON: {"notes":["...","..."]} — exactly ${seq.length} notes in order.`}]})});
@@ -1460,16 +1453,17 @@ ${kb()}`;}
               ?`<div class="bksum"><span>${bkLabel()} · ${bkNights()} night${bkNights()>1?'s':''} · ${bk.heads} guest${bk.heads>1?'s':''} with meals</span><b>${inr(p.ppWith*bk.heads*bkNights())}</b><button class="rclear" onclick="CS.bkClear()">Clear</button></div>`
               :`<div class="nt2" style="margin-top:9px">Optional — pick dates here, or just chat and sort everything in conversation.</div>`}
           </div>
+          ${csHoldHTML(p)}
           <div class="bk-rows">
             <div class="bk-row"><span>Answers about dates &amp; menus</span><b>Instant</b></div>
-            <div class="bk-row"><span>Tentative hold on payment</span><b>Automatic</b></div>
+            <div class="bk-row"><span>Nights held while you pay</span><b>${FX.S.holdHours} hours</b></div>
             <div class="bk-row"><span>Final confirmation</span><b>By ${esc(o.name)}</b></div>
           </div>
           <button class="wa-cta" onclick="CS.chat('${p.id}')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.3.4c-.1.2-.2.3 0 .6.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.5 2.8 1.7.3.1.5.1.7-.1l1-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.2Z"/></svg>
-            ${bk.days.length?`Book ${bkLabel()} on WhatsApp`:'Chat &amp; book on WhatsApp'}</button>
+            ${bk.days.length?'Ask the concierge first':'Chat with the concierge'}</button>
           <div class="wa-live"><i></i>Concierge online · replies in seconds</div>
-          <p class="wa-note">Opens <b>wa.me/918799938193</b> with a message naming ${esc(p.name)}, so the concierge knows your stay from the first word. No account, no forms — just chat.</p>
+          <p class="wa-note">Ask about dates, food or anything else, any hour. Prefer the WhatsApp app? <a href="https://wa.me/918799938193?text=${encodeURIComponent('Hi, I\'m interested in '+p.name)}" target="_blank" rel="noopener" style="color:var(--wa-deep);font-weight:800">Message +91 87999 38193</a></p>
         </aside>
       </div>
       ${lbState!=null&&p.gallery&&p.gallery[lbState]?`<div class="lbox" onclick="if(event.target===this)CS.lbx()">
@@ -1607,7 +1601,7 @@ ${kb()}`;}
     const myProps=propsOf(oid);
     if(!myProps.find(p=>p.id===ownerProp))ownerProp=(myProps[0]||{}).id;
     const mine=BOOKINGS.filter(b=>myProps.some(p=>p.id===b.prop));
-    const pend=mine.filter(b=>b.status==='pending');
+    const pend=mine.filter(b=>b.status==='pending'||b.status==='expired');
     const conf=mine.filter(b=>b.status==='confirmed');
     const gross=conf.reduce((s,b)=>s+b.amt,0), payout=gross-Math.round(gross*COMM);
     const edP=editing==='new'?{owner:oid}:editing?P(editing):null;
@@ -1621,13 +1615,14 @@ ${kb()}`;}
 
       <div class="pan"><div class="ph2"><h3>Booking approvals</h3>${pend.length?`<span class="cnt">${pend.length}</span>`:''}</div><div class="pb">
         ${pend.length?pend.map(b=>`<div class="appr">
-          <div class="th">${shotSVG(b.amt,72,90)}</div>
-          <div><b>${b.id} · ${esc(P(b.prop).name)}</b>
-            <span>${esc(b.guest)} · ${esc(b.dates)} · ${b.head} guests · ${inr(b.amt)} via UPI</span>
+          <div class="th"><span class="pill ${b.utr?'ok':'pd'}">${b.utr?'paid?':'unpaid'}</span></div>
+          <div><b>${b.id} · ${esc(P(b.prop).name)}${b.leg?' · '+esc(b.leg):''}</b>
+            <span>${esc(b.guest)} · ${esc(b.dates)} · ${b.head} guests${b.meals?' · meals':''} · ${inr(b.amt)} via UPI${b.status==='expired'?' · <b>hold lapsed</b>':''}</span>
+            ${b.utr?`<span>UPI reference: <b>${esc(b.utr)}</b></span>`:''}
             <span>You receive ${inr(b.amt-commOf(b))} after the 3% platform fee</span></div>
           <div class="acts2"><button class="b-ok" onclick="CS.dec('${b.id}',true)">Confirm</button>
           <button class="b-no" onclick="CS.dec('${b.id}',false)">Reject</button></div>
-        </div>`).join(''):`<div class="empty">Nothing waiting. When a guest sends a payment screenshot in chat, it lands here with the dates already on hold.</div>`}
+        </div>`).join(''):`<div class="empty">Nothing waiting. When a guest holds nights, the booking lands here with its dates already blocked; confirm once their UPI payment arrives.</div>`}
       </div></div>
 
       <div class="pan"><div class="ph2"><h3>Your listings</h3><span class="sp"></span><button class="b-lt" onclick="CS.newListing()">＋ Add a listing</button></div><div class="pb">
@@ -1749,6 +1744,7 @@ ${kb()}`;}
           <button class="${dashMode==='fest'?'on':''}" onclick="CS.mode('fest')">APPA Fest desk</button>
         </div>`:''}
       </div>
+      ${dashMode==='fest'?'':csDeskBanner()}
       ${dashMode==='creator'?creatorDash():dashMode==='fest'&&isSuper?festDesk():hostDash(ownerCtx)}
     </div>`;
   }
@@ -1758,9 +1754,11 @@ ${kb()}`;}
     const p=P(chat.propId);
     const body=chat.msgs.map(m=>{
       if(m.k==='sys')return `<div class="m sys">${esc(m.t)}</div>`;
-      if(m.k==='pay')return `<div class="pay"><div class="h">Payment · ${esc(m.prop)}</div>
+      if(m.k==='pay'){const ready=activeProp===m.propId&&bk.days.length>0;
+        return `<div class="pay"><div class="h">Ready to hold · ${esc(m.prop)}</div>
         <div class="r"><span>${esc(m.dates)} · ${m.head} guests</span><b>${inr(m.amt)}</b></div>
-        ${qrSVG()}<div class="upi">calmshade@upi</div></div>`;
+        <div style="font-size:12.5px;line-height:1.55;margin-top:6px">${ready?'Your nights are picked on the calendar. Hold them now and pay by UPI.':'Pick the exact nights on this stay\'s calendar, then hold them. You pay by UPI after the hold.'}</div>
+        <button class="b-ok" style="width:100%;margin-top:10px" onclick="CS.chatHold('${m.propId}',${+m.head||2})">${ready?'Hold my nights':'Pick nights on the calendar'}</button></div>`;}
       if(m.k==='shot')return `<div class="shot">${shotSVG(m.amt)}</div>`;
       if(m.k==='phone')return `<div class="pay"><div class="h">One quick thing</div>
         <div style="font-size:13px;line-height:1.55">Where should booking confirmations reach you? Share your WhatsApp number once — it's remembered for this whole session, here and in Curated trips.</div>
@@ -1773,7 +1771,6 @@ ${kb()}`;}
           <div class="wq"><b>Calm Shade</b><span>${chat.busy?'typing…':'online · always awake'}</span></div>
           <button class="x" onclick="CS.closeChat()" aria-label="Close">×</button></div>
         <div class="wa-sc" id="wa-sc">${body}</div>
-        ${chat.awaitShot?`<div class="wa-att"><button onclick="CS.shot()">📎 Attach payment screenshot</button></div>`:''}
         <div class="wa-cm"><input id="wa-in" placeholder="Ask about ${esc(p.name)}…" onkeydown="if(event.key==='Enter')CS.send()" ${chat.busy?'disabled':''}>
           <button class="snd" onclick="CS.send()" aria-label="Send">➤</button></div>
         <div class="wa-hint">Try “price for 4 with meals?” · “free next weekend?” · then “book it”</div>
@@ -2185,7 +2182,7 @@ ${kb()}`;}
         <div class="eacts"><button class="b-save" type="submit">Save festival prices</button><span class="fx-note" style="align-self:center">Stored in ${esc(D.data.store==='mysql'?'MySQL':'the built-in SQLite file')}.</span></div></form></div></div>`;}
   async function fxDeskLoad(){const D=FX.desk;if(!D.key){D.err='Enter the desk key.';render();return;}
     D.busy=true;D.err='';render();
-    try{D.data=await fxCall('admin',null,true);fxLS('desk',D.key);await fxLoad();}catch(e){D.data=null;D.err=e.message;}
+    try{D.data=await fxCall('admin',null,true);fxLS('desk',D.key);await fxLoad();csAdminLoad(true);}catch(e){D.data=null;D.err=e.message;}
     D.busy=false;render();}
 
   async function fxBook(){
@@ -2268,6 +2265,94 @@ ${kb()}`;}
   window.addEventListener('popstate',()=>{const want=/^#(appa|fest)/i.test(location.hash)?'fest':'home';if(want!==view&&(view==='fest'||want==='fest')){view=want;if(want==='fest')fxLoad();render();window.scrollTo({top:0});}});
   document.addEventListener('click',ev=>{const c=ev.target.closest&&ev.target.closest('.fx-cell');if(c&&root.contains(c))fxAct('cell',c.dataset.fxu,c.dataset.fxd);});
 
+  /* ═════════ CALM SHADE BOOKINGS — live calendars and holds (fest.php cs_*) ═════════ */
+  const CSB={loaded:false,offline:false,tickets:(Array.isArray(fxLS('cs-tickets'))?fxLS('cs-tickets'):[]).filter(t=>t&&t.ref&&t.token),mine:[],admin:null,adminErr:'',adminBusy:false,utr:'',
+    hold:Object.assign({open:false,meals:true,name:'',phone:'',email:'',busy:false,err:'',last:null,expect:null},(()=>{const g=fxLS('guest')||{};return {name:g.name||'',phone:g.phone||'',email:g.email||''};})())};
+  const bmISO=d=>BM.y+'-'+String(BM.m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const bmDay=iso=>(+iso.slice(0,4)===BM.y&&+iso.slice(5,7)-1===BM.m)?+iso.slice(8,10):null;
+  function csDates(nights){const ds=nights.slice().sort();const out=[];let s=ds[0],p=ds[0];
+    for(let i=1;i<=ds.length;i++){const v=ds[i];if(v&&fxDiff(p,v)===1){p=v;continue;}out.push(s===p?fxShort(s):fxD(s).getUTCDate()+'–'+fxShort(p));s=v;p=v;}
+    return out.join(', ');}
+  async function csLoad(){
+    try{const j=await fxCall('cs_state');const next={};PROPS.forEach(p=>next[p.id]={});
+      Object.keys(j.occ||{}).forEach(pid=>Object.keys(j.occ[pid]).forEach(iso=>{const d=bmDay(iso);if(d)(next[pid]=next[pid]||{})[d]=j.occ[pid][iso];}));
+      CAL=next;CSB.loaded=true;CSB.offline=false;
+      if(activeProp&&bk.days.length){const n=bk.days.length;bk.days=bk.days.filter(d=>!(CAL[activeProp]||{})[d]);if(bk.days.length<n)toast('Some nights you picked were just booked by someone else');}
+    }catch(e){CSB.offline=true;}
+    if(CSB.tickets.length){try{CSB.mine=(await fxCall('cs_mine',{tickets:CSB.tickets})).bookings||[];}catch(e){}}
+    if(session&&session.type==='super'&&FX.desk.key)await csAdminLoad(true);
+    if(fxQuiet())render();
+  }
+  setInterval(()=>{if((view==='home'||view==='detail')&&document.visibilityState==='visible'&&!CSB.hold.busy)csLoad();},60000);
+  async function csAdminLoad(silent){
+    if(!FX.desk.key){CSB.adminErr='Enter the desk key.';if(!silent)render();return;}
+    CSB.adminBusy=true;if(!silent)render();
+    try{const j=await fxCall('cs_admin',null,true);CSB.admin=j.bookings;CSB.adminErr='';fxLS('desk',FX.desk.key);
+      BOOKINGS=[];j.bookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:b.items.length>1?'leg '+(i+1)+' of '+b.items.length:'',prop:it.prop,
+        guest:((b.guest||{}).name||'Guest')+' · '+((b.guest||{}).phone||''),dates:csDates(it.nights),head:it.heads,amt:it.total,meals:it.meals,utr:b.utr,
+        status:b.status==='cancelled'?'rejected':b.status})));
+    }catch(e){CSB.admin=null;CSB.adminErr=e.message;}
+    CSB.adminBusy=false;if(!silent)render();
+  }
+  function csDeskBanner(){
+    if(!(session&&session.type==='super')||CSB.admin)return '';
+    return `<div class="pan"><div class="ph2"><h3>Live bookings are locked on this device</h3></div><div class="pb">
+      <form class="fx-row" onsubmit="event.preventDefault();CS.csAdmin()"><div class="fx-field" style="flex:1;min-width:220px"><label for="cs-dk">Desk key (from fest-config.php)</label><input id="cs-dk" type="password" autocomplete="current-password" value="${esc(FX.desk.key)}" oninput="CS.fx('deskKey',this.value)"></div>
+      <button class="fx-btn" type="submit" style="align-self:flex-end" ${CSB.adminBusy?'disabled':''}>${CSB.adminBusy?'Opening…':'Load live bookings'}</button></form>
+      ${CSB.adminErr&&CSB.adminErr!=='Enter the desk key.'?`<div class="fx-err" style="margin-top:12px">${esc(CSB.adminErr)}</div>`:''}
+      <p class="nt2">Guest bookings, approvals and payouts come from the server once the key is entered. It's remembered on this device.</p></div></div>`;
+  }
+  const csUpi=b=>`upi://pay?pa=${encodeURIComponent(FX.S.upi)}&pn=${encodeURIComponent(FX.S.payee)}${b.total>100000?'':'&am='+Math.round(b.total)}&cu=INR&tn=${encodeURIComponent('Calm Shade '+b.ref)}`;
+  function csPayBlock(b){
+    const wa='https://wa.me/918799938193?text='+encodeURIComponent(`Hi! I've held ${b.what||'nights'} on Calm Shade. Booking ${b.ref}, total ${inr(b.total)}.`);
+    return `<div class="fx-panel accent" style="gap:12px">
+      <div class="fx-trip-head" style="display:flex"><b class="fx-h2" style="font-size:19px">Nights held</b><span class="fx-status pending">awaiting payment</span></div>
+      <div class="fx-kv"><span>Booking reference</span><b class="fx-ref" style="font-size:21px">${esc(b.ref)}</b></div>
+      <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div><div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div></div>
+      ${b.total>100000?`<div class="fx-warn">UPI apps usually allow up to ${inr(100000)} per payment. Pay in parts and send every reference.</div>`:''}
+      <div class="fx-qr" id="cs-qr" data-upi="${esc(csUpi(b))}" aria-label="UPI payment QR code"></div>
+      <div class="fx-lines"><div><span>UPI ID</span><b>${esc(FX.S.upi)}</b></div><div><span>Payee</span><b>${esc(FX.S.payee)}</b></div></div>
+      <a class="fx-btn ok" style="justify-content:center;text-decoration:none" href="${esc(wa)}" target="_blank" rel="noopener">Send this booking on WhatsApp</a>
+      ${b.utrSent?`<div class="fx-warn">Payment reference received. Your host confirms shortly.</div>`:`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.csUtr('${esc(b.ref)}')"><div class="fx-field"><label for="cs-utr">After paying, enter the UPI reference number(s)</label><input id="cs-utr" value="${esc(CSB.utr)}" oninput="CS.csUtrF(this.value)" maxlength="200" placeholder="12-digit UPI ref" required></div><button class="fx-btn" type="submit">Send payment reference</button></form>`}
+      <p class="fx-note">Add ${esc(b.ref)} in the payment note. Your host confirms once the payment arrives.</p>
+    </div>`;
+  }
+  function csDrawQR(){const q=document.getElementById('cs-qr');if(!q||q.dataset.done)return;const text=q.dataset.upi;
+    const go=()=>{q.innerHTML='';q.dataset.done=1;try{new window.QRCode(q,{text,width:160,height:160,colorDark:'#111111',colorLight:'#FFFFFF'});}catch(e){q.textContent='Pay to '+FX.S.upi;}};
+    if(window.QRCode)return go();
+    if(!csDrawQR.loading){csDrawQR.loading=true;const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=()=>{csDrawQR();fxDrawQR();};s.onerror=()=>{const el=document.getElementById('cs-qr');if(el)el.textContent='Pay to '+FX.S.upi;};document.head.appendChild(s);}}
+  function csHoldHTML(p){
+    const h=CSB.hold;
+    if(h.last&&h.last.prop===p.id)return csPayBlock(h.last)+`<button class="fx-x" style="align-self:flex-start;margin:6px 0 12px" onclick="CS.csDone()">Done · hold more nights</button>`;
+    if(!bk.days.length)return '';
+    const pp=h.meals?p.ppWith:p.ppWithout,total=pp*bk.heads*bk.days.length;
+    if(!h.open)return `<button class="fx-btn" style="width:100%;justify-content:center;margin:12px 0 10px" onclick="CS.csOpen()">Hold ${esc(bkLabel())} · ${inr(total)}</button>`;
+    const F=(k,l,t,ex)=>`<div class="fx-field"><label for="csh-${k}">${l}</label><input id="csh-${k}" type="${t}" value="${esc(h[k])}" oninput="CS.csF('${k}',this.value)" ${ex||''}></div>`;
+    return `<form class="fx-panel" style="margin:12px 0 10px;gap:10px" onsubmit="event.preventDefault();CS.csHold()">
+      <b class="fx-h2" style="font-size:17px">Hold ${esc(bkLabel())}</b>
+      <div class="fx-chips"><button type="button" class="fx-chip ${h.meals?'on':''}" onclick="CS.csMeals(true)">With all meals · ${inr(p.ppWith)}</button><button type="button" class="fx-chip ${h.meals?'':'on'}" onclick="CS.csMeals(false)">Breakfast only · ${inr(p.ppWithout)}</button></div>
+      <div class="fx-lines"><div><span>${bk.days.length} night${bk.days.length>1?'s':''} × ${bk.heads} guest${bk.heads>1?'s':''} × ${inr(pp)}</span><b>${inr(total)}</b></div></div>
+      ${F('name','Full name','text','required maxlength="80" autocomplete="name"')}${F('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${F('email','Email (optional)','email','maxlength="120" autocomplete="email"')}
+      ${h.err?`<div class="fx-err">${esc(h.err)}</div>`:''}
+      <div class="fx-row"><button class="fx-btn" type="submit" ${h.busy||CSB.offline?'disabled':''}>${h.busy?'Holding…':'Hold my nights'}</button><button class="fx-x" type="button" onclick="CS.csClose()">Back</button></div>
+      <p class="fx-note">Held ${FX.S.holdHours} hours while you pay by UPI. ${esc(O(p.owner).name)} confirms personally.</p></form>`;
+  }
+  async function csHold(){
+    const h=CSB.hold,p=P(activeProp);h.err='';
+    if(!bk.days.length){h.err='Pick your nights on the calendar first.';return render();}
+    if(!h.name.trim()){h.err='Add your name.';return render();}
+    if(h.phone.replace(/\D/g,'').length<10){h.err='Add a 10-digit phone number.';return render();}
+    const total=(h.meals?p.ppWith:p.ppWithout)*bk.heads*bk.days.length;
+    h.busy=true;render();
+    try{const r=await fxCall('cs_book',{legs:[{prop:p.id,nights:bk.days.map(bmISO),heads:bk.heads,meals:h.meals}],guest:{name:h.name,phone:h.phone,email:h.email},expectTotal:h.expect!=null?h.expect:total,via:chat&&chat.propId===p.id?'chat':'property'});
+      CSB.tickets.push({ref:r.ref,token:r.token});fxLS('cs-tickets',CSB.tickets);fxLS('guest',{name:h.name,phone:h.phone,email:h.email});
+      guestPhone=h.phone.replace(/\D/g,'').slice(-10);
+      h.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,prop:p.id,what:bkLabel()+' at '+p.name,utrSent:false};
+      h.open=false;h.expect=null;bk.days=[];h.busy=false;
+      if(chat&&chat.propId===p.id)chat.msgs.push({k:'sys',t:'Booking '+r.ref+' held · pay by UPI to confirm'});
+      await csLoad();toast('Nights held · '+r.ref);
+    }catch(e){h.busy=false;h.err=e.message;if(e.data&&e.data.priceChanged)h.expect=e.data.total;if(e.status===409)await csLoad();render();}
+  }
   /* ═════════ RENDER ═════════ */
   let searchFocusHack=false;
   function render(){
@@ -2275,7 +2360,7 @@ ${kb()}`;}
     let body=view==='home'?home():view==='detail'?detail():view==='fest'?fest():view==='login'?loginView():dash();
     root.innerHTML=nav()+body+((view==='home'||view==='detail')?waChat():'');
     reveal();wire();initMotion();
-    {const fb=root.querySelector('.fx-board');if(fb&&fxAct.sl)fb.scrollLeft=fxAct.sl;if(view==='fest'&&FX.last)fxDrawQR();}
+    {const fb=root.querySelector('.fx-board');if(fb&&fxAct.sl)fb.scrollLeft=fxAct.sl;if(view==='fest'&&FX.last)fxDrawQR();csDrawQR();}
     const sc=document.getElementById('wa-sc');if(sc)sc.scrollTop=sc.scrollHeight;
     const wi=document.getElementById('wa-in');if(wi&&chat&&!chat.busy&&document.querySelector('.wa-ov'))wi.focus();
     if(hadFocus){const s=root.querySelector('.search input');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
@@ -2284,9 +2369,25 @@ ${kb()}`;}
   /* ═════════ PUBLIC API ═════════ */
   window.CS={
     fx(a,x,y){fxAct(a,x,y);},
+    csOpen(){const h=CSB.hold;h.open=true;h.err='';if(!h.phone&&guestPhone)h.phone=guestPhone;render();},
+    csClose(){CSB.hold.open=false;CSB.hold.err='';render();},
+    csF(k,v){CSB.hold[k]=v;},
+    csMeals(v){CSB.hold.meals=v;CSB.hold.expect=null;render();},
+    csHold(){csHold();},
+    csDone(){CSB.hold.last=null;render();},
+    csAdmin(){csAdminLoad(false);},
+    csUtrF(v){CSB.utr=v;},
+    csUtr(ref){const t=CSB.tickets.find(x=>x.ref===ref);if(!t)return;if(CSB.utr.trim().length<6)return toast('Enter the full UPI reference number');
+      fxCall('cs_utr',{ref,token:t.token,utr:CSB.utr.trim()}).then(()=>{CSB.utr='';[CSB.hold.last,cur.done].forEach(b=>{if(b&&b.ref===ref)b.utrSent=true;});toast('Payment reference sent');render();},e=>toast(e.message));},
+    chatHold(pid,heads){const ov=root.querySelector('.wa-ov');if(ov)ov.remove();
+      if(activeProp!==pid){CS.open(pid);}
+      bk.heads=Math.max(1,Math.min(capOf(P(pid))||20,heads||bk.heads));bkOpen=true;
+      if(bk.days.length){CSB.hold.open=true;if(!CSB.hold.phone&&guestPhone)CSB.hold.phone=guestPhone;}
+      render();setTimeout(()=>{const el=root.querySelector('.book-card');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+      if(!bk.days.length)toast('Tap your nights on the calendar, then Hold');},
     go(v){if(v==='fest'){fxLoad();try{if(location.hash!=='#appa')history.pushState({fx:1},'','#appa');}catch(e){}}
       else if(view==='fest'&&location.hash==='#appa'){try{history.pushState({},'',location.pathname+location.search);}catch(e){}}if(v==='dash'&&!session){view='login';}else{view=v;}editing=null;edMedia=null;lbState=null;vtRender();window.scrollTo({top:0});},
-    open(id){if(activeProp!==id)bk={heads:2,days:[],sent:false};bkOpen=false;activeProp=id;view='detail';lbState=null;vtRender();window.scrollTo({top:0});},
+    open(id){csLoad();if(activeProp!==id){bk={heads:2,days:[],sent:false};CSB.hold.open=false;CSB.hold.err='';}bkOpen=false;activeProp=id;view='detail';lbState=null;vtRender();window.scrollTo({top:0});},
     cat(c){filterCat=c;render();},
     q(v){query=v;clearTimeout(this._t);this._t=setTimeout(render,250);},
     fav(id){favs[id]=!favs[id];render();},
@@ -2299,7 +2400,7 @@ ${kb()}`;}
         :`Hi, I'm interested in ${p.name}`;
       if(!chat||chat.propId!==id){
         chat={propId:id,msgs:[],busy:false,awaitShot:false,draft:null};chatHistory=[];
-        chat.msgs.push({k:'sys',t:'Opened via wa.me deep link · pre-filled: \u201c'+pre+'\u201d'});
+        chat.msgs.push({k:'sys',t:'Chatting with the Calm Shade concierge · prefer the app? WhatsApp +91 87999 38193'});
         chat.msgs.push({k:'out',t:pre,tm:now()});
         chatHistory.push({role:'user',content:pre});
         const hello=hasSel
@@ -2399,26 +2500,30 @@ ${kb()}`;}
       if(i>=0)chat.msgs.splice(i,1,{k:'sys',t:'Saved — confirmations will reach +91 '+guestPhone+' (remembered this session)'});
       render();},
     curPhone(v){cur.phone=v;const d=(v||'').replace(/\D/g,'');if(d.length>=10)guestPhone=d.slice(-10);},
-    curFinalize(){
-      if(!cur.plan)return;
+    async curFinalize(){
+      if(!cur.plan||cur.busy)return;
       if(cur.plan.some(d=>capOf(P(d.prop))<cur.heads)){toast('One of your stays sleeps fewer than '+cur.heads+' — swap it before finalising');return;}
       if(cur.plan.some(d=>!freeOn(P(d.prop),d.date))){toast('A stay in your plan just got booked for its night — hit Curate again');cur.plan=null;render();return;}
+      if(!(cur.name||'').trim()){toast('Add your name first');return;}
       const digits=((cur.phone||guestPhone)||'').replace(/\D/g,'');
-      if(digits.length<10){toast("Add your WhatsApp number first — that's where your itinerary and host confirmations arrive");return;}
+      if(digits.length<10){toast("Add your WhatsApp number first — that's where your confirmations arrive");return;}
       cur.phone=digits.slice(-10);guestPhone=cur.phone;
-      const legs=[];cur.plan.forEach((d,i)=>{const last=legs[legs.length-1];
-        if(last&&last.prop===d.prop){last.end=d.date;last.n++;}
-        else legs.push({prop:d.prop,startD:d.date,end:d.date,n:1});});
-      legs.forEach(l=>{const p=P(l.prop);l.amt=p.ppWith*cur.heads*l.n;l.id='B-'+(seq++);
-        l.dates=(l.n>1?l.startD+'–'+l.end:''+l.startD)+' '+BM.mon;
-        if(!CAL[l.prop])CAL[l.prop]={};
-        for(let d=l.startD;d<=l.end;d++)if(!CAL[l.prop][d])CAL[l.prop][d]='tn';
-        BOOKINGS.push({id:l.id,prop:l.prop,guest:'Curated trip · +91 '+cur.phone,dates:l.dates,head:cur.heads,amt:l.amt,status:'pending',fromChat:true});});
-      cur.done={legs,total:legs.reduce((s,l)=>s+l.amt,0)};cur.plan=null;render();
-      toast(legs.length+' host'+(legs.length>1?'s':'')+' messaged on WhatsApp — dates held on their calendars');
-      setTimeout(()=>{const el=root.querySelector('.cur-done');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},60);
+      const legs=[];cur.plan.forEach(d=>{const last=legs[legs.length-1];
+        if(last&&last.prop===d.prop&&d.date===last.end+1){last.end=d.date;last.n++;last.days.push(d.date);}
+        else legs.push({prop:d.prop,startD:d.date,end:d.date,n:1,days:[d.date]});});
+      legs.forEach(l=>{l.amt=P(l.prop).ppWith*cur.heads*l.n;l.dates=(l.n>1?l.startD+'–'+l.end:''+l.startD)+' '+BM.mon;});
+      const total=legs.reduce((s,l)=>s+l.amt,0);
+      cur.busy=true;cur.conflict=null;render();
+      try{const r=await fxCall('cs_book',{legs:legs.map(l=>({prop:l.prop,nights:l.days.map(bmISO),heads:cur.heads,meals:true})),guest:{name:cur.name,phone:cur.phone},expectTotal:cur.expect!=null?cur.expect:total,via:'curated'});
+        CSB.tickets.push({ref:r.ref,token:r.token});fxLS('cs-tickets',CSB.tickets);
+        cur.done={legs,total:r.total,ref:r.ref,token:r.token,holdUntil:r.holdUntil,label:trLabel(),what:'a curated trip ('+trLabel()+')',utrSent:false};cur.plan=null;cur.expect=null;
+        toast('Trip held · '+r.ref);await csLoad();
+      }catch(e){cur.conflict=e.message;if(e.data&&e.data.priceChanged)cur.expect=e.data.total;if(e.status===409)await csLoad();}
+      cur.busy=false;render();
+      setTimeout(()=>{const el=root.querySelector(cur.done?'.cur-done':'.conflict');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},60);
     },
-    curReset(){cur={heads:2,phone:cur.phone,start:null,end:null,route:[],plan:null,busy:false,done:null,conflict:null};render();CS.jump('.curated');},
+    curName(v){cur.name=v;},
+    curReset(){cur={heads:2,name:cur.name,phone:cur.phone,start:null,end:null,route:[],plan:null,busy:false,done:null,conflict:null};render();CS.jump('.curated');},
     upImgs(inp){if(!edMedia)return;[...inp.files].forEach(f=>{if(f.type.indexOf('image/')===0)edMedia.gallery.push({src:URL.createObjectURL(f),cap:''});});toast(inp.files.length>1?inp.files.length+' photos added':'Photo added');render();},
     upVid(inp){if(!edMedia)return;const f=inp.files[0];if(!f)return;if(f.type.indexOf('video/')!==0){toast('Please choose a video file');return;}edMedia.video={src:URL.createObjectURL(f),cap:''};toast('Video added — audio stays untouched');render();},
     setCover(i){if(edMedia){edMedia.cover=i;render();toast('Cover photo set — this shows on the home page');}},
@@ -2493,7 +2598,7 @@ ${kb()}`;}
     if(q)CS.invite(q);
     else if(/^#(appa|fest)/i.test(location.hash)||new URLSearchParams(location.search).has('fest'))view='fest';
   }catch(e){}})();
-  fxLoad();
+  fxLoad();csLoad();
 
   render();
 })();

@@ -130,3 +130,12 @@ define('FEST_DB_PASS','YOUR_DB_PASSWORD');
 define('FEST_ADMIN_KEY','a long random phrase');   // unlocks the APPA Fest desk
 ```
 - Calm Shade's own homestay bookings are still the in-memory demo described in §1.
+
+
+## 7. October 2026 — Calm Shade homestays on the booking server + live concierge
+- **Homestay bookings are real now.** `fest.php` `cs_*` routes keep a `cs_bookings` table: whole place per night, holds for `holdHours` (48 h), max 3 unpaid holds per phone, 10 per device a day. Calendars (`CAL`) are filled from the server for the booking month (`BM`: current month, next month in its last week); the seeded demo bookings are gone.
+- Guests hold nights from the property page ("Hold … · ₹…", with or without meals), from the concierge chat ("Ready to hold" card → calendar), or from Curated trips (one booking, one leg per stay). They pay by UPI (QR + reference), with a WhatsApp handoff to +91 87999 38193.
+- Host approvals call `cs_status` with the desk key (FEST_ADMIN_KEY); the dashboard shows a key prompt until it's entered. Confirming a lapsed hold checks its nights are still free.
+- **Prices live in two places:** `CS_PROPS` in fest.php must match `PROPS` in index.html (name, sleeps, per-head with/without meals, bookable). Listing edits in the dashboard are still session-only, so change both when a price changes.
+- **Concierge:** the site calls `fest.php?a=ai` (not api.anthropic.com). The key is `ANTHROPIC_KEY` in fest-config.php (or the old secrets.php). The route only accepts Calm Shade concierge prompts, fixes the model (`AI_MODEL`, default claude-haiku-4-5-20251001), caps 800 output tokens, 40 calls per visitor per hour and `AI_DAILY_CAP` (default 1500) a day. Without a key the chat falls back to sample replies.
+- Fixed: the page fade-in left a transform that trapped `position:fixed` bars, so the phone booking card sat far down the page.

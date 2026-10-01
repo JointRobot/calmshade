@@ -209,6 +209,67 @@ function public_listings() {
   return $out;
 }
 
+/* ---------- Calm Shade homestays (whole place per night) ---------- */
+/* id => [name, sleeps, per head with meals, per head without meals, bookable] — keep in step with PROPS in index.html */
+const CS_PROPS = [
+  'p1'=>['Calmshet Lakeview Cottage',8,1800,1200,true], 'p2'=>['Calmshet Room',3,1400,950,true],
+  'p3'=>['Calmshet Room 1',4,1500,1000,true],           'p4'=>['Calmshet Triangle',4,2200,1600,true],
+  'p5'=>['Appa Art Cottage',6,1700,1150,true],          'p6'=>['Appa Community',14,1100,750,true],
+  'p7'=>['The Quiet Courtyard',5,1600,1100,true],       'p8'=>['The Old Millhouse',6,1500,1000,false],
+  'p9'=>["Anya's Terrace",4,1300,900,true],
+];
+const CS_COMM = 0.03;
+function ist_today() { return gmdate('Y-m-d', time() + 19800); }
+function cs_init() {
+  static $done = false; if ($done) return; $done = true;
+  db()->exec('CREATE TABLE IF NOT EXISTS cs_bookings (ref VARCHAR(16) PRIMARY KEY, token VARCHAR(40) NOT NULL, status VARCHAR(12) NOT NULL, created_at BIGINT NOT NULL, total BIGINT, payout BIGINT, items TEXT, guest TEXT, utr VARCHAR(200))');
+}
+function cs_occ() {
+  cs_init(); $S = settings(); $occ = [];
+  foreach (db()->query("SELECT status, created_at, items FROM cs_bookings WHERE status IN ('pending','confirmed')") as $b) {
+    if (!active_booking($b, $S)) continue;
+    foreach (json_decode($b['items'], true) ?: [] as $it) foreach ($it['nights'] as $d) {
+      $cur = $occ[$it['prop']][$d] ?? '';
+      $occ[$it['prop']][$d] = ($b['status'] === 'confirmed' || $cur === 'bk') ? 'bk' : 'tn';
+    }
+  }
+  return $occ;
+}
+function cs_quote($legs, $occ) {
+  $err = []; $items = []; $seen = []; $today = ist_today(); $max = addDays($today, 400);
+  if (!is_array($legs) || !$legs) return [null, ['Pick at least one night.']];
+  if (count($legs) > 14) return [null, ['That trip has too many stops.']];
+  foreach ($legs as $l) {
+    $id = (string)($l['prop'] ?? ''); $p = CS_PROPS[$id] ?? null;
+    if (!$p || !$p[4]) { $err[] = 'One of these stays is not taking bookings right now.'; continue; }
+    $heads = (int)($l['heads'] ?? 0); $meals = !empty($l['meals']);
+    $nights = array_values(array_unique(array_map('strval', (array)($l['nights'] ?? []))));
+    sort($nights);
+    if ($heads < 1 || $heads > $p[1]) { $err[] = $p[0].' sleeps up to '.$p[1].'.'; continue; }
+    if (!$nights || count($nights) > 60) { $err[] = 'Pick between 1 and 60 nights at '.$p[0].'.'; continue; }
+    foreach ($nights as $d) {
+      if (!valid_date($d) || $d < $today || $d > $max) { $err[] = $p[0].': '.$d.' can\'t be booked.'; continue 2; }
+      if (!empty($occ[$id][$d]) || isset($seen[$id][$d])) { $err[] = $p[0].' is already booked on '.gmdate('j M', strtotime($d)).'.'; continue 2; }
+      $seen[$id][$d] = 1;
+    }
+    $pp = $meals ? $p[2] : $p[3]; $total = $pp * $heads * count($nights);
+    $items[] = ['prop'=>$id,'name'=>$p[0],'nights'=>$nights,'heads'=>$heads,'meals'=>$meals,'pp'=>$pp,'total'=>$total];
+  }
+  $total = array_sum(array_column($items, 'total'));
+  return [['items'=>$items,'total'=>$total,'payout'=>(int)round($total * (1 - CS_COMM))], array_values(array_unique($err))];
+}
+function cs_lines($items) {
+  return array_map(fn($it)=>'- '.$it['name'].': '.implode(', ', array_map(fn($d)=>gmdate('j M', strtotime($d)), $it['nights'])).' · '.$it['heads'].' guest(s)'.($it['meals'] ? ' with meals' : '').' — '.inr($it['total']), $items);
+}
+function find_booking($table, $ref) { $st = db()->prepare("SELECT * FROM $table WHERE ref=?"); $st->execute([(string)$ref]); return $st->fetch(); }
+
+/* ---------- AI concierge proxy (locked down) ---------- */
+function ai_key() {
+  if (defined('ANTHROPIC_KEY')) return ANTHROPIC_KEY;
+  if (is_file(__DIR__.'/secrets.php')) { require_once __DIR__.'/secrets.php'; if (defined('ANTHROPIC_KEY')) return ANTHROPIC_KEY; }
+  return '';
+}
+
 /* ---------- routes ---------- */
 $a = $_GET['a'] ?? 'state';
 $m = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -218,7 +279,7 @@ try {
 switch ($a) {
   case 'state':
     out(['ok'=>true,'settings'=>settings(),'listings'=>public_listings(),'occ'=>(object)occupancy(),'now'=>time(),
-         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12]);
+         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '']);
 
   case 'book': {
     if ($m !== 'POST') fail('Use POST');
@@ -361,6 +422,121 @@ switch ($a) {
     db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute(['settings', $v]);
     out(['ok'=>true,'settings'=>json_decode($v, true)]);
   }
+
+  /* ---- Calm Shade homestays ---- */
+  case 'cs_state':
+    out(['ok'=>true,'occ'=>(object)cs_occ(),'today'=>ist_today(),'holdHours'=>settings()['holdHours']]);
+
+  case 'cs_book': {
+    if ($m !== 'POST') fail('Use POST');
+    cs_init(); $b = body(); $g = $b['guest'] ?? [];
+    $name = clean($g['name'] ?? '', 80); $phone = preg_replace('/[^\d+]/', '', (string)($g['phone'] ?? '')); $email = clean($g['email'] ?? '', 120); $note = clean($g['note'] ?? '', 300);
+    if ($name === '') fail('Add your name.');
+    if (strlen(digits($phone)) < 10) fail('Add a 10-digit phone number.');
+    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) fail('That email address looks wrong.');
+    throttle('csbook', 10, 86400, 'Too many bookings from this device today. Message us on WhatsApp and we will help.');
+    $S = settings(); $open = 0;
+    foreach (db()->query("SELECT status, created_at, guest FROM cs_bookings WHERE status='pending'") as $r)
+      if (active_booking($r, $S) && digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') === digits($phone)) $open++;
+    if ($open >= 3) fail('You already have 3 unpaid holds. Pay or cancel one of them first.', 429);
+    lock_start(); $ok = false;
+    try {
+      [$q, $err] = cs_quote($b['legs'] ?? [], cs_occ());
+      if ($err) { lock_end(false); out(['error'=>$err[0],'errors'=>$err], 409); }
+      if (isset($b['expectTotal']) && (int)$b['expectTotal'] !== $q['total']) { lock_end(false); out(['error'=>'The price for these nights is '.inr($q['total']).'. Tap hold again to book at that price.','priceChanged'=>true,'total'=>$q['total']], 409); }
+      do { $ref = 'CS-'.substr(new_ref(), 5); } while (find_booking('cs_bookings', $ref));
+      $token = bin2hex(random_bytes(16)); $now = time();
+      db()->prepare('INSERT INTO cs_bookings (ref,token,status,created_at,total,payout,items,guest) VALUES (?,?,?,?,?,?,?,?)')
+        ->execute([$ref,$token,'pending',$now,$q['total'],$q['payout'],json_encode($q['items']),json_encode(['name'=>$name,'phone'=>$phone,'email'=>$email,'note'=>$note,'via'=>clean($b['via'] ?? 'site', 20)])]);
+      $ok = true; lock_end(true);
+    } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
+    $until = gmdate('j M, H:i', $now + $S['holdHours']*3600 + 19800).' IST';
+    notify($S['contact'], 'New Calm Shade booking '.$ref.' · '.inr($q['total']), array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], cs_lines($q['items']), ['Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : '']));
+    if ($email) notify($email, 'Your Calm Shade nights are held · '.$ref, array_merge(['Hi '.$name.',', '', 'Your nights are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' with '.$ref.' in the note, then send us the UPI reference.', ''], cs_lines($q['items']), ['', 'WhatsApp: +91 87999 38193', '— Calm Shade']));
+    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'holdUntil'=>$now + $S['holdHours']*3600]);
+  }
+
+  case 'cs_mine': {
+    cs_init(); $b = body(); $S = settings(); $res = [];
+    foreach (array_slice((array)($b['tickets'] ?? []), 0, 30) as $t) {
+      $r = find_booking('cs_bookings', $t['ref'] ?? ''); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
+      $res[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'total'=>(int)$r['total'],'items'=>json_decode($r['items'], true),'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'utrSent'=>!empty($r['utr'])];
+    }
+    out(['ok'=>true,'bookings'=>$res]);
+  }
+
+  case 'cs_utr': case 'cs_cancel': {
+    if ($m !== 'POST') fail('Use POST');
+    cs_init(); $b = body(); $r = find_booking('cs_bookings', $b['ref'] ?? '');
+    if (!$r || !hash_equals($r['token'], (string)($b['token'] ?? ''))) fail('Booking not found.', 404);
+    if ($a === 'cs_utr') {
+      $utr = clean($b['utr'] ?? '', 200); if (strlen(preg_replace('/\W/', '', $utr)) < 6) fail('That reference number looks short. UPI references are usually 12 digits.');
+      if ($r['status'] === 'cancelled') fail('This booking was cancelled. Message us on WhatsApp if you have already paid.');
+      db()->prepare('UPDATE cs_bookings SET utr=? WHERE ref=?')->execute([$utr, $r['ref']]);
+      notify(settings()['contact'], 'Payment reference for '.$r['ref'], ['UPI reference: '.$utr]);
+    } else {
+      if ($r['status'] === 'cancelled') out(['ok'=>true]);
+      if ($r['status'] !== 'pending') fail('Paid bookings can only be changed by your host. Message us on WhatsApp.');
+      db()->prepare("UPDATE cs_bookings SET status='cancelled' WHERE ref=?")->execute([$r['ref']]);
+    }
+    out(['ok'=>true]);
+  }
+
+  case 'cs_admin': {
+    need_admin(); cs_init(); $S = settings(); $bs = [];
+    foreach (db()->query('SELECT * FROM cs_bookings ORDER BY created_at DESC') as $r)
+      $bs[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'createdAt'=>(int)$r['created_at'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
+    out(['ok'=>true,'bookings'=>$bs]);
+  }
+
+  case 'cs_status': {
+    need_admin(); cs_init(); $b = body(); $s = (string)($b['status'] ?? '');
+    if (!in_array($s, ['confirmed','cancelled'], true)) fail('Unknown status');
+    $r = find_booking('cs_bookings', $b['ref'] ?? ''); if (!$r) fail('Booking not found.', 404);
+    lock_start(); $ok = false;
+    try {
+      if ($s === 'confirmed' && !active_booking($r, settings())) {
+        $occ = cs_occ(); $clash = [];
+        foreach (json_decode($r['items'], true) ?: [] as $it) foreach ($it['nights'] as $d) if (!empty($occ[$it['prop']][$d])) $clash[] = $it['name'].' on '.gmdate('j M', strtotime($d));
+        if ($clash) { lock_end(false); fail('Those nights were taken after this hold lapsed: '.implode(', ', array_slice($clash, 0, 4)).'.', 409); }
+      }
+      db()->prepare('UPDATE cs_bookings SET status=? WHERE ref=?')->execute([$s, $r['ref']]);
+      $ok = true; lock_end(true);
+    } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
+    $g = json_decode($r['guest'], true) ?: [];
+    notify($g['email'] ?? '', ($s === 'confirmed' ? 'Confirmed: ' : 'Cancelled: ').'Calm Shade booking '.$r['ref'],
+      $s === 'confirmed' ? array_merge(['Hi '.($g['name'] ?? '').',', '', 'Your host has confirmed your stay.', ''], cs_lines(json_decode($r['items'], true) ?: []), ['', '— Calm Shade'])
+                         : ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$r['ref'].' was cancelled and its nights released. If you already paid, reply and we will arrange the refund.', '', '— Calm Shade']);
+    out(['ok'=>true]);
+  }
+
+  /* ---- AI concierge: fixed model, capped size, throttled, Calm Shade prompts only ---- */
+  case 'ai': {
+    if ($m !== 'POST') fail('Use POST');
+    $key = ai_key(); if (!$key) fail('The concierge is not switched on yet.', 503);
+    $b = body(); $sys = (string)($b['system'] ?? ''); $msgs = $b['messages'] ?? null;
+    if (strpos($sys, 'Calm Shade') === false || strlen($sys) > 40000 || !is_array($msgs) || !$msgs || count($msgs) > 40) fail('Not a concierge request.', 400);
+    $clean = []; $chars = 0;
+    foreach ($msgs as $mm) {
+      $role = ($mm['role'] ?? '') === 'assistant' ? 'assistant' : 'user'; $c = is_string($mm['content'] ?? null) ? $mm['content'] : '';
+      $c = function_exists('mb_substr') ? mb_substr($c, 0, 2000) : substr($c, 0, 2000); $chars += strlen($c);
+      if ($c !== '') $clean[] = ['role'=>$role,'content'=>$c];
+    }
+    if (!$clean || end($clean)['role'] !== 'user' || $chars > 30000) fail('Not a concierge request.', 400);
+    throttle('ai', 40, 3600, 'The concierge is busy. Try again in a little while, or message us on WhatsApp.');
+    $day = 'ai-'.gmdate('Ymd'); $row = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $row->execute([$day]); $n = (int)(($row->fetch() ?: ['v'=>0])['v']);
+    if ($n >= (defined('AI_DAILY_CAP') ? AI_DAILY_CAP : 1500)) fail('The concierge has hit today\'s limit. Message us on WhatsApp.', 429);
+    db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$day]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$day, (string)($n + 1)]);
+    $payload = json_encode(['model'=>defined('AI_MODEL') ? AI_MODEL : 'claude-haiku-4-5-20251001','max_tokens'=>min(800, max(50, (int)($b['max_tokens'] ?? 600))),'system'=>$sys,'messages'=>$clean]);
+    $ch = curl_init('https://api.anthropic.com/v1/messages');
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>$payload, CURLOPT_TIMEOUT=>45,
+      CURLOPT_HTTPHEADER=>['Content-Type: application/json','anthropic-version: 2023-06-01','x-api-key: '.$key]]);
+    $res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    $j = json_decode((string)$res, true);
+    if ($code !== 200 || !is_array($j)) { error_log('fest ai: '.$code.' '.substr((string)$res, 0, 300)); fail('The concierge is unavailable right now.', 502); }
+    out(['content'=>array_values(array_filter($j['content'] ?? [], fn($c)=>($c['type'] ?? '') === 'text'))]);
+  }
+
   default: fail('Unknown action', 404);
 }
 } catch (Throwable $e) {
