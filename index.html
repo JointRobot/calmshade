@@ -2066,7 +2066,7 @@ ${kb()}`;}
     for(let i=0;i<pad;i++)c+='<div class="fx-day blank"></div>';
     days.forEach(d=>{const dt=fxD(d);const on=FX.passDays.includes(d);c+=`<button class="fx-day ${on?'on':''}" onclick="CS.fx('passDay','${d}')" aria-pressed="${on}">${dt.getUTCDate()}<small>${FMON[dt.getUTCMonth()]}</small></button>`;});
     const n=FX.passDays.length;
-    return `<div><h2 class="fx-h2">Day passes</h2><p class="fx-sub">Open festival entry for one day, any day of the festival. No stay included. ${inr(FX.S.dayPass)} per person per day; kids under 10 enter free. Booking a stay? Your entry is already included.</p></div>
+    return `<div><h2 class="fx-h2">Day passes</h2><p class="fx-sub">Open festival entry for one day, any day of the festival. No stay included. ${inr(FX.S.dayPass)} per person per day; kids under 10 enter free. Booking a stay? Your entry is already included. No rooms involved: you pay and get your ticket.</p></div>
       <div class="fx-panel"><div class="fx-cal">${c}</div>
         <div class="fx-row"><div class="fx-kv"><span>People 10 and over</span><div class="fx-step"><button onclick="CS.fx('passQty',-1)" ${FX.passQty<=1?'disabled':''} aria-label="Fewer">−</button><output>${FX.passQty}</output><button onclick="CS.fx('passQty',1)" ${FX.passQty>=20?'disabled':''} aria-label="More">+</button></div></div>
           <div class="fx-kv"><span>Days</span><b>${n}</b></div><div class="fx-kv"><span>Total</span><b class="fx-money">${inr(n*FX.passQty*FX.S.dayPass)}</b></div></div>
@@ -2091,7 +2091,9 @@ ${kb()}`;}
 
   function fxTripHTML(){
     const t=fxTrip();const count=FX.cart.stays.length+FX.cart.passes.length;
+    const passOnly=FX.cart.stays.length===0&&FX.cart.passes.length>0;
     const mob=`<div class="fx-mob"><div><b>Your trip</b> <span class="fx-note">${count} item${count===1?'':'s'}${t.tier?' · '+t.tier.toUpperCase():''}</span><div class="fx-money">${inr(t.total)}</div></div><button class="fx-btn small" onclick="CS.fx('toggleTrip')">${FX.tripOpen?'Close':'Review'}</button></div>`;
+    if(FX.ticket){const b=FX.mine.find(m=>m.ref===FX.ticket);if(b)return mob+fxTicketHTML(b);FX.ticket=null;}
     if(FX.last)return mob+fxConfirmHTML();
     const items=t.lines.map(({s,p})=>({k:s.from,h:`<div class="fx-item"><div><div class="what">${esc(p.u.name)}</div><div class="when">${fxFmt(s.from)} → ${fxFmt(fxAdd(s.from,s.n))} · ${s.n} night${s.n>1?'s':''}<br>${s.rooms} ${p.u.kind==='tent'?'tent':'room'}${s.rooms>1?'s':''}${p.u.kind==='single'?'':' · '+s.guests+' adult'+(s.guests>1?'s':'')+' each'}</div></div><div style="text-align:right"><div class="fx-money">${inr(p.total)}</div><button class="fx-x" onclick="CS.fx('rmStay','${s.key}')">Remove</button></div></div>`}))
       .concat(FX.cart.passes.map((p,i)=>({k:p.date,h:`<div class="fx-item"><div><div class="what">Day pass</div><div class="when">${fxFmt(p.date)} · ${p.qty} ${p.qty>1?'people':'person'}</div></div><div style="text-align:right"><div class="fx-money">${inr(p.qty*FX.S.dayPass)}</div><button class="fx-x" onclick="CS.fx('rmPass',${i})">Remove</button></div></div>`})))
@@ -2105,11 +2107,11 @@ ${kb()}`;}
     const checkout=FX.checkout?`<form style="display:flex;flex-direction:column;gap:10px" onsubmit="event.preventDefault();CS.fx('book')">
         ${FF('name','Full name','text','required maxlength="80" autocomplete="name"')}${FF('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${FF('email','Email','email','maxlength="120" autocomplete="email"')}
         <div class="fx-field"><label for="fxg-note">Anything we should know?</label><textarea id="fxg-note" rows="2" maxlength="300" oninput="CS.fx('guestF','note',this.value)" placeholder="Kids' ages, arrival time, food preferences">${esc(f.note)}</textarea></div>
-        <p class="fx-note">We hold your rooms for ${FX.S.holdHours} hours while you pay by UPI.</p>
+        <p class="fx-note">${passOnly?'Next you pay by UPI. Your ticket is confirmed as soon as the payment arrives, and you show it at the festival gate.':'We hold your rooms for '+FX.S.holdHours+' hours while you pay by UPI.'}</p>
         ${FX.err&&FX.tab!=='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
-        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy||FX.offline?'disabled':''}>${FX.busy?'Holding your rooms…':'Hold my rooms'}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
-      :`<button class="fx-btn" style="justify-content:center" onclick="CS.fx('checkout')" ${e.length?'disabled':''}>Book this trip</button>`;
-    const mine=FX.mine.length?`<div><b class="fx-h2" style="font-size:17px">Your bookings</b><div class="fx-items" style="margin-top:8px">${FX.mine.map(b=>`<div class="fx-item"><div><div class="what">${esc(b.ref)}</div><div class="when">${(b.items||[]).length} item${(b.items||[]).length===1?'':'s'} · ${inr(b.total)}</div></div><div style="text-align:right"><span class="fx-status ${b.status}">${b.status}</span>${b.status==='pending'?`<br><button class="fx-x" onclick="CS.fx('pay','${esc(b.ref)}')">Pay</button> · <button class="fx-x" style="${FX.arm==='c'+b.ref?'color:#B03A22':''}" onclick="CS.fx('myCancel','${esc(b.ref)}')">${FX.arm==='c'+b.ref?'Tap again to cancel':'Cancel'}</button>`:''}</div></div>`).join('')}</div></div>`:'';
+        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy||FX.offline?'disabled':''}>${FX.busy?(passOnly?'Preparing payment…':'Holding your rooms…'):(passOnly?'Continue to payment':'Hold my rooms')}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
+      :`<button class="fx-btn" style="justify-content:center" onclick="CS.fx('checkout')" ${e.length?'disabled':''}>${passOnly?'Buy '+(FX.cart.passes.reduce((a,p)=>a+p.qty,0)===1?'day pass':'day passes'):'Book this trip'}</button>`;
+    const mine=FX.mine.length?`<div><b class="fx-h2" style="font-size:17px">Your bookings</b><div class="fx-items" style="margin-top:8px">${FX.mine.map(b=>`<div class="fx-item"><div><div class="what">${esc(b.ref)}</div><div class="when">${(b.items||[]).length} item${(b.items||[]).length===1?'':'s'} · ${inr(b.total)}</div></div><div style="text-align:right"><span class="fx-status ${b.status}">${b.status==='pending'&&b.passOnly?'unpaid':b.status}</span>${b.status==='confirmed'?`<br><button class="fx-x" onclick="CS.fx('ticket','${esc(b.ref)}')">Show ticket</button>`:''}${b.status==='pending'?`<br><button class="fx-x" onclick="CS.fx('pay','${esc(b.ref)}')">Pay</button> · <button class="fx-x" style="${FX.arm==='c'+b.ref?'color:#B03A22':''}" onclick="CS.fx('myCancel','${esc(b.ref)}')">${FX.arm==='c'+b.ref?'Tap again to cancel':'Cancel'}</button>`:''}</div></div>`).join('')}</div></div>`:'';
     const fd=FX.find;const findHTML=FX.offline?'':fd.open?`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('findGo')"><b style="font-size:13px">Find a booking made on another device</b>
         <div class="fx-grid2"><div class="fx-field"><label for="fxf-ref">Booking reference</label><input id="fxf-ref" value="${esc(fd.ref)}" oninput="CS.fx('findF','ref',this.value)" placeholder="APPA-XXXXX" required></div><div class="fx-field"><label for="fxf-ph">Phone used</label><input id="fxf-ph" type="tel" value="${esc(fd.phone)}" oninput="CS.fx('findF','phone',this.value)" required></div></div>
         ${fd.err?`<div class="fx-err">${esc(fd.err)}</div>`:''}<div class="fx-row"><button class="fx-btn small" type="submit">Find booking</button><button class="fx-x" type="button" onclick="CS.fx('findToggle')">Close</button></div></form>`
@@ -2126,17 +2128,31 @@ ${kb()}`;}
   const fxWa=b=>'https://wa.me/918799938193?text='+encodeURIComponent(`Hi! I've held rooms for APPA Art Fest 2027. Booking ${b.ref}, total ${inr(b.total)}. Sharing my payment details here.`);
   const fxUntil=ts=>new Date(ts*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
   function fxConfirmHTML(){const b=FX.last;
-    return `<div class="fx-trip-head"><h2 class="fx-h2">Rooms held</h2><span class="fx-status pending">awaiting payment</span></div>
-      <div class="fx-kv"><span>Booking reference</span><b class="fx-ref">${esc(b.ref)}</b></div>
-      <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div><div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div></div>
+    return `<div class="fx-trip-head"><h2 class="fx-h2">${b.passOnly?'Pay for your passes':'Rooms held'}</h2><span class="fx-status pending">awaiting payment</span></div>
+      <div class="fx-kv"><span>${b.passOnly?'Order reference':'Booking reference'}</span><b class="fx-ref">${esc(b.ref)}</b></div>
+      <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div>${b.passOnly?'':`<div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div>`}</div>
       ${b.total>100000?`<div class="fx-warn">UPI apps usually allow up to ${inr(100000)} per payment. Pay in parts of ${inr(100000)} or less with this QR (enter the amount yourself), and send every UPI reference below, separated by commas. Prefer a bank transfer? Ask us on WhatsApp.</div>`:''}
       <div class="fx-qr" id="fx-qr" aria-label="UPI payment QR code"></div>
       <div class="fx-lines"><div><span>UPI ID</span><b>${esc(FX.S.upi)}</b></div><div><span>Payee</span><b>${esc(FX.S.payee)}</b></div></div>
       <div class="fx-row"><button class="fx-btn ghost small" onclick="CS.fx('copy','${esc(FX.S.upi)}')">Copy UPI ID</button><a class="fx-btn ghost small" href="${esc(fxUpi(b))}">Open UPI app</a></div>
       ${b.utrSent?`<div class="fx-warn">Payment reference received. The team will confirm your booking shortly.</div>`:`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('utr')"><div class="fx-field"><label for="fxg-utr">After paying, enter the UPI reference number(s)</label><input id="fxg-utr" value="${esc(FX.utr)}" oninput="CS.fx('utrF',this.value)" maxlength="200" placeholder="12-digit UPI ref" required></div><button class="fx-btn" type="submit">Send payment reference</button></form>`}
       <a class="fx-btn ok" style="justify-content:center;text-decoration:none" href="${esc(fxWa(b))}" target="_blank" rel="noopener">Send this booking on WhatsApp</a>
-      <p class="fx-note">Add ${esc(b.ref)} in the payment note. The team confirms once the payment arrives${FX.form.email?' and emails you':''}. Questions: ${esc(FX.S.contact)} or WhatsApp +91 87999 38193.</p>
+      <p class="fx-note">Add ${esc(b.ref)} in the payment note. ${b.passOnly?'Your ticket appears under Your bookings as soon as the team confirms the payment':'The team confirms once the payment arrives'}${FX.form.email?' and emails you':''}. Questions: ${esc(FX.S.contact)} or WhatsApp +91 87999 38193.</p>
       <button class="fx-btn ghost" onclick="CS.fx('done')">Back to the board</button>`;}
+  function fxTicketHTML(b){
+    const its=b.items||[];
+    const lines=its.map(it=>it.kind==='pass'?`<div><span>Day pass · ${fxFmt(it.date)}</span><b>${it.qty} ${it.qty>1?'people':'person'}</b></div>`
+      :`<div><span>${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))}</span><b>${it.rooms*it.guests} ${it.rooms*it.guests>1?'guests':'guest'}</b></div>`).join('');
+    return `<div class="fx-trip-head"><h2 class="fx-h2">Your ticket</h2><span class="fx-status confirmed">paid</span></div>
+      <div class="fx-panel accent" style="gap:12px">
+        <span class="fx-eyebrow" style="color:var(--mute)">APPA Art Fest 2027${b.tier?' · '+b.tier.toUpperCase():''}</span>
+        <b class="fx-ref" style="font-size:28px">${esc(b.ref)}</b>
+        ${b.name?`<b style="font-size:15px">${esc(b.name)}</b>`:''}
+        <div class="fx-lines">${lines}</div>
+        <div class="fx-qr" data-qr="${esc(b.ref)}" aria-label="Ticket QR code"></div>
+        <p class="fx-note">Show this at the festival gate, or just say your reference. ${its.some(i=>i.kind==='stay')?'Stays include entry for every guest on each night. ':''}Kids under 10 enter free.</p>
+      </div>
+      <button class="fx-btn ghost" onclick="CS.fx('ticketClose')">Back</button>`;}
   function fxDrawQR(){const q=document.getElementById('fx-qr');if(!q||!FX.last)return;
     const go=()=>{q.innerHTML='';try{new window.QRCode(q,{text:fxUpi(FX.last),width:168,height:168,colorDark:'#111111',colorLight:'#FFFFFF'});}catch(e){q.textContent='Pay to '+FX.S.upi;}};
     if(window.QRCode)return go();
@@ -2155,7 +2171,8 @@ ${kb()}`;}
     const gross=conf.reduce((s,b)=>s+b.total,0),pay=conf.reduce((s,b)=>s+b.payout,0);
     let invT=0,invS=0;const ns=fxNights();FX_VIP.concat([fxTent()]).forEach(u=>{invT+=u.rooms*ns.length;ns.forEach(d=>invS+=fxOcc(u.id,d));});
     const item=it=>it.kind==='stay'?`${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms}×${it.guests}`:`Day pass · ${fxShort(it.date)} · ${it.qty}`;
-    const rows=bs.map(b=>{const g=b.guest||{};return `<tr><td><b>${esc(b.ref)}</b><br><span class="fx-note">${new Date(b.createdAt*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
+    const qq=(D.q||'').trim().toUpperCase();
+    const rows=bs.filter(b=>!qq||b.ref.includes(qq)).map(b=>{const g=b.guest||{};return `<tr><td><b>${esc(b.ref)}</b><br><span class="fx-note">${new Date(b.createdAt*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
       <td><b>${esc(g.name||'')}</b><br><span class="fx-note">${g.phone?`<a href="https://wa.me/${esc(String(g.phone).replace(/\D/g,'').replace(/^(\d{10})$/,'91$1'))}" target="_blank" rel="noopener">${esc(g.phone)}</a>`:''} ${esc(g.email||'')}</span>${g.note?`<br><span class="fx-note">“${esc(g.note)}”</span>`:''}${b.utr?`<br><span class="fx-note">UPI ref <b>${esc(b.utr)}</b></span>`:''}</td>
       <td>${(b.items||[]).map(item).join('<br>')}</td><td>${b.tier?`<span class="fx-tier ${b.tier}">${b.tier}</span>`:''}</td>
       <td class="num"><b>${inr(b.total)}</b><br><span class="fx-note">hosts ${inr(b.payout)}</span></td><td><span class="fx-status ${b.status}">${b.status}</span></td>
@@ -2172,7 +2189,7 @@ ${kb()}`;}
         <div class="stat" style="--stc:var(--r6)"><div class="k">Owed to hosts</div><div class="v">${inr(pay)}</div></div>
         <div class="stat" style="--stc:var(--r2)"><div class="k">APPA keeps</div><div class="v">${inr(gross-pay)}</div></div>
         <div class="stat" style="--stc:var(--r7)"><div class="k">VIP nights sold</div><div class="v">${invS} <small style="color:var(--mute)">/ ${invT}</small></div></div></div>
-      <div class="pan"><div class="ph2"><h3>Festival bookings</h3><span class="sp"></span><button class="b-lt" onclick="CS.fx('deskRefresh')">Refresh</button></div><div class="pb">
+      <div class="pan"><div class="ph2"><h3>Festival bookings</h3><span class="sp"></span><input class="sel" style="max-width:220px" placeholder="Check a ticket: APPA-…" value="${esc(D.q||'')}" oninput="CS.fx('deskQ',this.value)" aria-label="Check a ticket by reference"><button class="b-lt" onclick="CS.fx('deskRefresh')">Refresh</button></div><div class="pb">
         ${rows?`<div class="fx-tbl"><table><thead><tr><th>Ref</th><th>Guest</th><th>Trip</th><th>Tier</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="fx-note">No festival bookings yet. They appear here the moment a guest holds rooms.</p>'}
         <p class="nt2" style="margin-top:12px">Unpaid bookings hold their rooms for ${FX.S.holdHours} hours, then release automatically. Confirm once the UPI payment lands; an expired booking can still be confirmed if its rooms are free.</p></div></div>
       <div class="pan"><div class="ph2"><h3>Partner host applications</h3></div><div class="pb">
@@ -2194,9 +2211,9 @@ ${kb()}`;}
     const payload={stays:FX.cart.stays.map(s=>({unit:s.unit,from:s.from,n:s.n,rooms:s.rooms,guests:s.guests})),passes:FX.cart.passes,guest:f,expectTotal:t.total};
     try{
       const r=await fxCall('book',payload);FX.tickets.push({ref:r.ref,token:r.token});fxSave();
-      FX.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,utrSent:false};
+      FX.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,utrSent:false,passOnly:!payload.stays.length};
       FX.cart={stays:[],passes:[]};FX.checkout=false;FX.form.note='';FX.utr='';FX.tripOpen=true;fxSave();
-      FX.busy=false;await fxLoad();render();fxDrawQR();toast('Rooms held · '+r.ref);
+      FX.busy=false;await fxLoad();render();fxDrawQR();toast((FX.last.passOnly?'Order placed · ':'Rooms held · ')+r.ref);
     }catch(e){FX.busy=false;FX.err=e.message;if(e.data&&(e.data.priceChanged||e.status===409))await fxLoad();render();}
   }
 
@@ -2233,10 +2250,12 @@ ${kb()}`;}
       case 'done':FX.last=null;break;
       case 'copy':try{navigator.clipboard.writeText(x).then(()=>toast('Copied'),()=>toast(x));}catch(e){toast(x);}return;
       case 'pay':{const b=FX.mine.find(m=>m.ref===x);const t=FX.tickets.find(m=>m.ref===x);if(!b)return;
-        FX.last={ref:b.ref,token:t&&t.token,total:b.total,holdUntil:b.holdUntil,utrSent:b.utrSent};FX.tripOpen=true;render();fxDrawQR();return;}
+        FX.last={ref:b.ref,token:t&&t.token,total:b.total,holdUntil:b.holdUntil,utrSent:b.utrSent,passOnly:b.passOnly};FX.tripOpen=true;render();fxDrawQR();return;}
       case 'utr':{const b=FX.last;if(!b||FX.utr.trim().length<6)return toast('Enter the full UPI reference number');
         if(FX.offline){b.utrSent=true;render();return;}
         fxCall('utr',{ref:b.ref,token:b.token,utr:FX.utr.trim()}).then(()=>{b.utrSent=true;FX.utr='';toast('Payment reference sent');fxLoad();render();fxDrawQR();},e=>toast(e.message));return;}
+      case 'ticket':FX.ticket=x;FX.last=null;FX.tripOpen=true;break;
+      case 'ticketClose':FX.ticket=null;break;
       case 'findToggle':FX.find.open=!FX.find.open;FX.find.err='';break;
       case 'findF':FX.find[x]=y;return;
       case 'findGo':fxCall('find',{ref:FX.find.ref.trim(),phone:FX.find.phone}).then(r=>{if(!FX.tickets.some(t=>t.ref===r.ref))FX.tickets.push({ref:r.ref,token:r.token});fxSave();FX.find={open:false,ref:'',phone:'',err:''};toast('Found '+r.ref);fxLoad();},e=>{FX.find.err=e.message;render();});return;
@@ -2252,6 +2271,7 @@ ${kb()}`;}
           .then(()=>{FX.busy=false;FX.hostSent=h.name;render();window.scrollTo({top:0,behavior:'smooth'});},e=>{FX.busy=false;FX.err=e.message;render();});return;}
       case 'hostAgain':FX.hostSent=null;FX.host=Object.assign(FX.host,{name:'',desc:''});break;
       case 'deskKey':FX.desk.key=x;return;
+      case 'deskQ':FX.desk.q=x;clearTimeout(fxAct.qt);fxAct.qt=setTimeout(()=>{render();const i=root.querySelector('input[aria-label="Check a ticket by reference"]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},250);return;
       case 'deskOpen':case 'deskRefresh':fxDeskLoad();return;
       case 'deskStatus':if(y==='cancelled'&&FX.arm!=='d'+x){FX.arm='d'+x;clearTimeout(fxAct.at);fxAct.at=setTimeout(()=>{FX.arm=null;render();},4000);break;}
         FX.arm=null;fxCall('status',{ref:x,status:y},true).then(()=>{toast(y==='confirmed'?x+' confirmed':x+' cancelled');fxDeskLoad();},e=>toast(e.message));return;
@@ -2310,17 +2330,17 @@ ${kb()}`;}
       <div class="fx-kv"><span>Booking reference</span><b class="fx-ref" style="font-size:21px">${esc(b.ref)}</b></div>
       <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div><div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div></div>
       ${b.total>100000?`<div class="fx-warn">UPI apps usually allow up to ${inr(100000)} per payment. Pay in parts and send every reference.</div>`:''}
-      <div class="fx-qr" id="cs-qr" data-upi="${esc(csUpi(b))}" aria-label="UPI payment QR code"></div>
+      <div class="fx-qr" data-qr="${esc(csUpi(b))}" aria-label="UPI payment QR code"></div>
       <div class="fx-lines"><div><span>UPI ID</span><b>${esc(FX.S.upi)}</b></div><div><span>Payee</span><b>${esc(FX.S.payee)}</b></div></div>
       <a class="fx-btn ok" style="justify-content:center;text-decoration:none" href="${esc(wa)}" target="_blank" rel="noopener">Send this booking on WhatsApp</a>
       ${b.utrSent?`<div class="fx-warn">Payment reference received. Your host confirms shortly.</div>`:`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.csUtr('${esc(b.ref)}')"><div class="fx-field"><label for="cs-utr">After paying, enter the UPI reference number(s)</label><input id="cs-utr" value="${esc(CSB.utr)}" oninput="CS.csUtrF(this.value)" maxlength="200" placeholder="12-digit UPI ref" required></div><button class="fx-btn" type="submit">Send payment reference</button></form>`}
       <p class="fx-note">Add ${esc(b.ref)} in the payment note. Your host confirms once the payment arrives.</p>
     </div>`;
   }
-  function csDrawQR(){const q=document.getElementById('cs-qr');if(!q||q.dataset.done)return;const text=q.dataset.upi;
-    const go=()=>{q.innerHTML='';q.dataset.done=1;try{new window.QRCode(q,{text,width:160,height:160,colorDark:'#111111',colorLight:'#FFFFFF'});}catch(e){q.textContent='Pay to '+FX.S.upi;}};
+  function csDrawQR(){const qs=[...document.querySelectorAll('[data-qr]')].filter(q=>!q.dataset.done);if(!qs.length)return;
+    const go=()=>qs.forEach(q=>{q.innerHTML='';q.dataset.done=1;try{new window.QRCode(q,{text:q.dataset.qr,width:160,height:160,colorDark:'#111111',colorLight:'#FFFFFF'});}catch(e){q.textContent=q.dataset.qr;}});
     if(window.QRCode)return go();
-    if(!csDrawQR.loading){csDrawQR.loading=true;const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=()=>{csDrawQR();fxDrawQR();};s.onerror=()=>{const el=document.getElementById('cs-qr');if(el)el.textContent='Pay to '+FX.S.upi;};document.head.appendChild(s);}}
+    if(!csDrawQR.loading){csDrawQR.loading=true;const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=()=>{csDrawQR();fxDrawQR();};s.onerror=()=>{document.querySelectorAll('[data-qr]').forEach(el=>{el.textContent=el.dataset.qr.startsWith('upi:')?'Pay to '+FX.S.upi:el.dataset.qr;});};document.head.appendChild(s);}}
   function csHoldHTML(p){
     const h=CSB.hold;
     if(h.last&&h.last.prop===p.id)return csPayBlock(h.last)+`<button class="fx-x" style="align-self:flex-start;margin:6px 0 12px" onclick="CS.csDone()">Done · hold more nights</button>`;

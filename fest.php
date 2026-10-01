@@ -100,6 +100,8 @@ function units() {
   }
   return $u;
 }
+function has_stay($items) { foreach ((is_array($items) ? $items : (json_decode((string)$items, true) ?: [])) as $it) if (($it['kind'] ?? '') === 'stay') return true; return false; }
+function show_status($r, $S) { return ($r['status'] === 'pending' && has_stay($r['items']) && !active_booking($r, $S)) ? 'expired' : $r['status']; }
 function active_booking($b, $S) {
   if ($b['status'] === 'confirmed') return true;
   if ($b['status'] !== 'pending') return false;
@@ -314,8 +316,8 @@ switch ($a) {
     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) fail('That email address looks wrong.');
     throttle('book', 10, 86400, 'Too many bookings from this device today. Message us on WhatsApp and we will help.');
     $S0 = settings(); $mineOpen = 0;
-    foreach (db()->query("SELECT status, created_at, guest FROM fest_bookings WHERE status='pending'") as $r)
-      if (active_booking($r, $S0) && digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') === digits($phone)) $mineOpen++;
+    foreach (db()->query("SELECT status, created_at, guest, items FROM fest_bookings WHERE status='pending'") as $r)
+      if (has_stay($r['items']) && active_booking($r, $S0) && digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') === digits($phone)) $mineOpen++;
     if ($mineOpen >= 3) fail('You already have 3 unpaid bookings on hold. Pay or cancel one of them first.', 429);
     lock_start(); $ok = false;
     try {
@@ -331,9 +333,13 @@ switch ($a) {
     $S = settings(); $until = gmdate('j M, H:i', $now + $S['holdHours']*3600 + 19800).' IST';
     $body = array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], trip_lines($q['items']),
       [$q['discount'] ? strtoupper($q['tier']).' discount: −'.inr($q['discount']) : '', 'Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : '']);
-    notify($S['contact'], 'New festival booking '.$ref.' · '.inr($q['total']), $body);
-    if ($email) notify($email, 'Your APPA Art Fest rooms are held · '.$ref, array_merge(['Hi '.$name.',', '', 'Your rooms are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.', ''], trip_lines($q['items']), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
-    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + $S['holdHours']*3600]);
+    $passOnly = !has_stay($q['items']);
+    if ($passOnly) $body = array_values(array_filter($body, fn($l)=>strpos($l, 'Held until') !== 0));
+    notify($S['contact'], ($passOnly ? 'New day-pass order ' : 'New festival booking ').$ref.' · '.inr($q['total']), $body);
+    if ($email) notify($email, ($passOnly ? 'Your APPA Art Fest day passes · ' : 'Your APPA Art Fest rooms are held · ').$ref, array_merge(['Hi '.$name.',', '', $passOnly
+        ? 'Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page. Your ticket is confirmed as soon as the payment arrives.'
+        : 'Your rooms are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.', ''], trip_lines($q['items']), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
+    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + $S['holdHours']*3600,'passOnly'=>$passOnly]);
   }
 
   case 'quote': {
@@ -353,10 +359,10 @@ switch ($a) {
   case 'mine': {
     $b = body(); $res = []; $S = settings();
     foreach (array_slice((array)($b['tickets'] ?? []), 0, 30) as $t) {
-      $st = db()->prepare('SELECT ref,token,status,created_at,tier,total,items,utr FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
+      $st = db()->prepare('SELECT ref,token,status,created_at,tier,total,items,utr,guest FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
       $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
-      $status = ($r['status'] === 'pending' && !active_booking($r, $S)) ? 'expired' : $r['status'];
-      $res[] = ['ref'=>$r['ref'],'status'=>$status,'tier'=>$r['tier'],'total'=>(int)$r['total'],'createdAt'=>(int)$r['created_at'],'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'items'=>json_decode($r['items'], true),'utrSent'=>!empty($r['utr'])];
+      $status = show_status($r, $S);
+      $res[] = ['ref'=>$r['ref'],'status'=>$status,'name'=>(json_decode($r['guest'], true) ?: [])['name'] ?? '','passOnly'=>!has_stay($r['items']),'tier'=>$r['tier'],'total'=>(int)$r['total'],'createdAt'=>(int)$r['created_at'],'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'items'=>json_decode($r['items'], true),'utrSent'=>!empty($r['utr'])];
     }
     out(['ok'=>true,'bookings'=>$res]);
   }
@@ -399,8 +405,8 @@ switch ($a) {
     need_admin(); $S = settings();
     $bs = [];
     foreach (db()->query('SELECT * FROM fest_bookings ORDER BY created_at DESC') as $r) {
-      $status = ($r['status'] === 'pending' && !active_booking($r, $S)) ? 'expired' : $r['status'];
-      $bs[] = ['ref'=>$r['ref'],'status'=>$status,'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
+      $status = show_status($r, $S);
+      $bs[] = ['ref'=>$r['ref'],'status'=>$status,'passOnly'=>!has_stay($r['items']),'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
     }
     $ls = array_map(fn($l)=>['id'=>$l['id'],'status'=>$l['status'],'createdAt'=>(int)$l['created_at'],'data'=>json_decode($l['data'], true),'contact'=>json_decode($l['contact'], true)], listings_all());
     out(['ok'=>true,'bookings'=>$bs,'listings'=>$ls,'store'=>is_mysql() ? 'mysql' : 'sqlite']);
@@ -427,7 +433,7 @@ switch ($a) {
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
     $g = json_decode($r['guest'], true) ?: [];
-    if ($s === 'confirmed') notify($g['email'] ?? '', 'Confirmed: your APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'Payment received — your booking is confirmed. See you at the lake.', ''], trip_lines(json_decode($r['items'], true) ?: []), ['', '— APPA Art Fest 2027']));
+    if ($s === 'confirmed') notify($g['email'] ?? '', 'Confirmed: your APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'Payment received — your booking is confirmed. Your ticket is ready under "Your bookings" on calmshade.in/#appa; show it (or just say '.$ref.') at the festival gate. See you at the lake.', ''], trip_lines(json_decode($r['items'], true) ?: []), ['', '— APPA Art Fest 2027']));
     if ($s === 'cancelled') notify($g['email'] ?? '', 'Cancelled: APPA Art Fest booking '.$ref, ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$ref.' has been cancelled and its rooms released. If you already paid, reply to this email and we will sort out the refund.', '', '— APPA Art Fest 2027']);
     out(['ok'=>true]);
   }
