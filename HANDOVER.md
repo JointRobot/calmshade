@@ -139,3 +139,10 @@ define('FEST_ADMIN_KEY','a long random phrase');   // unlocks the APPA Fest desk
 - **Prices live in two places:** `CS_PROPS` in fest.php must match `PROPS` in index.html (name, sleeps, per-head with/without meals, bookable). Listing edits in the dashboard are still session-only, so change both when a price changes.
 - **Concierge:** the site calls `fest.php?a=ai` (not api.anthropic.com). The key is `ANTHROPIC_KEY` in fest-config.php (or the old secrets.php). The route only accepts Calm Shade concierge prompts, fixes the model (`AI_MODEL`, default claude-haiku-4-5-20251001), caps 800 output tokens, 40 calls per visitor per hour and `AI_DAILY_CAP` (default 1500) a day. Without a key the chat falls back to sample replies.
 - Fixed: the page fade-in left a transform that trapped `position:fixed` bars, so the phone booking card sat far down the page.
+
+
+## 8. October 2026 — Day passes and the APPA Art Passport
+- **Day passes** (pass-only orders) go straight to payment: no room hold, never expire, don't count toward the 3-unpaid-holds cap. Confirmed bookings show a gate ticket (reference + QR).
+- **Art Passport** (`#passport`): opens for any confirmed festival booking on that device (or via reference + phone). Stamps & map (9 stamp spots: 7 venues, Festival Square, Island Cinema; stay venues ringed), venue programmes from `appa/2027/project/copy.js` (copied into `PP_SPOTS`), itinerary by week with the guest's days highlighted, locked/unlocked shows, and "Add this day" → checkout.
+- **Stamps**: venue QR posters (APPA Fest desk → Passport stamps → Show posters → Print) link to `?stamp=<spot>.<sig>`. The sig is an HMAC with a secret stored in the database (`fest_kv.stamp_secret`), so stamps can't be forged from the URL pattern. A guest who scans before opening their passport is asked to find their booking, then the stamp lands. Stamps are stored per booking in `fest_stamps`.
+- **Timetable**: desk → Timetable. Each show has day, optional time, venue, and who can attend (everyone with that day / VIP+VVIP / VVIP). It appears in every passport. Max 350 entries.

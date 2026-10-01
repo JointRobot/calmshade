@@ -296,6 +296,35 @@ function ai_key() {
   return '';
 }
 
+
+/* ---------- APPA Art Passport: venue stamps + timetable ---------- */
+const STAMP_SPOTS = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala','secretfarm','square','island'];
+function kv_get($k) { $st = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $st->execute([$k]); $r = $st->fetch(); return $r ? $r['v'] : null; }
+function kv_set($k, $v) { db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$k]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$k, $v]); }
+function stamp_secret() { $s = kv_get('stamp_secret'); if (!$s) { $s = bin2hex(random_bytes(24)); kv_set('stamp_secret', $s); } return $s; }
+function stamp_sig($spot) { return substr(hash_hmac('sha256', 'stamp|'.$spot, stamp_secret()), 0, 12); }
+function schedule() { $j = json_decode((string)kv_get('schedule'), true); return is_array($j) ? $j : []; }
+/* Confirmed festival bookings this device holds tickets for, plus their venue stamps */
+function passport_data($tickets) {
+  db()->exec('CREATE TABLE IF NOT EXISTS fest_stamps (ref VARCHAR(16) NOT NULL, spot VARCHAR(20) NOT NULL, at BIGINT NOT NULL)');
+  $bs = []; $pending = 0;
+  foreach (array_slice((array)$tickets, 0, 30) as $t) {
+    $st = db()->prepare('SELECT ref,token,status,tier,items,guest FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
+    $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
+    if ($r['status'] === 'pending') { $pending++; continue; }
+    if ($r['status'] !== 'confirmed') continue;
+    $g = json_decode($r['guest'], true) ?: [];
+    $bs[] = ['ref'=>$r['ref'],'tier'=>$r['tier'],'name'=>$g['name'] ?? '','items'=>json_decode($r['items'], true) ?: []];
+  }
+  $stamps = [];
+  if ($bs) {
+    $refs = array_column($bs, 'ref'); $in = implode(',', array_fill(0, count($refs), '?'));
+    $st = db()->prepare("SELECT spot, MIN(at) at FROM fest_stamps WHERE ref IN ($in) GROUP BY spot"); $st->execute($refs);
+    foreach ($st as $row) $stamps[$row['spot']] = (int)$row['at'];
+  }
+  return ['bookings'=>$bs,'pending'=>$pending,'stamps'=>(object)$stamps];
+}
+
 /* ---------- routes ---------- */
 $a = $_GET['a'] ?? 'state';
 $m = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -305,7 +334,7 @@ try {
 switch ($a) {
   case 'state':
     out(['ok'=>true,'settings'=>settings(),'listings'=>public_listings(),'occ'=>(object)occupancy(),'now'=>time(),
-         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '']);
+         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule()]);
 
   case 'book': {
     if ($m !== 'POST') fail('Use POST');
@@ -433,7 +462,7 @@ switch ($a) {
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
     $g = json_decode($r['guest'], true) ?: [];
-    if ($s === 'confirmed') notify($g['email'] ?? '', 'Confirmed: your APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'Payment received — your booking is confirmed. Your ticket is ready under "Your bookings" on calmshade.in/#appa; show it (or just say '.$ref.') at the festival gate. See you at the lake.', ''], trip_lines(json_decode($r['items'], true) ?: []), ['', '— APPA Art Fest 2027']));
+    if ($s === 'confirmed') notify($g['email'] ?? '', 'Confirmed: your APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'Payment received — your booking is confirmed. Your ticket and your APPA Art Passport (map, itinerary and venue stamps) are ready at calmshade.in/#passport on the phone you booked with. Show the ticket, or just say '.$ref.', at the festival gate. See you at the lake.', ''], trip_lines(json_decode($r['items'], true) ?: []), ['', '— APPA Art Fest 2027']));
     if ($s === 'cancelled') notify($g['email'] ?? '', 'Cancelled: APPA Art Fest booking '.$ref, ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$ref.' has been cancelled and its rooms released. If you already paid, reply to this email and we will sort out the refund.', '', '— APPA Art Fest 2027']);
     out(['ok'=>true]);
   }
@@ -565,6 +594,43 @@ switch ($a) {
     $j = json_decode((string)$res, true);
     if ($code !== 200 || !is_array($j)) { error_log('fest ai: '.$code.' '.substr((string)$res, 0, 300)); fail('The concierge is unavailable right now.', 502); }
     out(['content'=>array_values(array_filter($j['content'] ?? [], fn($c)=>($c['type'] ?? '') === 'text'))]);
+  }
+
+
+  /* ---- APPA Art Passport ---- */
+  case 'passport': {
+    $b = body(); out(['ok'=>true] + passport_data($b['tickets'] ?? []));
+  }
+  case 'stamp': {
+    if ($m !== 'POST') fail('Use POST');
+    throttle('stamp', 60, 3600, 'Too many stamps from this phone. Try again later.');
+    $b = body(); $spot = (string)($b['spot'] ?? ''); $sig = (string)($b['sig'] ?? '');
+    if (!in_array($spot, STAMP_SPOTS, true) || !hash_equals(stamp_sig($spot), $sig)) fail('That QR code is not a valid APPA stamp.', 400);
+    $p = passport_data($b['tickets'] ?? []);
+    if (!$p['bookings']) fail($p['pending'] ? 'Your passport opens once your payment is confirmed.' : 'Find your booking first to open your passport.', 403);
+    $fresh = !isset(((array)$p['stamps'])[$spot]);
+    if ($fresh) db()->prepare('INSERT INTO fest_stamps (ref,spot,at) VALUES (?,?,?)')->execute([$p['bookings'][0]['ref'], $spot, time()]);
+    out(['ok'=>true,'spot'=>$spot,'fresh'=>$fresh] + passport_data($b['tickets'] ?? []));
+  }
+  case 'stamp_links': {
+    need_admin(); $out = [];
+    foreach (STAMP_SPOTS as $sp) $out[] = ['spot'=>$sp,'sig'=>stamp_sig($sp)];
+    db()->exec('CREATE TABLE IF NOT EXISTS fest_stamps (ref VARCHAR(16) NOT NULL, spot VARCHAR(20) NOT NULL, at BIGINT NOT NULL)');
+    $cnt = []; foreach (db()->query('SELECT spot, COUNT(*) c FROM fest_stamps GROUP BY spot') as $r) $cnt[$r['spot']] = (int)$r['c'];
+    out(['ok'=>true,'links'=>$out,'counts'=>(object)$cnt]);
+  }
+  case 'schedule_set': {
+    need_admin(); $b = body(); $items = [];
+    foreach (array_slice((array)($b['items'] ?? []), 0, 350) as $it) {
+      $d = (string)($it['date'] ?? ''); $tm = (string)($it['time'] ?? ''); $sp = (string)($it['spot'] ?? '');
+      $ac = in_array($it['access'] ?? 'all', ['all','vip','vvip'], true) ? $it['access'] : 'all';
+      $ti = clean($it['title'] ?? '', 100);
+      if (!valid_date($d) || $ti === '' || ($tm !== '' && !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $tm)) || ($sp !== '' && !in_array($sp, STAMP_SPOTS, true))) continue;
+      $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'date'=>$d,'time'=>$tm,'spot'=>$sp,'title'=>$ti,'access'=>$ac];
+    }
+    usort($items, fn($x,$y)=>strcmp($x['date'].$x['time'], $y['date'].$y['time']));
+    kv_set('schedule', json_encode($items));
+    out(['ok'=>true,'schedule'=>$items]);
   }
 
   default: fail('Unknown action', 404);
