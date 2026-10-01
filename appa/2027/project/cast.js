@@ -1,17 +1,17 @@
-import { TS } from './story.js';
-// APPA Art Fest 2027 · the people. Walkers follow a plan (times in seconds of the 90 s loop); wanderers roam an
+import { tsc } from './story.js';
+// APPA Art Fest 2027 · the people. Walkers follow a plan (times in seconds of the 96 s loop, longer than the 90 s tour so the tour family never wraps); wanderers roam an
 // area on a seamless loop; cyclists ride a path loop; performers play or dance while their stage is on.
 // Kinds: man, woman (saree unless outfit 'casual'), girl, boy (casual unless outfit 'uniform'), teacher.
 export const CAST = {
-  loop: 90, navRes: 0.25,
+  loop: 96, navRes: 0.25,
   walkers: [
     // a family: walk in under the arch, stop on the shore to watch the lotus light and the island, end at the square stage
     ...[['mother', 'woman', { h: 1.6, saree: '#B8432F', border: '#E0B040', blouse: '#6A2A3A' }, [0, 0]], ['father', 'man', { h: 1.74, shirt: '#8FB3CF', hat: 'cap', hatColor: '#2F7F7A' }, [0.9, 0.3]],
         ['mira', 'girl', { h: 1.3, dress: '#E2A33A', bag: true, bagColor: '#D9502F' }, [0.3, 0.9]], ['kabir', 'boy', { h: 1.2, shirt: '#3E6AA0', pants: '#6A5A48' }, [1.1, 1.1]]]
       .map(([id, kind, look, [ox, oy]]) => ({ id, kind, ...look, plan: [
-        { xy: [92 + ox, 104 + oy], until: 16 * TS, acts: id === 'mira' ? [[10 * TS, 12 * TS, 'point', [90, 100, 4]]] : [] },
-        { xy: [72 + ox, 84 + oy], until: 78 * TS, look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[73.5, 76.5, 'point', [68, 38.5, 0.6]], [77, 78, 'joy']] : [[74, 76.5, 'photo', [75, 57, 1.5]]]).map(a => [a[0] * TS, a[1] * TS, ...a.slice(2)]) },
-        { xy: [94 + ox, 90 + oy], until: 94 * TS, look: [96, 84], acts: [[83 * TS, 85 * TS, 'joy'], [87 * TS, 91 * TS, id === 'father' ? 'clap' : 'raise']] } ] }))
+        { xy: [92 + ox, 104 + oy], until: tsc(16), acts: id === 'mira' ? [[tsc(10), tsc(12), 'point', [90, 100, 4]]] : [] },
+        { xy: [72 + ox, 84 + oy], until: tsc(78), look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[73.5, 76.5, 'point', [68, 38.5, 0.6]], [77, 78, 'joy']] : [[74, 76.5, 'photo', [75, 57, 1.5]]]).map(a => [tsc(a[0]), tsc(a[1]), ...a.slice(2)]) },
+        { xy: [94 + ox, 90 + oy], until: tsc(94), look: [96, 84], acts: [[tsc(83), tsc(85), 'joy'], [tsc(87), tsc(91), id === 'father' ? 'clap' : 'raise']] } ] }))
   ],
   wanderers: [
     { area: 'raiker', count: 4 }, { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },

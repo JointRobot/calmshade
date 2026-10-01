@@ -1,10 +1,10 @@
-// APPA Art Fest 2027 · the guided tour (105 s): the camera path, captions and subtitles.
+// APPA Art Fest 2027 · the guided tour (authored on 105 s, plays in 90 s via tsc): the camera path, captions and subtitles.
 // Camera keys: [t, x, y, z, S] = at time t look at plan point (x, y, z) with S pixels per metre (at 1920 px wide).
 // Keep each venue on screen for 5 to 8 seconds; pull back (smaller S) between far-apart venues.
 // Optional 6th/7th values: look-at height and S for tall (portrait) phone screens.
 import { makeCamera, drawOverlay } from '../src/engine/overlay.js';
 import { LOOK } from './look.js';
-import { TS } from './story.js';
+import { tsc } from './story.js';
 
 // Each venue: arrive wide (S 40), push in to one of its signboards (S ~150; on a tall phone closer, S ~250,
 // framed a little higher so the board clears the caption), then pull back out past the venue on the way to the next one.
@@ -57,10 +57,10 @@ const KEYS0 = [
   [96, 90, 100, 5.4, 120, 2.2],
   [105, 90, 100, 5.4, 126, 2.2]
 ];
-const scaleRow = r => [r[0] * TS, r[1] * TS, ...r.slice(2)];
-export const KEYS = KEYS0.map(k => [k[0] * TS, k[1], k[2], k[3], k[4]]);
+const scaleRow = r => [tsc(r[0]), tsc(r[1]), ...r.slice(2)];
+export const KEYS = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[3], k[4]]);
 // on a tall phone screen the arch is framed higher (a lower look-at height), so it sits above the caption text instead of behind it
-export const KEYS_PORTRAIT = KEYS0.map(k => [k[0] * TS, k[1], k[2], k[5] ?? k[3], k[6] ?? k[4]]);
+export const KEYS_PORTRAIT = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[5] ?? k[3], k[6] ?? k[4]]);
 const TOUR0 = {
   title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Many venues. A living ecosystem.'],
   end: [101.2, 105, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],

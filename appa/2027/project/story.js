@@ -3,12 +3,21 @@
 // Channels used by the engine: timeOfDay (0 morning, 0.5 golden hour, 1 night), buildIn, stageOn, crowd, lotusGlow, dronesOn.
 import { env, smooth, ramp, lerp } from '../src/engine/util.js';
 
-// The tour is authored on a 105 s timeline; TS squeezes it to a tight ~84 s (under two minutes). Everything time-based
-// in the tour (camera, captions, channels, the family walkers) is authored in the original seconds and scaled by TS.
+// The tour is authored on a 105 s timeline and plays in 90 s. tsc() maps authored seconds to tour seconds:
+// everything runs at TS (0.8x) except the venue stretch, from the end of the banner close-up (authored 16) to the
+// start of Hidden APPA (authored 68), which plays slower (TS_V) so each venue gets more time on screen.
+// Everything time-based in the tour (camera, captions, channels, the family walkers) is authored in the original
+// seconds and passed through tsc(); untsc() is the inverse, for channels that read the tour clock.
 export const TS = 0.8;
-/* the tour skips CUT_D original seconds once the banner close-up is done (real time CUT_AT), so the camera pans straight from the banner to Calmshet */
+const V0 = 16, V1 = 68, TOUR_SECONDS = 90;
+/* the tour skips CUT_D tour seconds once the banner close-up is done (real time CUT_AT), so the camera pans straight from the banner to Calmshet */
 export const CUT_AT = 13 * TS, CUT_D = 3 * TS;
-export const TOUR_LENGTH = Math.round(105 * TS);
+// solve for the venue-stretch speed so the whole tour, after the cut, lasts exactly TOUR_SECONDS
+const TS_V = (TOUR_SECONDS + CUT_D - (105 - (V1 - V0)) * TS) / (V1 - V0);
+const T0 = V0 * TS, T1 = T0 + (V1 - V0) * TS_V;
+export const tsc = a => (a <= V0 ? a * TS : a <= V1 ? T0 + (a - V0) * TS_V : T1 + (a - V1) * TS);
+export const untsc = t => (t <= T0 ? t / TS : t <= T1 ? V0 + (t - T0) / TS_V : V1 + (t - T1) / TS);
+export const TOUR_LENGTH = tsc(105);
 // the order venues rise in during the opening, and when the tour's camera visits each one (seconds)
 const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'theeya', 'lefarm', 'shambhala', 'raiker', 'hidden'];
 // the tour goes round the lake clockwise on screen from Calmshet (Venue 1): Purrom, The Company Theatre, Theeya, Le Farm,
@@ -42,5 +51,5 @@ export const CHANNELS = {
   lights: { film: t => smooth(ramp(t, 75.5, 79)), app: 1, ease: 0.8 },
   dronesOn: { film: t => env(t, 82, 86, 96, 99), app: 0, ease: 0.8 }
 };
-// channels are authored in original seconds: feed them t / TS
-for (const c of Object.values(CHANNELS)) { const f = c.film; if (f) c.film = (t, id) => f(t / TS, id); }
+// channels are authored in original seconds: feed them untsc(t)
+for (const c of Object.values(CHANNELS)) { const f = c.film; if (f) c.film = (t, id) => f(untsc(t), id); }
