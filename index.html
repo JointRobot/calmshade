@@ -722,8 +722,10 @@ body{background:var(--bg);}
 #cs-app .fx-venue.tent{grid-column:1/-1; border-style:dashed;}
 @media (max-width:900px){#cs-app .fx-band-in{grid-template-columns:1fr; padding:36px 26px;} #cs-app .fx-venues{grid-template-columns:1fr 1fr;}}
 
-#cs-app .fx-btn{display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#FFF9EE; border-radius:6px; padding:12px 18px; font-weight:800; font-size:13.5px; transition:transform .25s var(--ease), background .25s; position:relative; overflow:hidden;}
+#cs-app .fx-btn{display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#FFFFFF; border-radius:6px; padding:12px 18px; font-weight:800; font-size:13.5px; transition:transform .25s var(--ease), background .25s; position:relative; overflow:hidden;}
 #cs-app .fx-btn:hover{transform:translateY(-1px); background:#C2441F;}
+#cs-app .fx-btn:not(.ghost):not(.warn){font-weight:800; text-shadow:0 1px 0 rgba(0,0,0,.12);}
+#cs-app .fx-btn.ok{color:#FFFFFF;}
 #cs-app .fx-btn.ghost{background:transparent; color:inherit; border:1px solid currentColor;}
 #cs-app .fx-btn.ghost:hover{background:rgba(127,110,90,.12);}
 #cs-app .fx-btn.small{padding:7px 11px; font-size:12px;}
