@@ -4,3 +4,4 @@ secrets.php
 fest-config.php
 fest-data/
 uploads/
+tests/*.png
