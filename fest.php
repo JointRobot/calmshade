@@ -53,6 +53,8 @@ function db() {
       if (defined('FEST_DB_PASS') && stripos(FEST_DB_PASS, 'YOUR') !== false) $diag[] = 'the password is still the placeholder text';
       if (defined('FEST_DB_USER') && stripos(FEST_DB_USER, 'YOUR') !== false) $diag[] = 'the username is still the placeholder text';
     }
+    $mt = @filemtime(__DIR__.'/fest-config.php');
+    if ($mt) $diag[] = 'fest-config.php last saved '.gmdate('j M H:i', $mt + 19800).' IST';
     if ($diag) $hint .= '; '.implode('; ', $diag);
     elseif ($code === 1045) $hint .= '; the file looks well-formed, so the password itself differs from hPanel';
     fail('Booking store is not reachable ('.$hint.')', 503);
