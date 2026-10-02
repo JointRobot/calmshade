@@ -107,7 +107,7 @@ export const SITE = {
       A(40, 21.5, { type: 'canopy', w: 3 }), A(56.5, 23, { type: 'canopy', w: 3 }),
       A(51, 15.5, { type: 'pots', count: 7, r: 1.2 }), A(41, 18.5, { type: 'pots', count: 5, r: 1 }),
       A(58, 28, { type: 'sculpture', kind: 'totem', h: 3.4 }),
-      A(50.5, 28.6, { type: 'sign', w: 3.0, text: 'HORROR FILM\nFESTIVAL', neon: '#7CFF9A', size: 58 }), A(57.6, 10.4, { type: 'mats', count: 5, r: 1.5, seed: 0 }), A(60, 15.6, { type: 'sign', w: 2.4, text: 'SUNRISE YOGA\nSOUND HEALING', size: 52 }), A(50.6, 19.8, { type: 'sign', w: 2.6, text: 'EXHIBITION\nIN THE HUTS' }), A(55.0, 26.0, { type: 'sign', w: 2.4, text: 'ACOUSTIC\nSETS' }), A(38.4, 24.8, { type: 'sign', w: 2.4, text: 'WORKSHOP', size: 64 }), A(46, 18.6, { type: 'easels', count: 3, gap: 1.4, seed: 3 }),
+      A(50.5, 28.6, { type: 'sign', w: 3.0, text: 'WENCH FILM\nFESTIVAL', neon: '#7CFF9A', size: 58 }), A(57.6, 10.4, { type: 'mats', count: 5, r: 1.5, seed: 0 }), A(60, 15.6, { type: 'sign', w: 2.4, text: 'SUNRISE YOGA\nSOUND HEALING', size: 52 }), A(50.6, 19.8, { type: 'sign', w: 2.6, text: 'EXHIBITION\nIN THE HUTS' }), A(55.0, 26.0, { type: 'sign', w: 2.4, text: 'ACOUSTIC\nSETS' }), A(38.4, 24.8, { type: 'sign', w: 2.4, text: 'WORKSHOP', size: 64 }), A(46, 18.6, { type: 'easels', count: 3, gap: 1.4, seed: 3 }),
       A(0, 0, { type: 'fairy', pts: [[38.5, 11], [38.5, 19], [40, 25.5]] }), A(0, 0, { type: 'fairy', pts: [[54, 7], [59.5, 10], [59.8, 19]] }),
       A(38.5, 28, { type: 'stall', color: '#2F7F7A', seed: 0 }), A(41.2, 28.5, { type: 'stall', color: '#B5523B', seed: 1 }) ] },
     // 6 · THE COMPANY THEATRE: a white colonial house with a red roof and a railed veranda, up a few stone steps on its
