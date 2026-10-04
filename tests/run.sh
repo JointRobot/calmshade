@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 [ -f fest-config.php ] && { echo "fest-config.php exists here; move it aside first (tests write their own)."; exit 1; }
 printf "<?php define('FEST_ADMIN_KEY','test-desk-key-123456');\n" > fest-config.php
 php -S 127.0.0.1:8099 -t . > /tmp/fest-test-php.log 2>&1 & PHPPID=$!
-sleep 1
+for i in $(seq 1 50); do curl -s -o /dev/null http://127.0.0.1:8099/fest.php?a=state && break; sleep 0.2; done
 for t in api_festival api_homestays ui_festival ui_homestays ui_daypass ui_passport ui_curate ui_hosts; do
   rm -rf fest-data uploads
   printf "%-16s " "$t"

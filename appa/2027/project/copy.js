@@ -33,7 +33,7 @@ const TICKETS = {
     { name: 'Day pass', price: '₹2,000', unit: 'per person, per day', blurb: 'Entry to the festival for one day: every venue, every open show.', bullets: ['Access to all open venues for the day', 'Exhibitions, art walks and open workshops', 'No stay included'], book: { label: 'Buy day passes', href: BOOK + '#appa-pass' } },
     { name: 'Stay + festival, for 2', price: '₹12,000', unit: 'per couple, per night, inside the festival', blurb: 'A night’s stay for two in a VIP room inside the festival, with festival tickets for two included.', bullets: ['A room at Calmshet, Le Farm, Shambhala by the Lake, Theeya or The Company Theatre', 'Purrom single rooms ₹6,000 a night; VIP tents ₹9,000 for 2', 'Festival tickets for 2 people, every night you stay', 'Cycle or e-bike pickup at check-in', 'Mix venues night by night', 'Kids under 10: free entry with a paying adult'], book: { label: 'See live availability', href: BOOK + '#appa' } },
     { name: 'VIP · 1 week', price: '₹7,000 off', unit: 'any 7 or more nights inside the festival', blurb: 'A week at the festival with full access to every show and experience.', bullets: ['All shows and experiences for 7 days', 'Priority entry at every venue', 'A stay for the week inside the festival, across one or several venues', 'Curate your route, or let us plan it'], book: { label: 'Curate a VIP week', href: BOOK + '#appa-curate' } },
-    { name: 'VVIP · 30 days', price: '₹40,000 off', unit: 'the full month, stay + experience', blurb: 'The whole festival, start to finish: full access plus a few things nobody else gets.', bullets: ['All access, all 30 days, every venue', 'A few special-access moments across the month', 'Personal meet-ups with resident artists', 'Stay for the full run inside the festival', 'The Encore: 26 to 28 February, after the festival closes'], book: { label: 'Curate the month', href: BOOK + '#appa-curate' } },
+    { name: 'VVIP · the month', price: '₹40,000 off', unit: '30 or more nights inside the festival, stay + experience', blurb: 'The whole festival, start to finish: full access plus a few things nobody else gets.', bullets: ['All access, every day of the festival, every venue', 'A few special-access moments across the month', 'Personal meet-ups with resident artists', 'Stay for the full run inside the festival', 'The Encore: 26 to 28 February, after the festival closes'], book: { label: 'Curate the month', href: BOOK + '#appa-curate-month' } },
     { name: 'Partner stays nearby', price: 'Host rate + ₹1,000', unit: 'per guest, per night', blurb: 'Homestays and camps around the lake, approved by the festival team, with festival entry included.', bullets: ['Festival entry for every guest, every night', 'Hosts can list their own place too'], book: { label: 'See partner stays', href: BOOK + '#appa' } }
   ],
   note: 'Kids under 10 always enter free, on every ticket type. Prices inside the festival rise up to 20% as venues fill, so earlier is cheaper. Payments go by UPI to Karthikeyan Ramachandran (xtrathindesign@okicici); the booking page gives you the exact amount and QR.',
@@ -56,7 +56,7 @@ const JOIN = {
       { h: 'How it works', bullets: ['Open to everyone 18 and over; people from the villages around the lake are especially welcome', 'Shifts of about five hours; a minimum of three days', 'A short orientation before the festival opens on 25 January'] }
     ],
     contact: 'Tell us your name, the days you can come and where you would like to help. We will reply with a shift plan.',
-    cta: { label: 'Volunteer sign-up: contact details coming soon' } },
+    cta: { label: 'Volunteer: message us on WhatsApp', url: 'https://wa.me/918799938193?text=' + encodeURIComponent('Hi! I would like to volunteer at APPA Art Fest 2027. Name: , days I can come: , where I would like to help: ') } },
   partner: { button: 'Be a partner', eyebrow: 'Be a partner', title: 'Make Kamshet a season',
     intro: 'APPA is a festival of festivals, and it belongs to the whole lake. We are inviting stays, farms, theatres, collectives, schools, local businesses and civic bodies to become partners and grow a February season for Kamshet that people plan their year around.',
     blocks: [
@@ -66,7 +66,8 @@ const JOIN = {
       { h: 'For government and civic partners', bullets: ['A public inauguration on 25 January, the eve of Republic Day', 'Recognition as a founding supporter in all press and communication', 'A safe, well-run and well-planned event, built together from day one'] }
     ],
     contact: 'Write to us about the space, service or programme you would like to bring, and we will set up a conversation.',
-    cta: { label: 'Partner enquiries: contact details coming soon' } },
+    cta: { label: 'Partner: message us on WhatsApp', url: 'https://wa.me/918799938193?text=' + encodeURIComponent('Hi! I would like to partner with APPA Art Fest 2027. About my space / service / programme: ') },
+    cta2: { label: 'Have a stay near the lake? List your stay', url: BOOK + '#appa-host' } },
   sponsor: { button: 'Be a sponsor', eyebrow: 'Be a sponsor', title: 'Back the season',
     intro: 'APPA Art Fest 2027 is dedicated to the late artist K. N. Ramachandran: a month of art, people and nature across a whole lake, with cycles instead of cars and a new artist at work in every corner. Sponsors make it possible, and we make sure they are seen.',
     tiers: [
@@ -103,7 +104,7 @@ export const COPY = {
   weeks: WEEKS,
   areas: {
     raiker: { n: 7, name: 'Secret Farm', tagline: 'The biggest gatherings, with parking on site',
-      website: site('Find it on Google ↗', search('Raiker Farms Kamshet')),
+      website: site('Ask us how to get there ↗', 'https://wa.me/918799938193?text=' + encodeURIComponent('Hi! How do I get to the Secret Farm at APPA Art Fest 2027?')),
       offerings: [['Big-scale music performances', 'raiker-stage'], ['Public forums, town halls and debates', 'raiker-stage'], ['Theatre performances and award functions', 'raiker-stage'], ['Different acoustic artists', 'raiker-fire'], ['Multiple art installations', 'raiker-head'], ['Multiple interactive installations', 'raiker-crystals'], ['Four exhibitions', 'raiker-gallery'], ['One mega K. N. Ramachandran exhibition', 'raiker-mega'], ['Farm visits, farm treks and permaculture', 'raiker-farm'], ['Farm to table under the fruit trees', 'raiker-table'], 'On-site parking for the big crowds', 'Flower polyhouses, buffalo stables, lotus pond: the working farm stays part of the show', 'Facing the sunset: sound healing and meditation circles at dusk'] },
     lefarm: { n: 5, name: 'Le Farm', tagline: 'Big events and open debate',
       website: site('lefarm.in ↗', 'https://lefarm.in'),
