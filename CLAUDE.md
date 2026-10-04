@@ -99,5 +99,11 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
    real listings, so this was scoped to Karthik's own stays.
 4. Login OTP for built-in hosts is still the preview (code shown on screen).
 5. Payment is manual UPI confirmation; a payment gateway would automate it.
+7. Audit 5 Oct 2026 (guest walkthrough) fixed: curate plan editing (add venue, ±night, reorder, remove), homestay
+   month paging (`BM` is now `let`, `bmGo()`, `CSB.occ` + `csFill()`), offline UPI ref no longer faked, pass cap
+   30/day, Encore day passes hidden in Passport, tour buttons. Still open: VIP/VVIP is counted per booking, not
+   across a guest's bookings (two separate 7-night bookings each get −₹7,000; 7 booked + 3 more later gets no VIP)
+   — needs Karthik's call before changing `quote()`. Curate plan isn't kept across a page refresh. Concierge header
+   says "online · replies in seconds" even while it's off.
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters
    (desk → Passport stamps → Show posters).
