@@ -139,6 +139,7 @@ function renderPanel() {
       const ul = el('ul', 'offer'); t.bullets.forEach(s => ul.appendChild(el('li', '', s))); card.appendChild(ul);
       if (t.book) card.appendChild(row(linkBtn(t.book.label, t.book.href, 'primary'))); tl.appendChild(card); }
     if (T.links) pBody.appendChild(row(...T.links.map(l => linkBtn(l.label, l.href, l.primary ? 'primary' : ''))));
+    if (T.help) { pBody.appendChild(el('p', 'note', T.help.text)); pBody.appendChild(row(...T.help.links.map(l => { const b = linkBtn(l.label, l.href, l.primary ? 'primary' : ''); if (l.href.startsWith('tel:')) b.removeAttribute('target'); return b; }))); }
     pBody.appendChild(tl);
     if (T.note) pBody.appendChild(el('p', 'small', T.note));
     if (T.qr) { const qb = el('div', 'qrbox'); const img = el('img', 'qrimg'); img.src = T.qr.image; img.alt = T.qr.caption; qb.appendChild(img);

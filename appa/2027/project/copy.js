@@ -38,6 +38,10 @@ const TICKETS = {
   ],
   note: 'Kids under 10 always enter free, on every ticket type. Prices inside the festival rise up to 20% as venues fill, so earlier is cheaper. Payments go by UPI to Karthikeyan Ramachandran (xtrathindesign@okicici); the booking page gives you the exact amount and QR.',
   links: [{ label: 'Book tickets & stays', href: BOOK + '#appa', primary: true }, { label: 'My Art Passport', href: BOOK + '#passport' }],
+  // a quick way to reach the team (shown near the top of the ticket counter): WhatsApp chat and a tap-to-call button
+  help: { text: 'Questions about tickets, stays or dates? Message us on WhatsApp or give us a call.',
+    links: [{ label: 'Message us on WhatsApp', href: 'https://wa.me/918799938193?text=' + encodeURIComponent('Hi! I have a question about APPA Art Fest 2027 tickets and stays.'), primary: true },
+      { label: 'Call +91 87999 38193', href: 'tel:+918799938193' }] },
   contact: 'Every booking comes with an APPA Art Passport: your itinerary, the map, and a stamp from each venue you visit. Questions? WhatsApp +91 87999 38193.'
 };
 
