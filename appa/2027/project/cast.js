@@ -14,8 +14,8 @@ export const CAST = {
         { xy: [94 + ox, 90 + oy], until: tsc(88), look: [96, 84], acts: [[tsc(77), tsc(79), 'joy'], [tsc(81), tsc(85), id === 'father' ? 'clap' : 'raise']] } ] }))
   ],
   wanderers: [
-    { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },
-    { area: 'company', count: 4 }, { area: 'calmshet', count: 5 }, { area: 'theeya', count: 5 }, { area: 'checkin', count: 6 }, { area: 'camp', count: 3 }, { area: 'hidden', count: 2 }
+    { area: 'lefarm', count: 5, seed: 101 }, { area: 'shambhala', count: 3, seed: 102 }, { area: 'purrom', count: 5, seed: 103 },
+    { area: 'company', count: 4, seed: 104 }, { area: 'calmshet', count: 5, seed: 105 }, { area: 'theeya', count: 5, seed: 106 }, { area: 'checkin', count: 6, seed: 107 }, { area: 'camp', count: 3, seed: 108 }, { area: 'hidden', count: 2, seed: 109 }
   ],
   // five kids running about (girls and boys), spread over the square and three venues; three dogs trotting around
   runners: [{ area: 'checkin', count: 2, run: true, seed: 700 }, { area: 'lefarm', count: 1, run: true, seed: 701 }, { area: 'calmshet', count: 1, run: true, seed: 702 }, { area: 'theeya', count: 1, run: true, seed: 703 }],
