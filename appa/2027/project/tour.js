@@ -1,4 +1,4 @@
-// APPA Art Fest 2027 · the guided tour (authored on 105 s, plays in 90 s via tsc): the camera path, captions and subtitles.
+// APPA Art Fest 2027 · the guided tour (authored on 99 s, plays in 84 s via tsc): the camera path, captions and subtitles.
 // Camera keys: [t, x, y, z, S] = at time t look at plan point (x, y, z) with S pixels per metre (at 1920 px wide).
 // Keep each venue on screen for 5 to 8 seconds; pull back (smaller S) between far-apart venues.
 // Optional 6th/7th values: look-at height and S for tall (portrait) phone screens.
@@ -38,24 +38,19 @@ const KEYS0 = [
   [50.71, 71.2, 110.5, 1.6, 150, -0.6, 250],
   [52.27, 71.35, 110.6, 1.6, 158, -0.6, 262],
   [53.63, 52.6, 98.8, 0, 27],
-  [55, 34, 87, 0, 40],
-  [55.9, 34, 87, 0, 44],
-  [57.21, 39.8, 93.6, 1.6, 150, -0.6, 250],
-  [58.77, 39.95, 93.7, 1.6, 158, -0.6, 262],
-  [60.13, 27.4, 80.3, 0, 27],
-  [61.5, 15, 67, 0, 40],
-  [62.4, 15, 67, 0, 44],
-  [63.8, 5.5, 60.4, 1.6, 150, -0.6, 250],
-  [65.4, 5.65, 60.5, 1.6, 158, -0.6, 262],
-  [67.7, 61.75, 86.7, 0, 27],
-  [70, 118, 113, 0, 40],
-  [73.5, 117, 112, 0, 40],
-  [76.5, 80, 64, 0, 19],
-  [82.5, 76, 60, 0, 21],
-  [86, 65, 67, 0, 10],
-  [91, 65, 67, 0, 8.5],
-  [96, 90, 100, 5.4, 120, 2.2],
-  [105, 90, 100, 5.4, 126, 2.2]
+  [55, 20, 65, 0, 40],
+  [55.9, 20, 65, 0, 44],
+  [57.21, 25.8, 71.6, 1.6, 150, -0.6, 250],
+  [58.77, 25.95, 71.7, 1.6, 158, -0.6, 262],
+  [60.13, 34, 80, 0, 27],
+  [64, 118, 113, 0, 40],
+  [67.5, 117, 112, 0, 40],
+  [70.5, 80, 64, 0, 19],
+  [76.5, 76, 60, 0, 21],
+  [80, 65, 67, 0, 10],
+  [85, 65, 67, 0, 8.5],
+  [90, 90, 100, 5.4, 120, 2.2],
+  [99, 90, 100, 5.4, 126, 2.2]
 ];
 const scaleRow = r => [tsc(r[0]), tsc(r[1]), ...r.slice(2)];
 export const KEYS = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[3], k[4]]);
@@ -63,7 +58,7 @@ export const KEYS = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[3], k[4]]);
 export const KEYS_PORTRAIT = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[5] ?? k[3], k[6] ?? k[4]]);
 const TOUR0 = {
   title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '25 Jan to 25 Feb 2027  ·  One lake. Many venues. A living ecosystem.'],
-  end: [101.2, 105, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
+  end: [95.2, 99, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '25 Jan to 25 Feb 2027  ·  A brighter tomorrow'],
   captions: [
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
     [18, 25.5, 'Venue 1', 'Calmshet', 'The past two years, fashion, art, opening night'],
@@ -72,21 +67,20 @@ const TOUR0 = {
     [40, 45.5, 'Venue 4', 'Theeya Creation Village', 'Voice, craft and community'],
     [47, 53.5, 'Venue 5', 'Le Farm', 'Big events, open debate and long tables'],
     [54.5, 60, 'Venue 6', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
-    [61, 67, 'Venue 7', 'Secret Farm', 'The biggest gatherings, forums and large-scale art'],
-    [68, 74, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
-    [77, 82, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
+    [62, 68, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
+    [71, 76, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
     // the four festival weeks, recapped over a wide hold before the Encore
-    [82.3, 85, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
-    [85.2, 87.9, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
-    [88.1, 90.8, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
-    [91, 93.7, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [94.5, 100.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
+    [76.3, 79, 'Week 1 · 25 Jan to 1 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
+    [79.2, 81.9, 'Week 2 · 2 to 8 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
+    [82.1, 84.8, 'Week 3 · 9 to 15 Feb', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
+    [85, 87.7, 'Weeks 4 and 5 · 16 to 25 Feb', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
+    [88.5, 94.5, 'The Encore · 26 to 28 Feb', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
   ],
   subs: [
     [11, 14.8, 'Park the car. Pick a cycle.'], [20, 23.5, 'Where the story begins.'], [27, 30.5, 'Horror films after dark.'],
     [33.5, 37, 'Theatre, and stories after dark.'], [41.5, 44.5, 'Sing together.'], [49, 52.5, 'Villages, fields, forests, hills.'],
-    [55.5, 58.5, 'Music by the water.'], [62, 65.5, 'Different scales. Different experiences.'], [70.5, 73.5, 'Off the map, after dark.'],
-    [77.5, 81.5, 'The lake lights up.']
+    [55.5, 58.5, 'Music by the water.'], [64.5, 67.5, 'Off the map, after dark.'],
+    [71.5, 75.5, 'The lake lights up.']
   ]
 };
 export const TOUR = { title: scaleRow(TOUR0.title), end: scaleRow(TOUR0.end), captions: TOUR0.captions.map(scaleRow), subs: TOUR0.subs.map(scaleRow) };

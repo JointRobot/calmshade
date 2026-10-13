@@ -7,7 +7,7 @@
 
 ## 1. What this is
 
-An interactive, browser-based 3D map of APPA Art Fest 2027: one lake, seven venues, animated visitors, and venues you can tap to see what happens there. It is a **static website**: one `index.html`, JavaScript modules, a 3D library, two logos and a small data file.
+An interactive, browser-based 3D map of APPA Art Fest 2027: one lake, six venues, animated visitors, and venues you can tap to see what happens there. It is a **static website**: one `index.html`, JavaScript modules, a 3D library, two logos and a small data file.
 
 - No server code (no PHP, Node or Python), no database, no build step.
 - No cookies, no analytics, no forms, no data sent anywhere.

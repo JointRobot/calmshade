@@ -10,11 +10,11 @@ export const CAST = {
         ['mira', 'girl', { h: 1.3, dress: '#E2A33A', bag: true, bagColor: '#D9502F' }, [0.3, 0.9]], ['kabir', 'boy', { h: 1.2, shirt: '#3E6AA0', pants: '#6A5A48' }, [1.1, 1.1]]]
       .map(([id, kind, look, [ox, oy]]) => ({ id, kind, ...look, plan: [
         { xy: [92 + ox, 104 + oy], until: tsc(16), acts: id === 'mira' ? [[tsc(10), tsc(12), 'point', [90, 100, 4]]] : [] },
-        { xy: [72 + ox, 84 + oy], until: tsc(78), look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[73.5, 76.5, 'point', [68, 38.5, 0.6]], [77, 78, 'joy']] : [[74, 76.5, 'photo', [75, 57, 1.5]]]).map(a => [tsc(a[0]), tsc(a[1]), ...a.slice(2)]) },
-        { xy: [94 + ox, 90 + oy], until: tsc(94), look: [96, 84], acts: [[tsc(83), tsc(85), 'joy'], [tsc(87), tsc(91), id === 'father' ? 'clap' : 'raise']] } ] }))
+        { xy: [72 + ox, 84 + oy], until: tsc(72), look: [75, 58], acts: (id === 'kabir' || id === 'mira' ? [[67.5, 70.5, 'point', [68, 38.5, 0.6]], [71, 72, 'joy']] : [[68, 70.5, 'photo', [75, 57, 1.5]]]).map(a => [tsc(a[0]), tsc(a[1]), ...a.slice(2)]) },
+        { xy: [94 + ox, 90 + oy], until: tsc(88), look: [96, 84], acts: [[tsc(77), tsc(79), 'joy'], [tsc(81), tsc(85), id === 'father' ? 'clap' : 'raise']] } ] }))
   ],
   wanderers: [
-    { area: 'raiker', count: 4 }, { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },
+    { area: 'lefarm', count: 5 }, { area: 'shambhala', count: 3 }, { area: 'purrom', count: 5 },
     { area: 'company', count: 4 }, { area: 'calmshet', count: 5 }, { area: 'theeya', count: 5 }, { area: 'checkin', count: 6 }, { area: 'camp', count: 3 }, { area: 'hidden', count: 2 }
   ],
   // five kids running about (girls and boys), spread over the square and three venues; three dogs trotting around
@@ -23,7 +23,6 @@ export const CAST = {
   cyclists: [{ path: 'loop', count: 8, speed: 3.0, lane: 0.55 }],
   performers: [
     { area: 'calmshet', count: 4, colors: ['#F2E6CF', '#D9502F', '#E2A33A', '#2F7F7A'] },
-    { area: 'raiker', count: 3, colors: ['#E2A33A', '#F2E6CF', '#7A4A8C'] },
     { area: 'shambhala', count: 2, style: 'play', colors: ['#F2E6CF', '#FFC9E0'] },
     { area: 'hidden', count: 1, style: 'play' },
     { area: 'theeya', count: 2, colors: ['#F2E6CF', '#A94F32'] },
@@ -43,16 +42,12 @@ const brush = (a, b) => [0.5, 12, 24, 36, 48, 60, 72, 84].map((s, i) => [s, s + 
 const G = { hat: undefined };
 CAST.stations = [
   // fires: a guitarist with listeners
-  { id: 'st-raiker-gtr', at: [16.8, 74.8], face: [18, 76], faceZ: 0.5, kind: 'woman', look: { h: 1.56, shirt: '#E2A33A', hat: 'sun' }, prop: 'guitar', acts: strum },
-  { id: 'st-raiker-l1', at: [16.6, 77.4], face: [17.9, 76.3], kind: 'man', acts: every('clap', null, [8, 34, 60], 6) },
   { id: 'st-theeya-gtr', at: [112.2, 65.3], face: [113.5, 66.5], faceZ: 0.5, kind: 'man', look: { h: 1.7, shirt: '#3E6AA0' }, prop: 'guitar', acts: strum },
   { id: 'st-theeya-l1', at: [115.4, 67.9], face: [112.4, 67.5], kind: 'woman', look: { h: 1.58, shirt: '#7A4A8C' }, acts: every('clap', null, [10, 44, 70], 6) },
   { id: 'st-square-gtr', at: [86.8, 87.8], face: [88, 89], faceZ: 0.5, kind: 'woman', look: { h: 1.6, shirt: '#2F7F7A' }, prop: 'guitar', acts: strum },
   { id: 'st-square-l1', at: [89.8, 90.6], face: [87, 90.2], kind: 'boy', acts: every('joy', null, [12, 46, 72], 3) },
   { id: 'st-purrom-gtr', at: [56.5, 20.6], face: [56.5, 22.4], faceZ: 1.0, kind: 'man', look: { h: 1.7, shirt: '#B5523B' }, prop: 'guitar', acts: strum },
   // interactive installations
-  { id: 'st-raiker-i1', at: [6.5, 63.7], face: [5, 62], kind: 'girl', look: { h: 1.3 }, acts: touch([5, 62, 1.5]) },
-  { id: 'st-raiker-i2', at: [3.6, 63.8], face: [5, 62], faceZ: 1.8, kind: 'man', acts: touch([5, 62, 2.0], 9) },
   { id: 'st-lefarm-i1', at: [69.4, 109], face: [71, 107.5], kind: 'woman', acts: touch([71, 107.5, 1.5]) },
   { id: 'st-lefarm-i2', at: [72.4, 109.4], face: [71, 107.5], faceZ: 1.8, kind: 'boy', acts: touch([71, 107.5, 1.8], 12) },
   { id: 'st-calmshet-ai1', at: [26, 50.9], face: [28, 49], kind: 'woman', acts: touch([28, 49, 1.3]) },
@@ -61,8 +56,6 @@ CAST.stations = [
   { id: 'st-company-i1', at: [85, 19.8], face: [86.5, 18], kind: 'man', acts: touch([86.5, 18, 1.3]) },
   { id: 'st-company-i2', at: [87.6, 20.1], face: [86.5, 18], faceZ: 1.8, kind: 'woman', acts: touch([86.5, 18, 1.8], 16) },
   // exhibitions: people looking at paintings
-  { id: 'st-raiker-v1', at: [25.9, 70.9], face: [26.4, 68.7], faceZ: 1.1, kind: 'woman', acts: study([26.4, 68.7, 1.15]) },
-  { id: 'st-raiker-v2', at: [28.3, 70.9], face: [27.6, 68.7], faceZ: 1.1, kind: 'man', acts: study([27.6, 68.7, 1.2], 9) },
   { id: 'st-calmshet-v1', at: [12.6, 35.3], face: [12.6, 33.4], faceZ: 1.1, kind: 'woman', acts: study([12.6, 33.4, 1.15]) },
   { id: 'st-calmshet-v2', at: [15.6, 35.3], face: [15.4, 33.4], faceZ: 1.1, kind: 'man', acts: study([15.4, 33.4, 1.2], 11) },
   { id: 'st-purrom-v1', at: [44.9, 20.4], face: [45.3, 18.7], faceZ: 1.1, kind: 'man', acts: study([45.3, 18.7, 1.15]) },
@@ -76,8 +69,8 @@ CAST.stations = [
   { id: 'st-lefarm-wood1', at: [56.3, 108.5], face: [57.5, 108.5], faceZ: 0.9, kind: 'man', acts: brush([57.2, 108.5, 0.9], [57.0, 108.5, 0.8]) },
   { id: 'st-lefarm-wood2', at: [58.7, 108.5], face: [57.5, 108.5], faceZ: 0.9, kind: 'woman', acts: brush([57.8, 108.5, 0.9], [58.0, 108.5, 0.8]) },
   { id: 'st-purrom-work', at: [40, 23.4], face: [40, 21.6], faceZ: 0.9, kind: 'woman', acts: brush([40, 21.9, 0.85], [40.2, 21.9, 0.75]) },
-  { id: 'st-shambhala-rocks', at: [37.7, 96.4], face: [36, 95], faceZ: 1.0, kind: 'man', acts: study([36, 95, 1.0]) },
-  { id: 'st-shambhala-wood', at: [48.7, 96.8], face: [47.4, 95.4], faceZ: 0.9, kind: 'man', acts: brush([47.4, 95.5, 0.9], [47.6, 95.5, 0.8]) }
+  { id: 'st-shambhala-rocks', at: [23.7, 74.4], face: [22, 73], faceZ: 1.0, kind: 'man', acts: study([22, 73, 1.0]) },
+  { id: 'st-shambhala-wood', at: [34.7, 74.8], face: [33.4, 73.4], faceZ: 0.9, kind: 'man', acts: brush([33.4, 73.5, 0.9], [33.6, 73.5, 0.8]) }
 ];
 
 // ---- second pass: every exhibit, workshop, installation and circle in the programme gets people
@@ -98,15 +91,9 @@ CAST.stations.push(
   at2('st-lefarm-wine1', 61.9, 101.4, 63.2, 99.6, 'woman', every('raise', null, [8, 34, 58], 4), 1.1), at2('st-lefarm-wine2', 64.6, 101.4, 63.2, 99.6, 'man', every('raise', null, [18, 44, 70], 4), 1.1),
   at2('st-lefarm-shrine1', 49.9, 97.6, 50.1, 99.6, 'woman', every('point', [50.1, 99.6, 2.6], [5, 47], 5), 1.5), at2('st-lefarm-shrine2', 48.6, 101.2, 50.1, 99.6, 'man', every('photo', [50.1, 99.6, 2.0], [22, 64], 5), 1.5, { bag: true, hat: 'cap' }),
   at2('st-lefarm-sculptor', 56.6, 98.0, 55.2, 98.0, 'man', brush([55.2, 98.0, 1.4], [55.2, 98.0, 0.9]), 1.2, { h: 1.72, shirt: '#8A7A60' }),
-  // Raiker
-  at2('st-raiker-m1', 2.9, 59.8, 3.6, 57.9, 'woman', study([3.6, 57.8, 1.15], 2)), at2('st-raiker-m2', 8.1, 59.8, 7.4, 57.9, 'man', study([7.4, 57.8, 1.2], 10)),
-  at2('st-raiker-h2', 3.2, 67.5, 3.2, 66.2, 'woman', study([3.2, 66.1, 1.15], 4)), at2('st-raiker-h3', 21.2, 71.0, 21.2, 69.6, 'man', study([21.2, 69.6, 1.15], 7)), at2('st-raiker-h3b', 22.6, 71.0, 22.2, 69.6, 'woman', study([22.2, 69.6, 1.15], 15)),
-  at2('st-raiker-i3', 26.6, 60.4, 28, 60.6, 'boy', touch([28, 60.6, 1.3], 4), 1.3, { h: 1.25 }), at2('st-raiker-i4', 20.6, 55.3, 22.5, 54.8, 'woman', touch([22.5, 54.8, 1.5], 18)),
-  at2('st-raiker-t1', 26.8, 75.4, 28, 74.6, 'man', every('point', [28, 74.6, 2.0], [9, 50], 5), 1.5), at2('st-raiker-trek', 28.3, 64.5, 25, 64, 'woman', every('point', [25, 64, 1.2], [12, 58], 5), 1.3, { bag: true, hat: 'sun' }),
-  at2('st-raiker-painter', 9.1, 62.6, 8.4, 60.8, 'woman', brush([8.4, 57.8, 1.2], [8.4, 57.8, 0.9]), 1.2, { h: 1.6, shirt: '#7A4A8C' }),
   // Shambhala
-  at2('st-shambhala-v1', 38.0, 82.5, 37.5, 81.2, 'woman', study([37.5, 81.2, 1.15], 2)), at2('st-shambhala-v2', 39.4, 82.5, 39.7, 81.2, 'man', study([39.7, 81.2, 1.2], 11)),
-  at2('st-shambhala-p1', 30.1, 96.9, 30.1, 95.5, 'man', brush([30.1, 95.5, 1.2], [30.2, 95.5, 0.9]), 1.1, { h: 1.7, shirt: '#2F7F7A' }), at2('st-shambhala-p2', 31.6, 96.9, 31.5, 95.5, 'woman', brush([31.5, 95.5, 1.25], [31.4, 95.5, 0.9]), 1.1, { h: 1.6, shirt: '#E2A33A' }),
+  at2('st-shambhala-v1', 24, 60.5, 23.5, 59.2, 'woman', study([23.5, 59.2, 1.15], 2)), at2('st-shambhala-v2', 25.4, 60.5, 25.7, 59.2, 'man', study([25.7, 59.2, 1.2], 11)),
+  at2('st-shambhala-p1', 16.1, 74.9, 16.1, 73.5, 'man', brush([16.1, 73.5, 1.2], [16.2, 73.5, 0.9]), 1.1, { h: 1.7, shirt: '#2F7F7A' }), at2('st-shambhala-p2', 17.6, 74.9, 17.5, 73.5, 'woman', brush([17.5, 73.5, 1.25], [17.4, 73.5, 0.9]), 1.1, { h: 1.6, shirt: '#E2A33A' }),
   // Theeya
   at2('st-theeya-p1', 109.0, 66.9, 109.0, 65.5, 'woman', brush([109, 65.5, 1.2], [109, 65.5, 0.9]), 1.1, { h: 1.58, shirt: '#B8432F' }), at2('st-theeya-p2', 110.4, 66.9, 110.4, 65.5, 'man', brush([110.4, 65.5, 1.2], [110.4, 65.5, 0.9]), 1.1, { h: 1.72, shirt: '#F2E6CF' }),
   at2('st-theeya-i2', 103.8, 75.6, 102.3, 74.4, 'girl', touch([102.3, 74.4, 1.4], 2), 1.3, { h: 1.3 }), at2('st-theeya-i3', 113.2, 78.4, 114.5, 77.2, 'man', touch([114.5, 77.2, 1.4], 20)),

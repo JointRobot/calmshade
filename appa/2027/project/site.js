@@ -1,8 +1,8 @@
-// APPA Art Fest 2027 · the site: one lake with an island cinema, seven venues around it, the festival square
+// APPA Art Fest 2027 · the site: one lake with an island cinema, six venues around it, the festival square
 // (check-in) on the south shore, the camp and Hidden APPA. Laid out from Karthik's own concept drawing.
 // Plan metres, x east, y south. The map is a diorama, not to scale: the real lake is kilometres across.
 // On screen the top corner is the north-west, the bottom corner the south-east. Going round the lake clockwise
-// on screen: Le Farm (bottom-left), Shambhala (left), Raiker (top-left), Calmshet (top), Purrom (top-right),
+// on screen: Le Farm (bottom-left), Shambhala (left, on the west shore), Calmshet (top), Purrom (top-right),
 // The Company Theatre (right), Theeya (bottom-right), and the festival square (bottom, by the water).
 // Every venue is an area with a plaza and a list of KIT parts (see src/engine/kit.js for the part types).
 
@@ -11,8 +11,8 @@ const A = (x, y, o) => ({ x, y, ...o });   // absolute plan position
 
 // venue centres
 const C = {
-  raiker: [15, 66], shambhala: [34, 86], lefarm: [60, 108], calmshet: [24, 40], purrom: [48, 18], company: [73, 17],
-  theeya: [111, 68], checkin: [89, 91], island: [75, 59], camp: [18, 114], hidden: [118, 114]
+  shambhala: [20, 64], lefarm: [60, 108], calmshet: [24, 40], purrom: [48, 18], company: [73, 17],
+  theeya: [111, 68], checkin: [89, 91], island: [75, 59], camp: [34, 86], hidden: [118, 114]
 };
 
 export const SITE = {
@@ -34,43 +34,28 @@ export const SITE = {
     { id: 'loop', loop: true, width: 2.4, color: '#E2CB9C', dash: 'rgba(255,255,255,0.55)',
       pts: [[36, 62], [39, 48], [46, 40], [55, 34], [64, 30], [76, 28], [92, 30], [104, 40], [106, 52], [98, 66], [92, 74], [82, 80], [68, 82], [52, 81], [40, 75]] },
     { id: 'in', width: 2.6, color: '#E2CB9C', pts: [[102, 130], [99, 113], [94, 104], [90, 101]] },
-    { id: 's-raiker', width: 1.8, pts: [[62, 81.5], [61, 96]] }, { id: 's-shambhala', width: 1.8, pts: [[40, 75], [36, 78]] },
-    { id: 's-lefarm', width: 1.8, pts: [[36, 62], [28, 64]] }, { id: 's-calmshet', width: 2.2, pts: [[39, 46], [34, 44]] },
+    { id: 's-lefarm', width: 1.8, pts: [[62, 81.5], [61, 96]] }, { id: 's-camp2', width: 1.8, pts: [[40, 75], [36, 78]] },
+    { id: 's-shambhala', width: 1.8, pts: [[36, 62], [28, 64]] }, { id: 's-calmshet', width: 2.2, pts: [[39, 46], [34, 44]] },
     { id: 's-purrom', width: 1.8, pts: [[55, 34], [50, 31]] }, { id: 's-company', width: 1.8, pts: [[74, 28.5], [73, 26]] },
     { id: 's-theeya', width: 1.8, pts: [[102, 59], [108, 57.5]] },
-    { id: 's-camp', width: 1.6, pts: [[52, 81], [44, 100], [32, 108], [26, 110]] },
+    { id: 's-camp', width: 1.6, pts: [[52, 81], [46, 85], [40, 87]] },
     { id: 'trail-hidden', width: 1.2, color: '#CDB889', pts: [[104, 100], [110, 106], [115, 110]] }
   ],
   trees: { count: 330, seed: 21, pineShare: 0.28,
     // a few trees on the island (the scatter keeps off the water, so these are placed by hand)
     list: [[68.5, 60, 0.7, 0], [80.8, 59.6, 0.7, 0], [71, 64.3, 0.65, 0], [78, 64.6, 0.7, 1], [69.5, 56.5, 0.6, 1]] },
   areas: [
-    // 1 · RAIKER FARMS (Kamshet): a cream farmhouse with twin red gables and a double curved staircase up to the balcony.
-    // Huge, parking inside: forums, town halls and the biggest gatherings. Flower polyhouses, buffalo stables, a lotus pond.
-    { id: 'raiker', n: 7, name: 'Secret Farm', center: C.raiker, rect: [1, 54, 29, 80], floor: '#CDBA8A', structures: [
-      A(15, 60, { type: 'villa', w: 9, d: 5.5, floors: 2, floorH: 2.7, color: '#F4ECDA', roof: '#B8432F', rail: '#FFFFFF', twin: true, frontStairs: 'double' }),
-      A(7, 71, { type: 'stage', w: 10, d: 5, glow: '#FFB45A' }),
-      A(7, 74, { type: 'audience', area: 'raiker', face: Math.PI / 2, r0: 2, r1: 6, count: 45 }),
-      A(24, 57, { type: 'pavilion', w: 5, d: 3.2, tables: 3, roof: '#8A6A3A' }),
-      A(25, 64, { type: 'pavilion', w: 4, d: 2.6, roof: '#7A5A3A' }),
-      A(24, 73, { type: 'sculpture', kind: 'head', h: 5 }),
-      A(18, 76, { type: 'fire' }),
-      A(23, 78, { type: 'cars', count: 3, rot: 0 }),
-      A(27, 68.6, { type: 'easels', count: 3, gap: 1.2, seed: 1 }),
-      A(27, 68.3, { type: 'pavilion', w: 4, d: 2.8, roof: '#6A4A3A' }), A(5, 62, { type: 'sculpture', kind: 'crystal', h: 3, glow: '#FFB45A' }),
-      A(9.5, 58, { type: 'bush', r: 0.9, color: '#E0457B' }), A(21, 61, { type: 'bush', r: 0.9, color: '#D8367A' }),
-      A(5.5, 57.4, { type: 'pavilion', w: 7, d: 3.2, roof: '#6A4A3A' }), A(5.5, 57.7, { type: 'easels', count: 5, gap: 1.25, seed: 2 }), A(5.5, 60.4, { type: 'sign', w: 3.4, text: 'MEGA EXHIBITION\nK. N. RAMACHANDRAN', size: 52 }), A(3.2, 65.8, { type: 'pavilion', w: 3, d: 2.6, roof: '#8A6A3A' }), A(3.2, 66.0, { type: 'easels', count: 2, gap: 1.2, seed: 1 }), A(21.2, 69.2, { type: 'pavilion', w: 3.6, d: 2.6, roof: '#6A4A3A' }), A(21.2, 69.5, { type: 'easels', count: 3, gap: 1.05, seed: 3 }), A(8.4, 66.6, { type: 'sign', w: 3.4, text: 'CONCERTS · DEBATES\nTHEATRE · AWARDS', size: 52 }), A(28.0, 62.4, { type: 'sign', w: 2.6, text: 'FARM VISITS\nTREKS · PERMACULTURE', size: 48 }), A(14.8, 77.4, { type: 'sign', w: 2.4, text: 'ACOUSTIC\nFIRE' }), A(28, 60.6, { type: 'sculpture', kind: 'crystal', h: 2.6, glow: '#FFB45A' }), A(22.5, 54.8, { type: 'sculpture', kind: 'ring', h: 2.8 }), A(28, 74.6, { type: 'sculpture', kind: 'totem', h: 3 }) ] },
     // 2 · SHAMBHALA BY THE LAKE: a big open pavilion with a red tiled roof on stone terraces, steps down to the lawn.
     // Lake-touch homestay, dormitories, jetty, paragliding base. Intimate music.
-    { id: 'shambhala', n: 6, name: 'Shambhala by the Lake', center: C.shambhala, rect: [21, 76, 50, 98], floor: '#D8C8A0', structures: [
-      A(31, 84, { type: 'pavilion', w: 10, d: 6, h: 3, raised: 0.8, steps: 4, tables: 4, roof: '#B8432F', post: '#3A3A40', stone: '#B9A583' }),
-      A(44, 83, { type: 'stage', w: 5, d: 3, h: 0.6, truss: 3.6, glow: '#FFC9E0', beam: '#FFD0E8' }),
-      A(44, 85, { type: 'audience', area: 'shambhala', face: Math.PI / 2, r0: 1.5, r1: 5, count: 18 }),
-      A(23.5, 90.5, { type: 'dome', r: 2, glow: '#FFC8E8' }),
-      A(26, 94, { type: 'house', w: 5, d: 2.6, h: 2.4, color: '#DCC9A3', roof: '#B8432F' }),
-      A(47, 95, { type: 'tent', r: 1.4 }), A(43.5, 96, { type: 'tent', r: 1.4, color: '#E8D7B6' }),
-      A(37, 91, { type: 'bush', r: 0.9, color: '#E0457B' }), A(36, 95, { type: 'sculpture', kind: 'totem', h: 1.8 }),
-      A(38.6, 80.8, { type: 'pavilion', w: 4, d: 2.6, roof: '#6A4A3A' }), A(38.6, 81.1, { type: 'easels', count: 3, gap: 1.1, seed: 1 }), A(38.6, 83.6, { type: 'sign', w: 2.8, text: 'ART EXHIBITION', size: 60 }), A(39.8, 93.6, { type: 'sign', w: 2.2, text: 'ROCK\nBALANCING' }), A(47.4, 92.8, { type: 'sign', w: 2.6, text: 'CARPENTRY\nWORKSHOP' }), A(30.8, 95.4, { type: 'easels', count: 2, gap: 1.3, seed: 2 }) ] },
+    { id: 'shambhala', n: 6, name: 'Shambhala by the Lake', center: C.shambhala, rect: [7, 54, 36, 76], floor: '#D8C8A0', structures: [
+      A(17, 62, { type: 'pavilion', w: 10, d: 6, h: 3, raised: 0.8, steps: 4, tables: 4, roof: '#B8432F', post: '#3A3A40', stone: '#B9A583' }),
+      A(30, 61, { type: 'stage', w: 5, d: 3, h: 0.6, truss: 3.6, glow: '#FFC9E0', beam: '#FFD0E8' }),
+      A(30, 63, { type: 'audience', area: 'shambhala', face: Math.PI / 2, r0: 1.5, r1: 5, count: 18 }),
+      A(9.5, 68.5, { type: 'dome', r: 2, glow: '#FFC8E8' }),
+      A(12, 72, { type: 'house', w: 5, d: 2.6, h: 2.4, color: '#DCC9A3', roof: '#B8432F' }),
+      A(33, 73, { type: 'tent', r: 1.4 }), A(29.5, 74, { type: 'tent', r: 1.4, color: '#E8D7B6' }),
+      A(23, 69, { type: 'bush', r: 0.9, color: '#E0457B' }), A(22, 73, { type: 'sculpture', kind: 'totem', h: 1.8 }),
+      A(24.6, 58.8, { type: 'pavilion', w: 4, d: 2.6, roof: '#6A4A3A' }), A(24.6, 59.1, { type: 'easels', count: 3, gap: 1.1, seed: 1 }), A(24.6, 61.6, { type: 'sign', w: 2.8, text: 'ART EXHIBITION', size: 60 }), A(25.8, 71.6, { type: 'sign', w: 2.2, text: 'ROCK\nBALANCING' }), A(33.4, 70.8, { type: 'sign', w: 2.6, text: 'CARPENTRY\nWORKSHOP' }), A(16.8, 73.4, { type: 'easels', count: 2, gap: 1.3, seed: 2 }) ] },
     // 3 · LE FARM: On the backwaters. A two-storey modern house with flat roofs, big glass and a carport.
     // Political forums and big events under the big tops, with parking.
     { id: 'lefarm', n: 5, name: 'Le Farm', center: C.lefarm, rect: [48, 97, 73, 120], floor: '#D3C193', structures: [
@@ -149,7 +134,7 @@ export const SITE = {
     { id: 'island', n: 0, name: 'Island Cinema', center: C.island, rect: [66, 51, 84, 67], structures: [
       A(74.5, 55.5, { type: 'screen', w: 8, h: 3.8, rows: 3, glow: '#FFD2A0', show: 'island' }),
       A(75, 60, { type: 'lanterns', h: 2.8, pts: [[68, 61.5], [70.5, 64], [75, 65.6], [79.5, 64], [81.8, 60]] }) ] },
-    { id: 'camp', n: 0, name: 'Stay & Unwind', center: C.camp, rect: [6, 104, 32, 124], floor: '#BFB282', structures: [
+    { id: 'camp', n: 0, name: 'Stay & Unwind', center: C.camp, rect: [21, 76, 47, 96], floor: '#BFB282', structures: [
       at(C.camp, -5, -4, { type: 'tent' }), at(C.camp, 0, -6, { type: 'tent', color: '#E8D7B6' }), at(C.camp, 5, -3, { type: 'tent' }),
       at(C.camp, -4, 4, { type: 'tent', color: '#E8D7B6' }), at(C.camp, 3, 5, { type: 'tent' }), at(C.camp, 0, 0, { type: 'fire' }) ] },
     { id: 'hidden', n: 0, name: 'Hidden APPA', center: C.hidden, rect: [110, 106, 128, 124], floor: '#C2B485', hidden: true, structures: [
@@ -164,7 +149,7 @@ export const SITE = {
     { type: 'jetty', x: 41.5, y: 59, rot: 0.05, len: 6 }, { type: 'jetty', x: 47, y: 57.5, rot: 0, len: 5, w: 4 },
     { type: 'jetty', x: 100, y: 50, rot: Math.PI + 0.3, len: 4 },
     { type: 'lanterns', h: 3.0, color: '#FFB3E0', pts: [[42, 59], [47, 55.5], [52, 55.5], [52, 59.5], [47, 59.5]] },
-    // the open-air lawn screen between Shambhala and the square
+    // the open-air lawn screen between the Stay & Unwind camp and the square
     { type: 'screen', x: 55, y: 90, rot: -Math.PI / 2, w: 6, h: 3.4, rows: 3, show: 'shambhala' },
     { type: 'tower', x: 58, y: 37.5, h: 14, glow: '#FFB0E0' },
     { type: 'lanterns', h: 3.2, pts: [[99, 113], [96, 108], [93, 103]] },
@@ -175,6 +160,6 @@ export const SITE = {
   // named standing spots the cast can walk between (area centres are added automatically)
   spots: {},
   // where each area's pin floats, and the camera framing for areas (size in metres across)
-  view: { overview: { x: 65, y: 65, size: 150, fit: ['raiker', 'shambhala', 'lefarm', 'calmshet', 'purrom', 'company', 'theeya', 'checkin'] }, area: { size: 30 } }
+  view: { overview: { x: 65, y: 65, size: 150, fit: ['shambhala', 'lefarm', 'calmshet', 'purrom', 'company', 'theeya', 'checkin'] }, area: { size: 30 } }
 };
 export const VENUE_CENTRES = C;

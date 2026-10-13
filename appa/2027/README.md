@@ -3,7 +3,7 @@
 This folder is a complete, working app and video pipeline: a diorama of a site (a festival, a gallery, a campus)
 with animated people, clickable venues and exhibits whose controls do what they describe, a guided tour, and a
 renderer for the tour video and deck frames. No image or video generation: everything is Three.js code.
-The example project is **APPA Art Fest 2027** (one lake, seven venues).
+The example project is **APPA Art Fest 2027** (one lake, six venues).
 
 ## Run it
 ```

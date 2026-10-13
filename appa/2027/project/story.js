@@ -3,53 +3,53 @@
 // Channels used by the engine: timeOfDay (0 morning, 0.5 golden hour, 1 night), buildIn, stageOn, crowd, lotusGlow, dronesOn.
 import { env, smooth, ramp, lerp } from '../src/engine/util.js';
 
-// The tour is authored on a 105 s timeline and plays in 90 s. tsc() maps authored seconds to tour seconds:
+// The tour is authored on a 99 s timeline and plays in 84 s. tsc() maps authored seconds to tour seconds:
 // everything runs at TS (0.8x) except the venue stretch, from the end of the banner close-up (authored 16) to the
-// start of Hidden APPA (authored 68), which plays slower (TS_V) so each venue gets more time on screen.
+// start of Hidden APPA (authored 62), which plays slower (TS_V) so each venue gets more time on screen.
 // Everything time-based in the tour (camera, captions, channels, the family walkers) is authored in the original
 // seconds and passed through tsc(); untsc() is the inverse, for channels that read the tour clock.
 export const TS = 0.8;
-const V0 = 16, V1 = 68, TOUR_SECONDS = 90;
+const V0 = 16, V1 = 62, TOUR_SECONDS = 84;
 /* the tour skips CUT_D tour seconds once the banner close-up is done (real time CUT_AT), so the camera pans straight from the banner to Calmshet */
 export const CUT_AT = 13 * TS, CUT_D = 3 * TS;
 // solve for the venue-stretch speed so the whole tour, after the cut, lasts exactly TOUR_SECONDS
-const TS_V = (TOUR_SECONDS + CUT_D - (105 - (V1 - V0)) * TS) / (V1 - V0);
+const TS_V = (TOUR_SECONDS + CUT_D - (99 - (V1 - V0)) * TS) / (V1 - V0);
 const T0 = V0 * TS, T1 = T0 + (V1 - V0) * TS_V;
 export const tsc = a => (a <= V0 ? a * TS : a <= V1 ? T0 + (a - V0) * TS_V : T1 + (a - V1) * TS);
 export const untsc = t => (t <= T0 ? t / TS : t <= T1 ? V0 + (t - T0) / TS_V : V1 + (t - T1) / TS);
-export const TOUR_LENGTH = tsc(105);
+export const TOUR_LENGTH = tsc(99);
 // the order venues rise in during the opening, and when the tour's camera visits each one (seconds)
-const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'theeya', 'lefarm', 'shambhala', 'raiker', 'hidden'];
+const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'theeya', 'lefarm', 'shambhala', 'hidden'];
 // the tour goes round the lake clockwise on screen from Calmshet (Venue 1): Purrom, The Company Theatre, Theeya, Le Farm,
-// Shambhala and Secret Farm last (Venue 7), then Hidden APPA, then the lake lights up at the island cinema.
-// The light turns from Secret Farm onwards (dusk at 61, fully dark by Hidden APPA at ~73); the installation lights and
-// neon signs come on together at the lake (the 'lights' channel, ~75.5 to 79).
-// t=82 to 96: a wide, unhurried hold over the whole lake while the tour recaps all four festival weeks
+// Shambhala last (Venue 6), then Hidden APPA, then the lake lights up at the island cinema.
+// The light turns as the camera leaves Shambhala (dusk from 60.5, twilight by Hidden APPA at ~64); the installation lights and
+// neon signs come on together at the lake (the 'lights' channel, ~69.5 to 73).
+// t=76 to 90: a wide, unhurried hold over the whole lake while the tour recaps all four festival weeks
 // (see project/tour.js captions); the Encore caption and the end card follow straight after (the camera closes in on the lit arch).
-export const VISIT = { checkin: [9, 16], calmshet: [17, 25], purrom: [25.5, 31], company: [32, 37.5], theeya: [39, 45], lefarm: [47, 53.5], shambhala: [54.5, 60], raiker: [61, 67], hidden: [68, 74], island: [76, 82] };
+export const VISIT = { checkin: [9, 16], calmshet: [17, 25], purrom: [25.5, 31], company: [32, 37.5], theeya: [39, 45], lefarm: [47, 53.5], shambhala: [54.5, 60], hidden: [62, 68], island: [70, 76] };
 
-const TOD = [[0, 0.25], [16.5, 0.25], [19.5, 0.52], [25, 0.52], [27.5, 0.95], [37.5, 0.95], [40.5, 0.03], [45, 0.03], [48, 0.5], [53.5, 0.5], [56, 0.28], [60.5, 0.28], [63, 0.62], [66.5, 0.62], [69.5, 0.76], [74, 0.76], [77, 0.95], [120, 0.95]];
+const TOD = [[0, 0.25], [16.5, 0.25], [19.5, 0.52], [25, 0.52], [27.5, 0.95], [37.5, 0.95], [40.5, 0.03], [45, 0.03], [48, 0.5], [53.5, 0.5], [56, 0.28], [60.5, 0.28], [63.5, 0.76], [68, 0.76], [71, 0.95], [120, 0.95]];
 export const CHANNELS = {
   // the light follows the place: check-in in the morning, Calmshet at an early sunset with its lights on, Purrom and the
-  // theatre at night, Theeya at sunrise, Le Farm at sunset, Shambhala at noon, Secret Farm as the sun goes, Hidden APPA at
+  // theatre at night, Theeya at sunrise, Le Farm at sunset, Shambhala at noon, Hidden APPA at
   // twilight, then the lake, the recap and the Encore at night. [time, timeOfDay]: 0 morning, 0.5 sunset, 1 night.
   timeOfDay: { film: t => { let a = TOD[0]; if (t <= a[0]) return a[1]; for (let i = 1; i < TOD.length; i++) { const b = TOD[i]; if (t <= b[0]) return lerp(a[1], b[1], smooth((t - a[0]) / (b[0] - a[0]))); a = b; } return a[1]; }, app: 0.4, ease: 1.2 },
-  // 4 = the Encore (26–28 Feb, VVIP/VIP only), which the tour's final stretch (past t=94.5) represents.
-  week: { film: t => (t < 32 ? 0 : t < 52 ? 1 : t < 76 ? 2 : t < 94.5 ? 3 : 4), app: 0, ease: 0.05 },
+  // 4 = the Encore (26–28 Feb, VVIP/VIP only), which the tour's final stretch (past t=88.5) represents.
+  week: { film: t => (t < 32 ? 0 : t < 52 ? 1 : t < 70 ? 2 : t < 88.5 ? 3 : 4), app: 0, ease: 0.05 },
   buildIn: { film: (t, id) => { const i = Math.max(0, ORDER.indexOf(id)); return smooth(ramp(t, 1.0 + i * 0.42, 2.0 + i * 0.42)); }, app: 1 },
   stageOn: {
-    film: (t, id) => { const v = VISIT[id]; const visit = v ? env(t, v[0] - 1.5, v[0] + 0.5, v[1] + 1, v[1] + 3) : 0; const finale = smooth(ramp(t, 84, 88)) * (id === 'calmshet' ? 1 : 0.7); return Math.max(visit, finale); },
+    film: (t, id) => { const v = VISIT[id]; const visit = v ? env(t, v[0] - 1.5, v[0] + 0.5, v[1] + 1, v[1] + 3) : 0; const finale = smooth(ramp(t, 78, 82)) * (id === 'calmshet' ? 1 : 0.7); return Math.max(visit, finale); },
     app: () => 0, ease: 0.5 },
   crowd: {
-    film: (t, id) => { const v = VISIT[id]; const base = 0.35; const visit = v ? env(t, v[0] - 3, v[0], v[1] + 2, v[1] + 5) * 0.55 : 0; const finale = id === 'calmshet' ? 0.35 + 0.65 * smooth(ramp(t, 82, 90)) : 0;
+    film: (t, id) => { const v = VISIT[id]; const base = 0.35; const visit = v ? env(t, v[0] - 3, v[0], v[1] + 2, v[1] + 5) * 0.55 : 0; const finale = id === 'calmshet' ? 0.35 + 0.65 * smooth(ramp(t, 76, 84)) : 0;
       // the Encore is small and exclusive by design: once the finale crowd settles, calmshet hushes back down.
-      const encoreHush = (id === 'calmshet' && t > 94.5) ? 0.4 : 1;
+      const encoreHush = (id === 'calmshet' && t > 88.5) ? 0.4 : 1;
       return Math.max(base + visit, finale) * encoreHush; },
     app: id => (id === 'calmshet' ? 0.6 : 0.45), ease: 1.0 },
-  lotusGlow: { film: t => smooth(ramp(t, 75.5, 80)), app: 0, ease: 0.8 },
-  // installation lights and neon signs (dark from Secret Farm on, but lit only at the lake); in the app they follow the dark as before
-  lights: { film: t => smooth(ramp(t, 75.5, 79)), app: 1, ease: 0.8 },
-  dronesOn: { film: t => env(t, 82, 86, 96, 99), app: 0, ease: 0.8 }
+  lotusGlow: { film: t => smooth(ramp(t, 69.5, 74)), app: 0, ease: 0.8 },
+  // installation lights and neon signs (dark from Hidden APPA on, but lit only at the lake); in the app they follow the dark as before
+  lights: { film: t => smooth(ramp(t, 69.5, 73)), app: 1, ease: 0.8 },
+  dronesOn: { film: t => env(t, 76, 80, 90, 93), app: 0, ease: 0.8 }
 };
 // channels are authored in original seconds: feed them untsc(t)
 for (const c of Object.values(CHANNELS)) { const f = c.film; if (f) c.film = (t, id) => f(untsc(t), id); }
