@@ -7,7 +7,7 @@ this file is the current state and the rules. Read both before changing anything
 ## 1. What this is
 - **Calm Shade** (`index.html`): an invite-only homestay collective with a WhatsApp-style AI concierge, host dashboard,
   creator console, the Grove (invite/trust system), curated multi-stay trips.
-- **APPA Art Fest 2027** (25 Jan – 25 Feb 2027, Encore 26–28 Feb, Kamshet): sold through Calm Shade as a VIP tier.
+- **APPA Art Fest 2027** (12 Feb – 20 Mar 2027, Encore 21–23 Mar, Kamshet — dates changed by Karthik 14 Oct 2026): sold through Calm Shade as a VIP tier.
   Festival booking, day passes, the Art Passport and partner-host listings all live inside `index.html`.
 - **The 3D festival app** (`appa/2027/`): isometric Three.js map + guided tour; its 🎟 Tickets panel links into booking.
 - **`fest.php`**: the only backend. PHP + PDO; SQLite by default, MySQL if configured. All money/availability rules
@@ -51,7 +51,9 @@ this file is the current state and the rules. Read both before changing anything
   editable in the desk. Sources: Shambhala = its published tariff +5% GST (6,510 / 7,560; extra 1,995 / 2,520);
   Calmshet = ₹4,000/head incl. 3 meals (Karthik, 14 Oct) → room for two 8,000, extra adult 4,000. Le Farm = room
   rate derived from its 2019 villa rate (6,700 / 9,800) — **confirm**; extra adult 2,360 = lefarm.in tariff ₹2,000 + 18% GST
-  (lefarm.in shows no base rate: "call to enquire", StayVista +91 9137023866; meals extra). Theeya (no website found),
+  (lefarm.in shows no base rate: "call to enquire", StayVista +91 9137023866; meals extra). Theeya = ₹4,000/head (Karthik, 14 Oct; extra adult 4,000).
+  Programme weeks (PP_WEEKS / copy.js / tour.js): Roots & Raga 12–19 Feb, Keeping it Real 20–26 Feb, Tech 27 Feb–5 Mar,
+  All forms 6–20 Mar, Encore 21–23 Mar. Tests use dates shifted +21 days (same weekdays).
   The Company Theatre (thecompanytheatre.net: no stay info) (8,000) and Purrom (purrom.com: 5 stays, 3 veg meals
   included, prices by WhatsApp +91 98200 24049 only) (4,000) — stand-ins reproducing the old ₹12,000 / ₹6,000. `coupleNight/singleNight/partnerShare*` are no longer used.
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.
@@ -115,8 +117,8 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
    (Fixed 14 Oct: concierge status now honest — `cs_state` returns `ai`; shows "usually replies within the hour" when off.)
 8. Audit 14 Oct 2026: six Calmshet/Appa listings corrected from Airbnb (names, Kamshet, beds/baths, capacity, ratings,
    `revs`); demo Grove stays p7–p9 hidden + unbookable; stock logos removed. Calmshet p1–p4 now ₹4,000/head with meals
-   (ppWith=ppWithout ⇒ `mealsIn()` hides breakfast-only). STILL NEEDED FROM KARTHIK: Appa Art Cottage / Art House prices, sleeps for
+   (ppWith=ppWithout ⇒ `mealsIn()` hides breakfast-only). Appa p5/p6 also ₹4,000/head with meals. STILL NEEDED FROM KARTHIK: sleeps for
    Lakeview Cottage + Room 2, whether Lakeview Cottage is still listed on Airbnb (its page errors), guest pet policy,
-   real photos per room (every card uses the same night shot), and real venue rates for Calmshet/Theeya/CTheatre/Purrom/Le Farm.
+   real photos per room (every card uses the same night shot), and real venue rates for CTheatre/Purrom/Le Farm.
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters
    (desk → Passport stamps → Show posters).

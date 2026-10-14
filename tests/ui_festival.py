@@ -16,7 +16,7 @@ async def main():
         await pg.goto(B+'#appa'); await pg.wait_for_timeout(1500)
         t=await pg.inner_text('.fx')
         check('outage banner',"can't reach the booking desk" in t,t[:200])
-        await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-12"]'); await pg.evaluate("CS.fx('add')"); await pg.evaluate("CS.fx('checkout')"); await pg.wait_for_timeout(200)
+        await pg.click('[data-fxu="lefarm"][data-fxd="2027-03-05"]'); await pg.evaluate("CS.fx('add')"); await pg.evaluate("CS.fx('checkout')"); await pg.wait_for_timeout(200)
         dis=await pg.get_attribute('text=Hold my rooms','disabled'); check('booking paused when offline',dis is not None,dis)
         await pg.unroute('**/fest.php*'); await pg.click('text=Try again now'); await pg.wait_for_timeout(1500)
         t=await pg.inner_text('.fx'); check('recovers',"can't reach" not in t)
@@ -51,7 +51,7 @@ async def main():
         await pg2.screenshot(path='/tmp/m-find.png')
         # 5 stale cart pruned
         pg3=await ctx.new_page()
-        await pg3.goto(B); await pg3.evaluate("""localStorage.setItem('appa-cart',JSON.stringify({stays:[{key:'a',unit:'L-GONE',from:'2027-02-01',n:2,rooms:1,guests:2},{key:'b',unit:'calmshet',from:'2027-02-03',n:1,rooms:1,guests:2},{junk:1}],passes:[{date:'x'}]}))""")
+        await pg3.goto(B); await pg3.evaluate("""localStorage.setItem('appa-cart',JSON.stringify({stays:[{key:'a',unit:'L-GONE',from:'2027-02-22',n:2,rooms:1,guests:2},{key:'b',unit:'calmshet',from:'2027-02-24',n:1,rooms:1,guests:2},{junk:1}],passes:[{date:'x'}]}))""")
         await pg3.goto(B+'?r=1#appa'); await pg3.wait_for_timeout(1800)
         t=await pg3.inner_text('.fx-trip'); check('stale cart pruned','Calmshet' in t and t.count('Remove')==1,t[:300])
         await pg3.evaluate("localStorage.setItem('appa-cart','{{broken')"); await pg3.goto(B+'?r=2#appa'); await pg3.wait_for_timeout(1200)

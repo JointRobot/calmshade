@@ -61,7 +61,7 @@ async def main():
         ref=await pg.inner_text('.fx-ref'); check('booked',ref.startswith('APPA-'),ref)
         c,j=api('passport',{'tickets':[]})
         # fill Theeya for the remaining rooms on one of those nights via API, then curate with Theeya only for 7 nights -> error message
-        for i in range(2): api('book',{'stays':[{'unit':'theeya','from':'2027-01-28','n':1,'rooms':1,'guests':2}],'passes':[],'guest':{'name':'F','phone':f'93000000{i:02d}'}})
+        for i in range(2): api('book',{'stays':[{'unit':'theeya','from':'2027-02-18','n':1,'rooms':1,'guests':2}],'passes':[],'guest':{'name':'F','phone':f'93000000{i:02d}'}})
         await pg.reload(); await pg.wait_for_timeout(1500)
         await pg.evaluate("CS.fx('tab','curate')"); await pg.wait_for_timeout(200)
         await pg.evaluate("CS.cu('clear')"); await pg.click('.fx-chip:has-text("Theeya")'); await pg.click('text=Curate my stay'); await pg.wait_for_timeout(300)

@@ -17,7 +17,7 @@ async def main():
         pg=await b.new_page(viewport={'width':1366,'height':860}); pg.on('pageerror',lambda e: errs.append(str(e)))
         await pg.goto(B+'#appa'); await pg.wait_for_timeout(1500)
         await pg.evaluate("CS.fx('tab','pass')"); await pg.wait_for_timeout(200)
-        await pg.click('.fx-day:has-text("30")'); await pg.click('.fx-day:has-text("31")'); await pg.evaluate("CS.fx('addPass')"); await pg.wait_for_timeout(300)
+        await pg.click('.fx-day[onclick*="2027-02-20"]'); await pg.click('.fx-day[onclick*="2027-02-21"]'); await pg.evaluate("CS.fx('addPass')"); await pg.wait_for_timeout(300)
         t=await pg.inner_text('.fx-trip'); check('buy label','Buy day passes' in t and 'Book this trip' not in t,t[-200:])
         await pg.click('text=Buy day passes'); await pg.wait_for_timeout(200)
         t=await pg.inner_text('.fx-trip'); check('no hold wording in checkout','hold' not in t.lower() and 'Continue to payment' in t,t[-300:])
@@ -39,7 +39,7 @@ async def main():
         check('ticket qr element',await pg.evaluate("!!document.querySelector('.fx-trip [data-qr^=\"APPA-\"]')"))
         await pg.screenshot(path='/tmp/ticket.png')
         # stays still use hold wording
-        await pg.click('text=Back'); await pg.evaluate("CS.fx('tab','stay')"); await pg.click('[data-fxu="calmshet"][data-fxd="2027-02-15"]'); await pg.evaluate("CS.fx('add');CS.fx('checkout')"); await pg.wait_for_timeout(300)
+        await pg.click('text=Back'); await pg.evaluate("CS.fx('tab','stay')"); await pg.click('[data-fxu="calmshet"][data-fxd="2027-03-08"]'); await pg.evaluate("CS.fx('add');CS.fx('checkout')"); await pg.wait_for_timeout(300)
         t=await pg.inner_text('.fx-trip'); check('stays keep hold','Hold my rooms' in t,t[-200:])
         print('ERR',errs); await b.close()
 asyncio.run(main())

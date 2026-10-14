@@ -72,8 +72,8 @@ function is_mysql() { return defined('FEST_DB_DSN') && stripos(FEST_DB_DSN, 'mys
 /* ---------- settings & inventory ---------- */
 const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partnerShareCouple'=>8000,'partnerShareSingle'=>4000,
   'tentNight'=>9000,'tents'=>20,'dayPass'=>2000,'partnerMarkup'=>2000,'surgeMax'=>20,'vipNights'=>7,'vipDiscount'=>7000,
-  'vvipNights'=>30,'vvipDiscount'=>40000,'holdHours'=>48,'firstNight'=>'2027-01-25','lastNight'=>'2027-02-28',
-  'passLast'=>'2027-02-25','encoreFrom'=>'2027-02-26','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
+  'vvipNights'=>30,'vvipDiscount'=>40000,'holdHours'=>48,'firstNight'=>'2027-02-12','lastNight'=>'2027-03-23',
+  'passLast'=>'2027-03-20','encoreFrom'=>'2027-03-21','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
   'contact'=>'karthik@xtrathin.in',
   /* Venue real rates (what the venue itself charges, per room per night incl. its taxes) — guests pay this
      PLUS a festival ticket (dayPass) per guest per night; the venue is paid exactly this. Researched 14 Oct 2026:
@@ -81,11 +81,12 @@ const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partne
      Le Farm = room rate from its 2019 villa rate (₹40k wk / ₹59k wkend, 12 adults) — CONFIRM (lefarm.in says 'call to enquire');
        extra adult from lefarm.in tariff today: ₹2,000 + 18% GST = 2,360; meals extra there.
      Calmshet = ₹4,000 per head incl. 3 meals (Karthik, 14 Oct) → room for two 8,000, each extra adult 4,000.
-     Theeya, The Company Theatre, Purrom: no public price on their sites — stand-ins equal to the old venue share. */
+     Theeya = ₹4,000/head (Karthik, 14 Oct) → room for two 8,000, extra adult 4,000.
+     The Company Theatre, Purrom: no public price on their sites — stand-ins equal to the old venue share. */
   'rate_calmshet'=>8000,'rateWe_calmshet'=>8000,'extra_calmshet'=>4000,'extraWe_calmshet'=>4000,
   'rate_lefarm'=>6700,'rateWe_lefarm'=>9800,'extra_lefarm'=>2360,'extraWe_lefarm'=>2360,
   'rate_shambhala'=>6510,'rateWe_shambhala'=>7560,'extra_shambhala'=>1995,'extraWe_shambhala'=>2520,
-  'rate_theeya'=>8000,'rateWe_theeya'=>8000,'extra_theeya'=>0,'extraWe_theeya'=>0,
+  'rate_theeya'=>8000,'rateWe_theeya'=>8000,'extra_theeya'=>4000,'extraWe_theeya'=>4000,
   'rate_ctheatre'=>8000,'rateWe_ctheatre'=>8000,'extra_ctheatre'=>0,'extraWe_ctheatre'=>0,
   'rate_purrom'=>4000,'rateWe_purrom'=>4000,'extra_purrom'=>0,'extraWe_purrom'=>0];
 const VIP = [
@@ -274,7 +275,7 @@ function public_listings() {
 const CS_PROPS = [
   'p1'=>['Calmshet Lakeview Cottage',8,4000,4000,true],   'p2'=>['Calmshet Lakeview Room 2',3,4000,4000,true],
   'p3'=>['Calmshet Lakeview Room 1',5,4000,4000,true],    'p4'=>['Calmshet Lakeview Triangle',6,4000,4000,true],
-  'p5'=>['Appa Art Cottage',2,1700,1150,true],            'p6'=>['Appa Art House',12,1100,750,true],
+  'p5'=>['Appa Art Cottage',2,4000,4000,true],            'p6'=>['Appa Art House',12,4000,4000,true],
   /* p7–p9 are the Grove's demo hosts (Mira, Ravi, Anya) — not real stays, never bookable by guests */
   'p7'=>['The Quiet Courtyard',5,1600,1100,false],        'p8'=>['The Old Millhouse',6,1500,1000,false],
   'p9'=>["Anya's Terrace",4,1300,900,false],
@@ -631,7 +632,7 @@ switch ($a) {
   case 'settings': {
     need_admin(); $b = body(); $in = (array)($b['settings'] ?? []); $s = [];
     foreach (DEF as $k => $v) if (array_key_exists($k, $in)) $s[$k] = is_int($v) ? max(0, (int)$in[$k]) : clean($in[$k], 120);
-    foreach (['firstNight','lastNight','passLast','encoreFrom'] as $k) if (isset($s[$k]) && !valid_date($s[$k])) fail($k.' must be a date like 2027-01-25');
+    foreach (['firstNight','lastNight','passLast','encoreFrom'] as $k) if (isset($s[$k]) && !valid_date($s[$k])) fail($k.' must be a date like 2027-02-12');
     $v = json_encode(array_merge(settings(), $s));
     db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute(['settings']);
     db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute(['settings', $v]);

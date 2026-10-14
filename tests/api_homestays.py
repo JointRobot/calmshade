@@ -26,7 +26,7 @@ with concurrent.futures.ThreadPoolExecutor(5) as ex: res=list(ex.map(one,range(5
 check('race: one winner',[c for c,_ in res].count(200)==1,[c for c,_ in res])
 win=[j for c,j in res if c==200][0]
 c,j=call('cs_state'); check('occ tn',j['occ'].get('p4',{}).get(D(10))=='tn',j['occ'])
-c,j=call('cs_book',{'legs':[{'prop':'p1','nights':[D(3),D(4)],'heads':4,'meals':False},{'prop':'p5','nights':[D(5)],'heads':2,'meals':True}],'guest':g('9820000001')}); check('multi leg',c==200 and j['total']==4000*4*2+1700*2,(c,j)); trip=j
+c,j=call('cs_book',{'legs':[{'prop':'p1','nights':[D(3),D(4)],'heads':4,'meals':False},{'prop':'p5','nights':[D(5)],'heads':2,'meals':True}],'guest':g('9820000001')}); check('multi leg',c==200 and j['total']==4000*4*2+4000*2,(c,j)); trip=j
 c,j=call('cs_book',{'legs':[{'prop':'p1','nights':[D(8)],'heads':2},{'prop':'p1','nights':[D(8)],'heads':2}],'guest':g('9820000002')}); check('same night twice in one trip',c==409,(c,j))
 c,j=call('cs_mine',{'tickets':[{'ref':trip['ref'],'token':trip['token']}]}); check('mine',len(j['bookings'])==1 and j['bookings'][0]['status']=='pending',j)
 c,j=call('cs_utr',{'ref':trip['ref'],'token':trip['token'],'utr':'123456789012'}); check('utr',c==200,(c,j))

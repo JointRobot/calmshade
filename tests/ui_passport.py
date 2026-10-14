@@ -15,10 +15,10 @@ async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); errs=[]
         ctx=await b.new_context(viewport={'width':1366,'height':860}); pg=await ctx.new_page(); pg.on('pageerror',lambda e: errs.append(str(e)))
-        # book: Le Farm 3 nights + day pass 10 Feb, via UI
+        # book: Le Farm 3 nights + day pass 3 Mar, via UI
         await pg.goto(B+'#appa'); await pg.wait_for_timeout(1500)
-        await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-02"]'); await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-04"]'); await pg.evaluate("CS.fx('add')")
-        await pg.evaluate("CS.fx('tab','pass')"); await pg.click('.fx-day:has-text("10")'); await pg.evaluate("CS.fx('addPass');CS.fx('checkout')"); await pg.wait_for_timeout(300)
+        await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-23"]'); await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-25"]'); await pg.evaluate("CS.fx('add')")
+        await pg.evaluate("CS.fx('tab','pass')"); await pg.click('.fx-day[onclick*="2027-03-03"]'); await pg.evaluate("CS.fx('addPass');CS.fx('checkout')"); await pg.wait_for_timeout(300)
         await pg.fill('#fxg-name','Ravi Menon'); await pg.fill('#fxg-phone','9811122233'); await pg.click('text=Hold my rooms'); await pg.wait_for_timeout(1800)
         ref=await pg.inner_text('.fx-ref')
         # passport before payment
@@ -28,7 +28,7 @@ async def main():
         c,j=api('stamp',{'spot':'lefarm','sig':sig['lefarm'],'tickets':[]}); check('stamp without booking 403',c==403,(c,j))
         c,j=api('stamp',{'spot':'lefarm','sig':'000000000000','tickets':[]}); check('forged stamp 400',c==400,(c,j))
         # timetable
-        c,j=api('schedule_set',{'items':[{'date':'2027-02-03','time':'19:30','spot':'lefarm','title':'Roots night concert','access':'all'},{'date':'2027-02-03','time':'22:00','spot':'calmshet','title':'Artist dinner','access':'vvip'},{'date':'2027-02-20','time':'','spot':'theeya','title':'Choir day','access':'all'},{'date':'bad','title':'x'}]},True)
+        c,j=api('schedule_set',{'items':[{'date':'2027-02-24','time':'19:30','spot':'lefarm','title':'Roots night concert','access':'all'},{'date':'2027-02-24','time':'22:00','spot':'calmshet','title':'Artist dinner','access':'vvip'},{'date':'2027-03-13','time':'','spot':'theeya','title':'Choir day','access':'all'},{'date':'bad','title':'x'}]},True)
         check('schedule saved, bad dropped',c==200 and len(j['schedule'])==3,(c,j))
         c,j=api('status',{'ref':ref,'status':'confirmed'},True); check('confirmed',c==200)
         await pg.reload(); await pg.wait_for_timeout(1800)
@@ -50,7 +50,7 @@ async def main():
         t=await pg.inner_text('.pp-itin'); check('whole festival shows others + no encore for non-VIP','Add this day' in t and 'Choir day' in t and 'Encore' not in t,t[-300:])
         await pg.screenshot(path='/tmp/pp-itin.png',full_page=False)
         await pg.click('.pp-day:has-text("Choir day") >> text=Add this day'); await pg.wait_for_timeout(800)
-        t=await pg.inner_text('.fx-trip'); check('add day → checkout with pass','Day pass' in t and '20 Feb' in t and 'Continue to payment' in t,t[:400])
+        t=await pg.inner_text('.fx-trip'); check('add day → checkout with pass','Day pass' in t and '13 Mar' in t and 'Continue to payment' in t,t[:400])
         # new phone: scan → find → stamped
         ctx2=await b.new_context(viewport={'width':390,'height':844},is_mobile=True); m=await ctx2.new_page(); m.on('pageerror',lambda e: errs.append(str(e)))
         await m.goto(B+f'?stamp=theeya.{sig["theeya"]}'); await m.wait_for_timeout(1500)

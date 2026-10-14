@@ -72,7 +72,7 @@ async def main():
         # 6 festival board shows partner with photo + Calm Shade link
         f=await b.new_page(viewport={'width':1366,'height':900}); f.on('pageerror',lambda e: errs.append(str(e)))
         await f.goto(B+'?f=1#appa'); await f.wait_for_timeout(1800)
-        await f.click('[data-fxu^="L-"][data-fxd="2027-02-05"]'); await f.wait_for_timeout(300)
+        await f.click('[data-fxu^="L-"][data-fxd="2027-02-26"]'); await f.wait_for_timeout(300)
         t=await f.inner_text('#fx-sel'); check('partner panel links',('Map ↗' in t) and ('Photos & details on Calm Shade' in t) and await f.evaluate("!!document.querySelector('.hf-selimg')"),t[:300])
         # 7 login link request UI
         await f.evaluate("CS.go('login')"); await f.wait_for_timeout(300)

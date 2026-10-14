@@ -34,7 +34,7 @@ export const CHANNELS = {
   // theatre at night, Theeya at sunrise, Le Farm at sunset, Shambhala at noon, Hidden APPA at
   // twilight, then the lake, the recap and the Encore at night. [time, timeOfDay]: 0 morning, 0.5 sunset, 1 night.
   timeOfDay: { film: t => { let a = TOD[0]; if (t <= a[0]) return a[1]; for (let i = 1; i < TOD.length; i++) { const b = TOD[i]; if (t <= b[0]) return lerp(a[1], b[1], smooth((t - a[0]) / (b[0] - a[0]))); a = b; } return a[1]; }, app: 0.4, ease: 1.2 },
-  // 4 = the Encore (26–28 Feb, VVIP/VIP only), which the tour's final stretch (past t=88.5) represents.
+  // 4 = the Encore (21–23 Mar, VVIP/VIP only), which the tour's final stretch (past t=88.5) represents.
   week: { film: t => (t < 32 ? 0 : t < 52 ? 1 : t < 70 ? 2 : t < 88.5 ? 3 : 4), app: 0, ease: 0.05 },
   buildIn: { film: (t, id) => { const i = Math.max(0, ORDER.indexOf(id)); return smooth(ramp(t, 1.0 + i * 0.42, 2.0 + i * 0.42)); }, app: 1 },
   stageOn: {
