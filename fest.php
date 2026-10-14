@@ -71,10 +71,21 @@ function is_mysql() { return defined('FEST_DB_DSN') && stripos(FEST_DB_DSN, 'mys
 
 /* ---------- settings & inventory ---------- */
 const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partnerShareCouple'=>8000,'partnerShareSingle'=>4000,
-  'tentNight'=>9000,'tents'=>20,'dayPass'=>2000,'partnerMarkup'=>1000,'surgeMax'=>20,'vipNights'=>7,'vipDiscount'=>7000,
+  'tentNight'=>9000,'tents'=>20,'dayPass'=>2000,'partnerMarkup'=>2000,'surgeMax'=>20,'vipNights'=>7,'vipDiscount'=>7000,
   'vvipNights'=>30,'vvipDiscount'=>40000,'holdHours'=>48,'firstNight'=>'2027-01-25','lastNight'=>'2027-02-28',
   'passLast'=>'2027-02-25','encoreFrom'=>'2027-02-26','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
-  'contact'=>'karthik@xtrathin.in'];
+  'contact'=>'karthik@xtrathin.in',
+  /* Venue real rates (what the venue itself charges, per room per night incl. its taxes) — guests pay this
+     PLUS a festival ticket (dayPass) per guest per night; the venue is paid exactly this. Researched 14 Oct 2026:
+     Shambhala = published tariff (₹6,200 wk / ₹7,200 wkend for 2, extra adult ₹1,900 / ₹2,400) + 5% GST.
+     Le Farm = 2019 published whole-villa rate (₹40k wk / ₹59k wkend for 12 adults, +₹1,500/adult) per room — CONFIRM.
+     Calmshet, Theeya, The Company Theatre, Purrom: no public price — stand-ins equal to the old venue share. */
+  'rate_calmshet'=>8000,'rateWe_calmshet'=>8000,'extra_calmshet'=>0,'extraWe_calmshet'=>0,
+  'rate_lefarm'=>6700,'rateWe_lefarm'=>9800,'extra_lefarm'=>1500,'extraWe_lefarm'=>1500,
+  'rate_shambhala'=>6510,'rateWe_shambhala'=>7560,'extra_shambhala'=>1995,'extraWe_shambhala'=>2520,
+  'rate_theeya'=>8000,'rateWe_theeya'=>8000,'extra_theeya'=>0,'extraWe_theeya'=>0,
+  'rate_ctheatre'=>8000,'rateWe_ctheatre'=>8000,'extra_ctheatre'=>0,'extraWe_ctheatre'=>0,
+  'rate_purrom'=>4000,'rateWe_purrom'=>4000,'extra_purrom'=>0,'extraWe_purrom'=>0];
 const VIP = [
   'calmshet' => ['name'=>'Calmshet','rooms'=>5,'cap'=>4,'kind'=>'room'],
   'lefarm'   => ['name'=>'Le Farm','rooms'=>8,'cap'=>4,'kind'=>'room'],
@@ -136,10 +147,15 @@ function surge($u, $id, $d, $occ, $S) {
   if (!in_array($u['kind'], ['room','single','tent']) || $u['rooms'] <= 1) return 1;
   return 1 + ($S['surgeMax'] / 100) * min(1, ($occ[$id][$d] ?? 0) / ($u['rooms'] - 1));
 }
+function is_weekend_night($d) { $w = (int)gmdate('w', strtotime($d.' 00:00:00 UTC')); return $w === 5 || $w === 6; }
+function venue_rate($id, $d, $S)  { $we = is_weekend_night($d); return (int)($S[($we ? 'rateWe_' : 'rate_').$id] ?? 0); }
+function venue_extra($id, $d, $S) { $we = is_weekend_night($d); return (int)($S[($we ? 'extraWe_' : 'extra_').$id] ?? 0); }
+/* What the venue is paid for one room-night: its own rate plus its own extra-adult charge — never the tickets or surge. */
+function venue_night($id, $d, $g, $S) { return venue_rate($id, $d, $S) + max(0, $g - 2) * venue_extra($id, $d, $S); }
 function night_price($u, $id, $d, $g, $occ, $S) {
   switch ($u['kind']) {
-    case 'single': return r100($S['singleNight'] * surge($u,$id,$d,$occ,$S));
-    case 'room':   return r100($S['coupleNight'] * surge($u,$id,$d,$occ,$S)) + max(0,$g-2) * $S['extraGuest'];
+    case 'single': return r100(venue_rate($id,$d,$S) * surge($u,$id,$d,$occ,$S)) + $S['dayPass'];
+    case 'room':   return r100(venue_rate($id,$d,$S) * surge($u,$id,$d,$occ,$S)) + max(0,$g-2) * venue_extra($id,$d,$S) + $g * $S['dayPass'];
     case 'tent':   return r100($S['tentNight'] * surge($u,$id,$d,$occ,$S)) + max(0,$g-2) * $S['extraGuest'];
     default:       return $u['rate'] + $S['partnerMarkup'] * $g;
   }
@@ -168,7 +184,8 @@ function quote($stays, $passes, $occ) {
     $per = []; foreach ($nights as $d) { $per[] = night_price($u,$id,$d,$g,$occ,$S); $want[$id][$d] = ($want[$id][$d] ?? 0) + $rooms; }
     if ($u['kind'] !== 'partner') foreach ($nights as $d) $prem[$d] = 1;
     $total = array_sum($per) * $rooms;
-    $lines[] = ['kind'=>'stay','unit'=>$id,'name'=>$u['name'],'unitKind'=>$u['kind'],'nights'=>$nights,'rooms'=>$rooms,'guests'=>$g,'per'=>$per,'total'=>$total,'payout'=>host_payout($u,$rooms,$n,$S)];
+    $pay = in_array($u['kind'], ['room','single'], true) ? array_sum(array_map(fn($d)=>venue_night($id,$d,$g,$S), $nights)) * $rooms : host_payout($u,$rooms,$n,$S);
+    $lines[] = ['kind'=>'stay','unit'=>$id,'name'=>$u['name'],'unitKind'=>$u['kind'],'nights'=>$nights,'rooms'=>$rooms,'guests'=>$g,'per'=>$per,'total'=>$total,'payout'=>$pay];
   }
   foreach ($want as $id => $byNight) foreach ($byNight as $d => $r) {
     $left = $U[$id]['rooms'] - ($occ[$id][$d] ?? 0);

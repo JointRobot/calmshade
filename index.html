@@ -2021,9 +2021,19 @@ ${kb()}`;}
   /* ═════════ APPA ART FEST 2027 — festival stays, a VIP tier on Calm Shade ═════════ */
   const FX_API='fest.php';
   const FX_DEF={coupleNight:12000,singleNight:6000,extraGuest:2000,partnerShareCouple:8000,partnerShareSingle:4000,
-    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:1000,surgeMax:20,vipNights:7,vipDiscount:7000,vvipNights:30,vvipDiscount:40000,
+    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:7,vipDiscount:7000,vvipNights:30,vvipDiscount:40000,
     holdHours:48,firstNight:'2027-01-25',lastNight:'2027-02-28',passLast:'2027-02-25',encoreFrom:'2027-02-26',
-    upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in'};
+    upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in',
+    rate_calmshet:8000,rateWe_calmshet:8000,extra_calmshet:0,extraWe_calmshet:0,
+    rate_lefarm:6700,rateWe_lefarm:9800,extra_lefarm:1500,extraWe_lefarm:1500,
+    rate_shambhala:6510,rateWe_shambhala:7560,extra_shambhala:1995,extraWe_shambhala:2520,
+    rate_theeya:8000,rateWe_theeya:8000,extra_theeya:0,extraWe_theeya:0,
+    rate_ctheatre:8000,rateWe_ctheatre:8000,extra_ctheatre:0,extraWe_ctheatre:0,
+    rate_purrom:4000,rateWe_purrom:4000,extra_purrom:0,extraWe_purrom:0};
+  /* mirrors fest.php: venue real rate (Fri/Sat nights use the weekend rate) + festival ticket per guest */
+  const fxWE=d=>{const w=new Date(d+'T00:00:00Z').getUTCDay();return w===5||w===6;};
+  const fxVR=(id,d)=>+(FX.S[(fxWE(d)?'rateWe_':'rate_')+id]||0);
+  const fxVX=(id,d)=>+(FX.S[(fxWE(d)?'extraWe_':'extra_')+id]||0);
   const FX_VIP=[
     {id:'calmshet',name:'Calmshet',rooms:5,cap:4,kind:'room',blurb:'K. N. Ramachandran paintings, fashion, sunset sets'},
     {id:'lefarm',name:'Le Farm',rooms:8,cap:4,kind:'room',blurb:'Big concerts, farm visits, sunrise yoga'},
@@ -2083,11 +2093,12 @@ ${kb()}`;}
   const r100=x=>Math.round(x/100)*100;
   function fxSurge(u,d){if(!fxPrem(u)||u.rooms<=1)return 1;return 1+(+FX.S.surgeMax/100)*Math.min(1,fxOcc(u.id,d)/(u.rooms-1));}
   function fxPrice(u,d,g){const S=FX.S;
-    if(u.kind==='single')return r100(S.singleNight*fxSurge(u,d));
-    if(u.kind==='room')return r100(S.coupleNight*fxSurge(u,d))+Math.max(0,g-2)*S.extraGuest;
+    if(u.kind==='single')return r100(fxVR(u.id,d)*fxSurge(u,d))+(+S.dayPass);
+    if(u.kind==='room')return r100(fxVR(u.id,d)*fxSurge(u,d))+Math.max(0,g-2)*fxVX(u.id,d)+g*S.dayPass;
     if(u.kind==='tent')return r100(S.tentNight*fxSurge(u,d))+Math.max(0,g-2)*S.extraGuest;
     return u.rate+S.partnerMarkup*g;}
-  const fxFrom=u=>u.kind==='single'?FX.S.singleNight:u.kind==='room'?FX.S.coupleNight:u.kind==='tent'?FX.S.tentNight:u.rate+FX.S.partnerMarkup*2;
+  const fxFrom=u=>u.kind==='single'?r100(+(FX.S['rate_'+u.id]||0))+(+FX.S.dayPass):u.kind==='room'?r100(Math.min(+(FX.S['rate_'+u.id]||0),+(FX.S['rateWe_'+u.id]||FX.S['rate_'+u.id]||0)))+2*FX.S.dayPass:u.kind==='tent'?FX.S.tentNight:u.rate+FX.S.partnerMarkup*2;
+  const fxRoomFrom=()=>Math.min(...FX_VIP.filter(u=>u.kind==='room').map(fxFrom));
   function fxPriceStay(s){const u=fxU(s.unit);if(!u)return null;const nights=fxRange(s.from,s.n);const per=nights.map(d=>fxPrice(u,d,s.guests));
     return {u,nights,per,total:per.reduce((a,b)=>a+b,0)*s.rooms};}
   function fxTrip(){const prem=new Set();let stays=0;const lines=[];
@@ -2143,7 +2154,7 @@ ${kb()}`;}
   function fxStayHTML(){
     const enc=fxEncOpen();const nights=fxNights().filter(d=>enc||!fxEnc(d));
     const groups=[];const f=FX.filter;
-    if(f==='all'||f==='rooms')groups.push(['VIP rooms','inside the festival · '+inr(FX.S.coupleNight)+' per couple per night with 2 festival entries',FX_VIP]);
+    if(f==='all'||f==='rooms')groups.push(['VIP rooms','inside the festival · the venue\'s own rate plus a festival ticket for every guest, every night',FX_VIP]);
     if(f==='all'||f==='tents')groups.push(['VIP tents','inside the festival grounds',[fxTent()]]);
     if(f==='all'||f==='partners')groups.push(['Partner stays','homestays and camps nearby · festival entry included',fxPartners()]);
     let head='<tr><th class="rowh">Night of</th>';
@@ -2172,7 +2183,7 @@ ${kb()}`;}
 
   function fxIncludedHTML(){const S=FX.S;
     const T=[['Day pass',inr(S.dayPass),'per person, per day','Entry to the festival for one day: every venue, every open show.',['Access to all open venues for the day','Exhibitions, art walks and open workshops','No stay included']],
-      ['VIP room, for 2',inr(S.coupleNight),'per couple, per night','A room inside the festival with festival tickets for two each night.',['A room at Calmshet, Le Farm, Shambhala, Theeya or The Company Theatre (Purrom single rooms '+inr(S.singleNight)+')','Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in','Extra adults '+inr(S.extraGuest)+' a night; kids under 10 free']],
+      ['VIP room, for 2','from '+inr(fxRoomFrom()),'per couple, per night','The venue\'s own room rate, plus festival tickets for two each night.',['A room at Calmshet, Le Farm, Shambhala, Theeya or The Company Theatre (Purrom single rooms from '+inr(fxFrom(FX_VIP.find(u=>u.id==='purrom')))+')','Festival tickets for every guest, every night you stay ('+inr(S.dayPass)+' each)','Each venue sets its own rate; weekends may cost more','Cycle or e-bike pickup at check-in','Kids under 10 free']],
       ['VIP tent, for 2',inr(S.tentNight),'per couple, per night','A tent inside the festival grounds, festival tickets included.',['Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in']],
       ['VIP · '+S.vipNights+'+ nights',inr(S.vipDiscount)+' off','any '+S.vipNights+' or more nights inside the festival','A week at the festival with full access to every show and experience.',['All shows and experiences for your nights','Priority entry at every venue','Mix venues night by night, or use Curate']],
       ['VVIP · '+S.vvipNights+' nights',inr(S.vvipDiscount)+' off','the full month, stay + experience','The whole festival, start to finish: full access plus a few things nobody else gets.',['All access, every venue, the whole month','A few special-access moments across the month','Personal meet-ups with resident artists','The Encore: three extra days after the festival closes']],
@@ -2191,7 +2202,7 @@ ${kb()}`;}
     if(u.kind==='single')FX.guests=1;else FX.guests=Math.max(1,Math.min(FX.guests,u.cap));
     const per=nights.map(d=>fxPrice(u,d,FX.guests));const grp={};per.forEach(p=>grp[p]=(grp[p]||0)+1);
     const sub=per.reduce((x,y)=>x+y,0)*FX.rooms;const word=u.kind==='tent'?'Tents':'Rooms';
-    const inc=u.kind==='partner'?`Host rate ${inr(u.rate)} plus festival entry ${inr(FX.S.partnerMarkup)} per guest, per night.`:u.kind==='single'?'Single room with festival entry each night.':`Includes festival entry for 2 each night. Extra adults ${inr(FX.S.extraGuest)} each per night. Kids under 10 free.`;
+    const inc=u.kind==='partner'?`Host rate ${inr(u.rate)} plus a festival ticket ${inr(FX.S.partnerMarkup)} per guest, per night.`:u.kind==='single'?`${esc(u.name)}'s own rate plus a festival ticket (${inr(FX.S.dayPass)}) each night.`:u.kind==='tent'?`Includes festival entry for 2 each night. Extra adults ${inr(FX.S.extraGuest)} each per night. Kids under 10 free.`:`${esc(u.name)}'s own rate (weekends may cost more) plus a festival ticket of ${inr(FX.S.dayPass)} for every guest, every night. Kids under 10 free.`;
     return `<div class="fx-panel accent" id="fx-sel">
       <div class="fx-row between" style="align-items:flex-start"><div><span class="fx-eyebrow" style="color:var(--mute)">${u.kind==='partner'?'Partner stay':u.kind==='tent'?'VIP tent':'VIP room'}</span>
         <h2 class="fx-h2" style="margin-top:4px">${esc(u.name)}</h2><p class="fx-note">${esc(u.blurb||'')}${u.desc?' · '+esc(u.desc):''}</p>
@@ -2342,7 +2353,7 @@ ${kb()}`;}
       <div class="pan"><div class="ph2"><h3>Partner host applications</h3></div><div class="pb">${hsLinkBox()}
         ${lrows?`<div class="fx-tbl"><table><thead><tr><th>Property</th><th>Contact</th><th>Rooms × adults</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>${lrows}</tbody></table></div>`:'<p class="fx-note">No applications yet.</p>'}</div></div>
       <div class="pan"><div class="ph2"><h3>Festival prices and rules</h3></div><div class="pb"><form onsubmit="event.preventDefault();CS.fx('deskSettings')">
-        <div class="fx-grid2">${SF('coupleNight','VIP room per couple per night (₹)')}${SF('partnerShareCouple','Venue partner share per couple-night (₹)')}${SF('singleNight','Purrom single room per night (₹)')}${SF('partnerShareSingle','Venue partner share per single-night (₹)')}${SF('extraGuest','Extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Day pass per person (₹)')}${SF('partnerMarkup','Festival entry added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipDiscount','VIP discount (₹)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipDiscount','VVIP discount (₹)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('encoreFrom','Encore starts')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
+        <div class="fx-grid2">${FX_VIP.map(v=>SF('rate_'+v.id,v.name+' — real rate, weeknight (₹)')+SF('rateWe_'+v.id,v.name+' — real rate, Fri/Sat night (₹)')+(v.kind==='room'?SF('extra_'+v.id,v.name+' — extra adult, weeknight (₹)')+SF('extraWe_'+v.id,v.name+' — extra adult, Fri/Sat (₹)'):'')).join('')}${SF('extraGuest','Tent extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Festival ticket / day pass per person (₹) — added to every room night per guest')}${SF('partnerMarkup','Festival ticket added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipDiscount','VIP discount (₹)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipDiscount','VVIP discount (₹)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('encoreFrom','Encore starts')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
         <div class="eacts"><button class="b-save" type="submit">Save festival prices</button><span class="fx-note" style="align-self:center">Stored in ${esc(D.data.store==='mysql'?'MySQL':'the built-in SQLite file')}.</span></div></form></div></div>`+ppDeskHTML();}
   async function fxDeskLoad(){const D=FX.desk;if(!D.key){D.err='Enter the desk key.';render();return;}
     D.busy=true;D.err='';render();

@@ -20,7 +20,7 @@ async def main():
         await a.evaluate("document.querySelector('#ticketsbtn').click()"); await a.wait_for_timeout(1200)
         links=await a.evaluate("[...document.querySelectorAll('a.cbtn')].map(x=>[x.textContent,x.getAttribute('href')])")
         check('app links',any(h=='../../#appa-pass' for _,h in links) and any(h=='../../#appa-curate' for _,h in links) and any(h=='../../#passport' for _,h in links),links)
-        t=await a.inner_text('body'); check('app keeps info','Cycle or e-bike pickup' in t and 'Personal meet-ups with resident artists' in t and 'Priority entry' in t and '₹12,000' in t and 'Kids under 10 always enter free' in t,'')
+        t=await a.inner_text('body'); check('app keeps info','Cycle or e-bike pickup' in t and 'Personal meet-ups with resident artists' in t and 'Priority entry' in t and 'from ₹10,500' in t and 'Kids under 10 always enter free' in t,'')
         await a.screenshot(path='/tmp/app-tickets.png')
         # 2 deep links resolve
         pg=await b.new_page(viewport={'width':1366,'height':860}); pg.on('pageerror',lambda e: errs.append(str(e)))

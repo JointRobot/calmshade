@@ -1,7 +1,7 @@
 # Calm Shade × APPA Art Fest 2027 — Claude Code handover
 
 Owner: Karthik (karthik@xtrathin.in · WhatsApp +91 9619176007). Live site: **https://calmshade.in**.
-Last updated 1 Oct 2026. `HANDOVER.md` has the full history (sections 1–5 original launch, 6–10 the October work);
+Last updated 14 Oct 2026. `HANDOVER.md` has the full history (sections 1–5 original launch, 6–10 the October work);
 this file is the current state and the rules. Read both before changing anything.
 
 ## 1. What this is
@@ -44,11 +44,17 @@ this file is the current state and the rules. Read both before changing anything
 - Emails use PHP `mail()`; delivery not verified (may land in spam).
 
 ## 5. Business rules (all editable in Creator console → APPA Fest desk → Festival prices; defaults in `fest.php` `DEF`)
-- VIP rooms inside the festival: Calmshet 5, Le Farm 8, Shambhala by the Lake 6, Theeya 4, The Company Theatre 8
-  (₹12,000/couple/night incl. 2 entries; ₹8,000 to venue partner), Purrom 4 singles (₹6,000; ₹4,000 partner).
+- VIP rooms inside the festival: Calmshet 5, Le Farm 8, Shambhala by the Lake 6, Theeya 4, The Company Theatre 8,
+  Purrom 4 singles. **Pricing (14 Oct 2026, Karthik's rule): guest pays the venue's own real rate + a festival ticket
+  (`dayPass`, ₹2,000) per guest per night; the venue is paid exactly its real rate** (surge + tickets are the
+  festival's). Per-venue settings `rate_/rateWe_/extra_/extraWe_<id>` (weeknight vs Fri/Sat night, extra adult), all
+  editable in the desk. Sources: Shambhala = its published tariff +5% GST (6,510 / 7,560; extra 1,995 / 2,520);
+  Le Farm = 2019 published villa rate per room (6,700 / 9,800; +1,500) — **ask Karthik to confirm**; Calmshet, Theeya,
+  The Company Theatre (8,000) and Purrom (4,000) have no public price — stand-ins that reproduce the old ₹12,000 /
+  ₹6,000 guest price until real rates are entered. `coupleNight/singleNight/partnerShare*` are no longer used.
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.
 - Surge: up to +20% as a place fills. VIP = 7+ nights inside (−₹7,000). VVIP = 30+ (−₹40,000). Encore nights only
-  for VIP/VVIP trips. Partner stays = host rate + ₹1,000 per guest-night, no commission. Day pass ₹2,000/person/day.
+  for VIP/VVIP trips. Partner stays = host rate + festival ticket (`partnerMarkup`, now ₹2,000) per guest-night, no commission. Day pass ₹2,000/person/day.
 - Holds: unpaid room bookings hold 48 h then release; day-pass-only orders never expire. Max 3 unpaid room holds per
   phone, 10 bookings per device per day. Payment = UPI to xtrathindesign@okicici (Karthikeyan Ramachandran), then the
   guest submits the UPI reference; staff confirm in the desk. UPI QR omits the amount above ₹1 lakh (pay in parts).
@@ -103,7 +109,12 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
    month paging (`BM` is now `let`, `bmGo()`, `CSB.occ` + `csFill()`), offline UPI ref no longer faked, pass cap
    30/day, Encore day passes hidden in Passport, tour buttons. Still open: VIP/VVIP is counted per booking, not
    across a guest's bookings (two separate 7-night bookings each get −₹7,000; 7 booked + 3 more later gets no VIP)
-   — needs Karthik's call before changing `quote()`. Curate plan isn't kept across a page refresh. Concierge header
-   says "online · replies in seconds" even while it's off.
+   — needs Karthik's call before changing `quote()`. Curate plan isn't kept across a page refresh.
+   (Fixed 14 Oct: concierge status now honest — `cs_state` returns `ai`; shows "usually replies within the hour" when off.)
+8. Audit 14 Oct 2026: six Calmshet/Appa listings corrected from Airbnb (names, Kamshet, beds/baths, capacity, ratings,
+   `revs`); demo Grove stays p7–p9 hidden + unbookable; stock logos removed. STILL NEEDED FROM KARTHIK: real nightly
+   homestay prices (Airbnb hides them without sign-in — current ppWith/ppWithout are July placeholders), sleeps for
+   Lakeview Cottage + Room 2, whether Lakeview Cottage is still listed on Airbnb (its page errors), guest pet policy,
+   real photos per room (every card uses the same night shot), and real venue rates for Calmshet/Theeya/CTheatre/Purrom/Le Farm.
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters
    (desk → Passport stamps → Show posters).

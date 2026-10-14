@@ -41,6 +41,13 @@ clear_hits()
 c,j=call('book',{'stays':[st('purrom','2027-02-26',2,1,1)],'passes':[],'guest':g('9200000001')}); check('encore blocked',c==409,(c,j))
 c,j=call('book',{'stays':[st('purrom','2027-02-20',9,1,1)],'passes':[],'guest':g('9200000001')}); check('encore with vip',c==200 and j['tier']=='vip',(c,j))
 vip=j
+# venue real rate + festival ticket per guest per night; venue paid exactly its real rate
+q=lambda *a:call('quote',{'stays':[st(*a)],'passes':[]})[1]['quote']
+x=q('shambhala','2027-01-26',1); check('shambhala weeknight 6500+2x2000',x['total']==10500 and x['payout']==6510,x)
+x=q('shambhala','2027-01-29',1); check('shambhala friday 7600+2x2000',x['total']==11600 and x['payout']==7560,x)
+x=q('shambhala','2027-01-26',1,1,3); check('shambhala 3 adults +extra +3 tickets',x['total']==6500+1995+3*2000 and x['payout']==6510+1995,x)
+x=q('purrom','2027-01-26',1,1,1); check('purrom single 4000+1 ticket',x['total']==6000 and x['payout']==4000,x)
+x=q('calmshet','2027-01-26',1); check('calmshet stand-in unchanged 12000',x['total']==12000 and x['payout']==8000,x)
 c,j=call('quote',{'stays':[st('lefarm','2027-01-25',30)],'passes':[]}); check('vvip quote',j['quote']['tier']=='vvip' and j['quote']['discount']==40000,j['quote'] and j['quote']['tier'])
 # phone cap
 clear_hits()
@@ -77,7 +84,7 @@ c,j=call('settings',{'settings':{'tents':25,'surgeMax':'15'}},True); check('sett
 c,j=call('list',{'property':{'name':'Pawna Camp','type':'Campsite','location':'Pawna','rooms':2,'maxGuests':3,'rate':4000},'contact':{'name':'Raj','phone':'9123456780'}}); lid=j.get('id'); check('listing',c==200,(c,j))
 c,j=call('book',{'stays':[st('L-'+str(lid),'2027-01-30',1)],'passes':[],'guest':g('9600000001')}); check('unapproved not bookable',c==409,(c,j))
 call('approve',{'id':lid,'status':'approved'},True)
-c,j=call('book',{'stays':[st('L-'+str(lid),'2027-01-30',1,1,3)],'passes':[],'guest':g('9600000001')}); check('partner price 4000+3x1000',c==200 and j['total']==7000,(c,j))
+c,j=call('book',{'stays':[st('L-'+str(lid),'2027-01-30',1,1,3)],'passes':[],'guest':g('9600000001')}); check('partner price 4000+3x2000 ticket',c==200 and j['total']==10000,(c,j))
 c,j=call('admin',None,True); check('admin lists',c==200 and len(j['bookings'])>10 and len(j['listings'])==1,c)
 c,j=call('nope'); check('unknown action',c==404,c)
 print(f'PASS {ok}  FAIL {len(bad)}'); [print(' -',b) for b in bad]
