@@ -73,8 +73,8 @@ const TOUR0 = {
     [76.3, 79, 'Week 1 · 12 to 19 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
     [79.2, 81.9, 'Week 2 · 20 to 26 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
     [82.1, 84.8, 'Week 3 · 27 Feb to 5 Mar', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
-    [85, 87.7, 'Weeks 4 and 5 · 6 to 20 Mar', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [88.5, 94.5, 'The Encore · 21 to 23 Mar', 'VVIP & VIP only', 'Three bonus days: special access and personal meet-ups with resident artists']
+    [85, 87.7, 'Weeks 4 and 5 · 6 to 15 Mar', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
+    [88.5, 94.5, 'The Encore · 16 to 20 Mar', 'VVIP & VIP only', 'The final five days: special access and personal meet-ups with resident artists']
   ],
   subs: [
     [11, 14.8, 'Park the car. Pick a cycle.'], [20, 23.5, 'Where the story begins.'], [27, 30.5, 'Horror films after dark.'],

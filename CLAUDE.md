@@ -7,7 +7,7 @@ this file is the current state and the rules. Read both before changing anything
 ## 1. What this is
 - **Calm Shade** (`index.html`): an invite-only homestay collective with a WhatsApp-style AI concierge, host dashboard,
   creator console, the Grove (invite/trust system), curated multi-stay trips.
-- **APPA Art Fest 2027** (12 Feb – 20 Mar 2027, Encore 21–23 Mar, Kamshet — dates changed by Karthik 14 Oct 2026): sold through Calm Shade as a VIP tier.
+- **APPA Art Fest 2027** (12 Feb – 20 Mar 2027, Encore 16–20 Mar = the final five days, Kamshet — dates changed by Karthik 14 Oct 2026): sold through Calm Shade as a VIP tier.
   Festival booking, day passes, the Art Passport and partner-host listings all live inside `index.html`.
 - **The 3D festival app** (`appa/2027/`): isometric Three.js map + guided tour; its 🎟 Tickets panel links into booking.
 - **`fest.php`**: the only backend. PHP + PDO; SQLite by default, MySQL if configured. All money/availability rules
@@ -53,7 +53,7 @@ this file is the current state and the rules. Read both before changing anything
   rate derived from its 2019 villa rate (6,700 / 9,800) — **confirm**; extra adult 2,360 = lefarm.in tariff ₹2,000 + 18% GST
   (lefarm.in shows no base rate: "call to enquire", StayVista +91 9137023866; meals extra). Theeya = ₹4,000/head (Karthik, 14 Oct; extra adult 4,000).
   Programme weeks (PP_WEEKS / copy.js / tour.js): Roots & Raga 12–19 Feb, Keeping it Real 20–26 Feb, Tech 27 Feb–5 Mar,
-  All forms 6–20 Mar, Encore 21–23 Mar. Tests use dates shifted +21 days (same weekdays).
+  All forms 6–15 Mar, Encore 16–20 Mar (festival ends 20 Mar; day passes to 15 Mar). Tests use dates shifted +21 days (same weekdays).
   The Company Theatre (thecompanytheatre.net: no stay info) (8,000) and Purrom (purrom.com: 5 stays, 3 veg meals
   included, prices by WhatsApp +91 98200 24049 only) (4,000) — stand-ins reproducing the old ₹12,000 / ₹6,000. `coupleNight/singleNight/partnerShare*` are no longer used.
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.

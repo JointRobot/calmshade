@@ -2023,7 +2023,7 @@ ${kb()}`;}
   const FX_API='fest.php';
   const FX_DEF={coupleNight:12000,singleNight:6000,extraGuest:2000,partnerShareCouple:8000,partnerShareSingle:4000,
     tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:7,vipDiscount:7000,vvipNights:30,vvipDiscount:40000,
-    holdHours:48,firstNight:'2027-02-12',lastNight:'2027-03-23',passLast:'2027-03-20',encoreFrom:'2027-03-21',
+    holdHours:48,firstNight:'2027-02-12',lastNight:'2027-03-20',passLast:'2027-03-15',encoreFrom:'2027-03-16',
     upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in',
     rate_calmshet:8000,rateWe_calmshet:8000,extra_calmshet:4000,extraWe_calmshet:4000,
     rate_lefarm:6700,rateWe_lefarm:9800,extra_lefarm:2360,extraWe_lefarm:2360,
@@ -2187,7 +2187,7 @@ ${kb()}`;}
       ['VIP room, for 2','from '+inr(fxRoomFrom()),'per couple, per night','The venue\'s own room rate, plus festival tickets for two each night.',['A room at Calmshet, Le Farm, Shambhala, Theeya or The Company Theatre (Purrom single rooms from '+inr(fxFrom(FX_VIP.find(u=>u.id==='purrom')))+')','Festival tickets for every guest, every night you stay ('+inr(S.dayPass)+' each)','Each venue sets its own rate; weekends may cost more','Cycle or e-bike pickup at check-in','Kids under 10 free']],
       ['VIP tent, for 2',inr(S.tentNight),'per couple, per night','A tent inside the festival grounds, festival tickets included.',['Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in']],
       ['VIP · '+S.vipNights+'+ nights',inr(S.vipDiscount)+' off','any '+S.vipNights+' or more nights inside the festival','A week at the festival with full access to every show and experience.',['All shows and experiences for your nights','Priority entry at every venue','Mix venues night by night, or use Curate']],
-      ['VVIP · '+S.vvipNights+' nights',inr(S.vvipDiscount)+' off','the full month, stay + experience','The whole festival, start to finish: full access plus a few things nobody else gets.',['All access, every venue, the whole month','A few special-access moments across the month','Personal meet-ups with resident artists','The Encore: three extra days after the festival closes']],
+      ['VVIP · '+S.vvipNights+' nights',inr(S.vvipDiscount)+' off','the full month, stay + experience','The whole festival, start to finish: full access plus a few things nobody else gets.',['All access, every venue, the whole month','A few special-access moments across the month','Personal meet-ups with resident artists','The Encore: the festival\'s final five days, 16–20 March']],
       ['Partner stays','Host rate + '+inr(S.partnerMarkup),'per guest, per night','Homestays and camps near the lake, festival entry included.',['Festival entry for every guest, every night','Listed and approved by the festival team']]];
     return `<div style="margin-top:8px"><h2 class="fx-h2">What's included</h2><p class="fx-sub">Kids under 10 always enter free, on every ticket type. Every booking comes with your APPA Art Passport: the map, your itinerary and a stamp from each venue you visit.</p></div>
       <div class="fx-incl">${T.map(t=>`<div class="fx-panel" style="gap:6px"><b style="font-family:var(--display);font-style:italic;font-weight:600;font-size:18px">${esc(t[0])}</b><div><span class="fx-money" style="color:var(--accent);font-size:19px">${esc(t[1])}</span> <span class="fx-note">${esc(t[2])}</span></div><p class="fx-note" style="color:var(--ink)">${esc(t[3])}</p><ul class="pp-prog" style="font-size:13px">${t[4].map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>`).join('')}</div>`;}
@@ -2547,8 +2547,8 @@ ${kb()}`;}
   const PP_WEEKS=[{from:'2027-02-12',to:'2027-02-19',label:'Roots & Raga',text:'Classical, Maharashtra culture, fusion, desi cool and global artists.'},
     {from:'2027-02-20',to:'2027-02-26',label:'Keeping it Real',text:'Hip-hop, rap, spoken word, poetry, rock and youth culture.'},
     {from:'2027-02-27',to:'2027-03-05',label:'Tech, Electronica & AI',text:'Electronic music, digital art, AI and immersive installations.'},
-    {from:'2027-03-06',to:'2027-03-20',label:'All forms, together',text:'Everything at once: music, art, workshops and special collaborations.'},
-    {from:'2027-03-21',to:'2027-03-23',label:'The Encore',text:'Three extra days for VIP and VVIP guests: special access and artist meet-ups.',encore:true}];
+    {from:'2027-03-06',to:'2027-03-15',label:'All forms, together',text:'Everything at once: music, art, workshops and special collaborations.'},
+    {from:'2027-03-16',to:'2027-03-20',label:'The Encore',text:'The festival\'s final five days, for VIP and VVIP guests: special access and artist meet-ups.',encore:true}];
   /* ═════════ APPA ART PASSPORT — stamps, map, itinerary ═════════ */
   const PP={data:null,loading:false,err:'',tab:'stamps',sel:'calmshet',mine:true,pendingStamp:null,justStamped:null,posters:null,sched:{date:'2027-02-12',time:'',spot:'',title:'',access:'all'}};
   const ppSpot=id=>PP_SPOTS.find(s=>s.id===id);
