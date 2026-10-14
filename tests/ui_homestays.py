@@ -28,7 +28,7 @@ async def main():
         await pg.click('text=Done · hold more nights'); await pg.wait_for_timeout(200)
         # chat handoff with nothing picked
         await pg.evaluate("CS.chatHold('p3',3)"); await pg.wait_for_timeout(800)
-        check('chatHold opens p3 with 3 guests',await pg.evaluate("document.querySelector('.det h1').textContent.includes('Calmshet Room 1')"))
+        check('chatHold opens p3 with 3 guests',await pg.evaluate("document.querySelector('.det h1').textContent.includes('Calmshet Lakeview Room 1')"))
         # curated
         await pg.evaluate("CS.go('home')"); await pg.wait_for_timeout(800)
         await pg.evaluate("CS.jump('.curated')"); await pg.wait_for_timeout(600)
@@ -53,7 +53,7 @@ async def main():
         await pg.fill('#cs-dk','test-desk-key-123456'); await pg.click('text=Load live bookings'); await pg.wait_for_timeout(1500)
         t=await pg.inner_text('.con'); check('approvals listed',ref in t and cref in t,t[:500])
         await pg.click(f'.appr:has-text("{ref}") .b-ok'); await pg.wait_for_timeout(1500)
-        t=await pg.inner_text('.con'); check('confirmed moves out of pending',f'{ref} · Calmshet Room' not in t.split('Your listings')[0],t[:400])
+        t=await pg.inner_text('.con'); check('confirmed moves out of pending',f'{ref} · Calmshet Lakeview' not in t.split('Your listings')[0],t[:400])
         await pg.screenshot(path='/tmp/host.png')
         await pg.evaluate("CS.mode('creator')"); await pg.wait_for_timeout(500)
         t=await pg.inner_text('.con'); check('creator log shows confirmed',ref in t and 'confirmed' in t.lower())

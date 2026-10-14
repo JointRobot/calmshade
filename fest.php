@@ -253,11 +253,12 @@ function public_listings() {
    overrides name/price/bookable (and display fields) into cs_builtin below, so this no longer needs hand-syncing
    with PROPS in index.html for day-to-day price changes. Sleeps stays here (no editor field for it yet). */
 const CS_PROPS = [
-  'p1'=>['Calmshet Lakeview Cottage',8,1800,1200,true], 'p2'=>['Calmshet Room',3,1400,950,true],
-  'p3'=>['Calmshet Room 1',4,1500,1000,true],           'p4'=>['Calmshet Triangle',4,2200,1600,true],
-  'p5'=>['Appa Art Cottage',6,1700,1150,true],          'p6'=>['Appa Community',14,1100,750,true],
-  'p7'=>['The Quiet Courtyard',5,1600,1100,true],       'p8'=>['The Old Millhouse',6,1500,1000,false],
-  'p9'=>["Anya's Terrace",4,1300,900,true],
+  'p1'=>['Calmshet Lakeview Cottage',8,1800,1200,true],   'p2'=>['Calmshet Lakeview Room 2',3,1400,950,true],
+  'p3'=>['Calmshet Lakeview Room 1',5,1500,1000,true],    'p4'=>['Calmshet Lakeview Triangle',6,2200,1600,true],
+  'p5'=>['Appa Art Cottage',2,1700,1150,true],            'p6'=>['Appa Art House',12,1100,750,true],
+  /* p7–p9 are the Grove's demo hosts (Mira, Ravi, Anya) — not real stays, never bookable by guests */
+  'p7'=>['The Quiet Courtyard',5,1600,1100,false],        'p8'=>['The Old Millhouse',6,1500,1000,false],
+  'p9'=>["Anya's Terrace",4,1300,900,false],
 ];
 const CS_COMM = 0.03;
 /* Built-in listing edits (dashboard → Save), keyed by CS_PROPS id. Only present fields override the default. */
@@ -620,7 +621,7 @@ switch ($a) {
 
   /* ---- Calm Shade homestays ---- */
   case 'cs_state':
-    out(['ok'=>true,'occ'=>(object)cs_occ(),'today'=>ist_today(),'holdHours'=>settings()['holdHours']]);
+    out(['ok'=>true,'occ'=>(object)cs_occ(),'today'=>ist_today(),'holdHours'=>settings()['holdHours'],'ai'=>ai_key()!=='']);
 
   case 'cs_book': {
     if ($m !== 'POST') fail('Use POST');
