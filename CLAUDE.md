@@ -49,9 +49,11 @@ this file is the current state and the rules. Read both before changing anything
   (`dayPass`, ₹2,000) per guest per night; the venue is paid exactly its real rate** (surge + tickets are the
   festival's). Per-venue settings `rate_/rateWe_/extra_/extraWe_<id>` (weeknight vs Fri/Sat night, extra adult), all
   editable in the desk. Sources: Shambhala = its published tariff +5% GST (6,510 / 7,560; extra 1,995 / 2,520);
-  Le Farm = 2019 published villa rate per room (6,700 / 9,800; +1,500) — **ask Karthik to confirm**; Calmshet, Theeya,
-  The Company Theatre (8,000) and Purrom (4,000) have no public price — stand-ins that reproduce the old ₹12,000 /
-  ₹6,000 guest price until real rates are entered. `coupleNight/singleNight/partnerShare*` are no longer used.
+  Calmshet = ₹4,000/head incl. 3 meals (Karthik, 14 Oct) → room for two 8,000, extra adult 4,000. Le Farm = room
+  rate derived from its 2019 villa rate (6,700 / 9,800) — **confirm**; extra adult 2,360 = lefarm.in tariff ₹2,000 + 18% GST
+  (lefarm.in shows no base rate: "call to enquire", StayVista +91 9137023866; meals extra). Theeya (no website found),
+  The Company Theatre (thecompanytheatre.net: no stay info) (8,000) and Purrom (purrom.com: 5 stays, 3 veg meals
+  included, prices by WhatsApp +91 98200 24049 only) (4,000) — stand-ins reproducing the old ₹12,000 / ₹6,000. `coupleNight/singleNight/partnerShare*` are no longer used.
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.
 - Surge: up to +20% as a place fills. VIP = 7+ nights inside (−₹7,000). VVIP = 30+ (−₹40,000). Encore nights only
   for VIP/VVIP trips. Partner stays = host rate + festival ticket (`partnerMarkup`, now ₹2,000) per guest-night, no commission. Day pass ₹2,000/person/day.
@@ -112,8 +114,8 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
    — needs Karthik's call before changing `quote()`. Curate plan isn't kept across a page refresh.
    (Fixed 14 Oct: concierge status now honest — `cs_state` returns `ai`; shows "usually replies within the hour" when off.)
 8. Audit 14 Oct 2026: six Calmshet/Appa listings corrected from Airbnb (names, Kamshet, beds/baths, capacity, ratings,
-   `revs`); demo Grove stays p7–p9 hidden + unbookable; stock logos removed. STILL NEEDED FROM KARTHIK: real nightly
-   homestay prices (Airbnb hides them without sign-in — current ppWith/ppWithout are July placeholders), sleeps for
+   `revs`); demo Grove stays p7–p9 hidden + unbookable; stock logos removed. Calmshet p1–p4 now ₹4,000/head with meals
+   (ppWith=ppWithout ⇒ `mealsIn()` hides breakfast-only). STILL NEEDED FROM KARTHIK: Appa Art Cottage / Art House prices, sleeps for
    Lakeview Cottage + Room 2, whether Lakeview Cottage is still listed on Airbnb (its page errors), guest pet policy,
    real photos per room (every card uses the same night shot), and real venue rates for Calmshet/Theeya/CTheatre/Purrom/Le Farm.
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters

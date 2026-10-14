@@ -47,7 +47,8 @@ x=q('shambhala','2027-01-26',1); check('shambhala weeknight 6500+2x2000',x['tota
 x=q('shambhala','2027-01-29',1); check('shambhala friday 7600+2x2000',x['total']==11600 and x['payout']==7560,x)
 x=q('shambhala','2027-01-26',1,1,3); check('shambhala 3 adults +extra +3 tickets',x['total']==6500+1995+3*2000 and x['payout']==6510+1995,x)
 x=q('purrom','2027-01-26',1,1,1); check('purrom single 4000+1 ticket',x['total']==6000 and x['payout']==4000,x)
-x=q('calmshet','2027-01-26',1); check('calmshet stand-in unchanged 12000',x['total']==12000 and x['payout']==8000,x)
+x=q('calmshet','2027-01-26',1); check('calmshet 2x4000 + 2 tickets',x['total']==12000 and x['payout']==8000,x)
+x=q('calmshet','2027-01-26',1,1,3); check('calmshet 3 adults 3x4000 + 3 tickets',x['total']==12000+6000 and x['payout']==12000,x)
 c,j=call('quote',{'stays':[st('lefarm','2027-01-25',30)],'passes':[]}); check('vvip quote',j['quote']['tier']=='vvip' and j['quote']['discount']==40000,j['quote'] and j['quote']['tier'])
 # phone cap
 clear_hits()

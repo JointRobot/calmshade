@@ -78,10 +78,12 @@ const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partne
   /* Venue real rates (what the venue itself charges, per room per night incl. its taxes) — guests pay this
      PLUS a festival ticket (dayPass) per guest per night; the venue is paid exactly this. Researched 14 Oct 2026:
      Shambhala = published tariff (₹6,200 wk / ₹7,200 wkend for 2, extra adult ₹1,900 / ₹2,400) + 5% GST.
-     Le Farm = 2019 published whole-villa rate (₹40k wk / ₹59k wkend for 12 adults, +₹1,500/adult) per room — CONFIRM.
-     Calmshet, Theeya, The Company Theatre, Purrom: no public price — stand-ins equal to the old venue share. */
-  'rate_calmshet'=>8000,'rateWe_calmshet'=>8000,'extra_calmshet'=>0,'extraWe_calmshet'=>0,
-  'rate_lefarm'=>6700,'rateWe_lefarm'=>9800,'extra_lefarm'=>1500,'extraWe_lefarm'=>1500,
+     Le Farm = room rate from its 2019 villa rate (₹40k wk / ₹59k wkend, 12 adults) — CONFIRM (lefarm.in says 'call to enquire');
+       extra adult from lefarm.in tariff today: ₹2,000 + 18% GST = 2,360; meals extra there.
+     Calmshet = ₹4,000 per head incl. 3 meals (Karthik, 14 Oct) → room for two 8,000, each extra adult 4,000.
+     Theeya, The Company Theatre, Purrom: no public price on their sites — stand-ins equal to the old venue share. */
+  'rate_calmshet'=>8000,'rateWe_calmshet'=>8000,'extra_calmshet'=>4000,'extraWe_calmshet'=>4000,
+  'rate_lefarm'=>6700,'rateWe_lefarm'=>9800,'extra_lefarm'=>2360,'extraWe_lefarm'=>2360,
   'rate_shambhala'=>6510,'rateWe_shambhala'=>7560,'extra_shambhala'=>1995,'extraWe_shambhala'=>2520,
   'rate_theeya'=>8000,'rateWe_theeya'=>8000,'extra_theeya'=>0,'extraWe_theeya'=>0,
   'rate_ctheatre'=>8000,'rateWe_ctheatre'=>8000,'extra_ctheatre'=>0,'extraWe_ctheatre'=>0,
@@ -270,8 +272,8 @@ function public_listings() {
    overrides name/price/bookable (and display fields) into cs_builtin below, so this no longer needs hand-syncing
    with PROPS in index.html for day-to-day price changes. Sleeps stays here (no editor field for it yet). */
 const CS_PROPS = [
-  'p1'=>['Calmshet Lakeview Cottage',8,1800,1200,true],   'p2'=>['Calmshet Lakeview Room 2',3,1400,950,true],
-  'p3'=>['Calmshet Lakeview Room 1',5,1500,1000,true],    'p4'=>['Calmshet Lakeview Triangle',6,2200,1600,true],
+  'p1'=>['Calmshet Lakeview Cottage',8,4000,4000,true],   'p2'=>['Calmshet Lakeview Room 2',3,4000,4000,true],
+  'p3'=>['Calmshet Lakeview Room 1',5,4000,4000,true],    'p4'=>['Calmshet Lakeview Triangle',6,4000,4000,true],
   'p5'=>['Appa Art Cottage',2,1700,1150,true],            'p6'=>['Appa Art House',12,1100,750,true],
   /* p7–p9 are the Grove's demo hosts (Mira, Ravi, Anya) — not real stays, never bookable by guests */
   'p7'=>['The Quiet Courtyard',5,1600,1100,false],        'p8'=>['The Old Millhouse',6,1500,1000,false],

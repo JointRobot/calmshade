@@ -11,15 +11,18 @@ async def main():
         b=await p.chromium.launch(); errs=[]
         pg=await b.new_page(viewport={'width':1366,'height':860}); pg.on('pageerror',lambda e: errs.append(str(e)))
         await pg.goto(B); await pg.wait_for_timeout(1500)
+        # Calmshet: ₹4,000/head with all meals, no breakfast-only option
         await pg.evaluate("CS.open('p2')"); await pg.wait_for_timeout(1200)
+        t=await pg.inner_text('.book-card'); check('calmshet 4000 meals included','₹4,000' in t and '3 meals included' in t and 'Breakfast only' not in t,t[:200])
+        await pg.evaluate("CS.open('p5')"); await pg.wait_for_timeout(1200)
         free=await pg.evaluate("[...document.querySelectorAll('.gcal .dy:not(.dis):not(.bl)')].map(e=>parseInt(e.textContent))")
         check('free days exist',len(free)>=3,free)
         d1,d2=free[1],free[2]
         await pg.evaluate(f"CS.bkDay({d1});CS.bkDay({d2})"); await pg.wait_for_timeout(300)
-        btn=await pg.inner_text('.book-card .fx-btn'); check('hold button with total',btn.startswith('Hold') and '₹5,600' in btn,btn)
+        btn=await pg.inner_text('.book-card .fx-btn'); check('hold button with total',btn.startswith('Hold') and '₹6,800' in btn,btn)
         await pg.click('.book-card .fx-btn'); await pg.wait_for_timeout(200)
         await pg.click('text=Breakfast only'); await pg.wait_for_timeout(200)
-        t=await pg.inner_text('.book-card form'); check('meals toggle reprices','₹3,800' in t,t[:200])
+        t=await pg.inner_text('.book-card form'); check('meals toggle reprices','₹4,600' in t,t[:200])
         await pg.fill('#csh-name','Meera Iyer'); await pg.fill('#csh-phone','9876501234'); await pg.click('text=Hold my nights'); await pg.wait_for_timeout(1800)
         t=await pg.inner_text('.book-card'); ref=(re.search(r'CS-[A-Z0-9]{5}',t) or [None])[0]
         check('held with ref',ref and 'Nights held' in t,t[:300])

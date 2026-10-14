@@ -1014,13 +1014,13 @@ body{background:var(--bg);}
   ];
   const hueOf=c=>(CATS.find(x=>x.id===c)||CATS[0]).hue;
   let PROPS=[
-    {id:'p1', geo:[18.657,73.487], owner:'o1', name:'Calmshet Lakeview Cottage', link:'airbnb.co.in/h/calmshetlakeviewcottage', loc:'Kamshet · Maharashtra', cat:'lake', cap:'Up to 8 guests · 3 rooms', ppWith:1800, ppWithout:1200, pet:true, villa:true, rate:null, sky:['#A7C4CE','#E6EEE9'], land:'#2E5B4C', live:true,
+    {id:'p1', geo:[18.657,73.487], owner:'o1', name:'Calmshet Lakeview Cottage', link:'airbnb.co.in/h/calmshetlakeviewcottage', loc:'Kamshet · Maharashtra', cat:'lake', cap:'Up to 8 guests · 3 rooms', ppWith:4000, ppWithout:4000, pet:true, villa:true, rate:null, sky:['#A7C4CE','#E6EEE9'], land:'#2E5B4C', live:true,
       desc:'The cottage at Calmshet, on the lakeside forest property near Kamshet — three home-cooked meals a day, the shared pool a few steps away, and sunsets over the lake. There is no mobile network out here; the forest is the point.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Bonfire on request'},
-    {id:'p2', geo:[18.655,73.492], owner:'o1', name:'Calmshet Lakeview Room 2', link:'airbnb.co.in/h/calmshetroom', loc:'Kamshet · Maharashtra', cat:'room', cap:'Up to 3 guests · 1 room · 2 beds · private bathroom', ppWith:1400, ppWithout:950, pet:false, villa:false, revs:32, rate:4.84, sky:['#C6D6CB','#EFF3EC'], land:'#3B7A63', live:true,
+    {id:'p2', geo:[18.655,73.492], owner:'o1', name:'Calmshet Lakeview Room 2', link:'airbnb.co.in/h/calmshetroom', loc:'Kamshet · Maharashtra', cat:'room', cap:'Up to 3 guests · 1 room · 2 beds · private bathroom', ppWith:4000, ppWithout:4000, pet:false, villa:false, revs:32, rate:4.84, sky:['#C6D6CB','#EFF3EC'], land:'#3B7A63', live:true,
       desc:'A forest room in the Calmshet bed and breakfast, with its own attached bathroom. No mobile network, plenty of birds, langurs and peacocks, and the lake for sunset. Three meals a day are included.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Private bathroom'},
-    {id:'p3', geo:[18.659,73.49], owner:'o1', name:'Calmshet Lakeview Room 1', link:'airbnb.co.in/h/calmshetroom1', loc:'Kamshet · Maharashtra', cat:'room', cap:'Up to 5 guests · 1 room · 2 double beds + 1 single · private bathroom', ppWith:1500, ppWithout:1000, pet:false, villa:false, revs:20, rate:4.65, sky:['#B4C9D1','#EAF0EE'], land:'#356A55', live:true,
+    {id:'p3', geo:[18.659,73.49], owner:'o1', name:'Calmshet Lakeview Room 1', link:'airbnb.co.in/h/calmshetroom1', loc:'Kamshet · Maharashtra', cat:'room', cap:'Up to 5 guests · 1 room · 2 double beds + 1 single · private bathroom', ppWith:4000, ppWithout:4000, pet:false, villa:false, revs:20, rate:4.65, sky:['#B4C9D1','#EAF0EE'], land:'#356A55', live:true,
       desc:'The roomy one at Calmshet — two double beds, a single and a sofa, with a private bathroom. Good for families and small groups. Three meals a day included; kayaking, paragliding and treks can be arranged on request.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Courtyard view · Private bathroom'},
-    {id:'p4', geo:[18.652,73.483], owner:'o1', name:'Calmshet Lakeview Triangle', link:'airbnb.co.in/h/calmshettriangle', loc:'Kamshet · Maharashtra', cat:'cabin', cap:'Up to 6 guests · 1 room · 2 double beds + hammock · 2 private bathrooms', ppWith:2200, ppWithout:1600, pet:true, villa:false, revs:32, rate:4.94, sky:['#96AEB9','#E3EBE9'], land:'#274F43', live:true,
+    {id:'p4', geo:[18.652,73.483], owner:'o1', name:'Calmshet Lakeview Triangle', link:'airbnb.co.in/h/calmshettriangle', loc:'Kamshet · Maharashtra', cat:'cabin', cap:'Up to 6 guests · 1 room · 2 double beds + hammock · 2 private bathrooms', ppWith:4000, ppWithout:4000, pet:true, villa:false, revs:32, rate:4.94, sky:['#96AEB9','#E3EBE9'], land:'#274F43', live:true,
       desc:'The Triangle — Calmshet\'s most-loved room, with two double beds, a hammock and two private bathrooms, sleeping up to six. Forest all around, the lake a short walk away, the dam within walking distance, and three meals a day included.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Wi-Fi · Hammock · 2 private bathrooms'},
     {id:'p5', geo:[18.757,73.552], owner:'o1', name:'Appa Art Cottage', link:'airbnb.co.in/h/appaartcottage', loc:'Kamshet · Maharashtra', cat:'creative', cap:'Up to 2 guests · 1 room · private bathroom with a tree inside', ppWith:1700, ppWithout:1150, pet:false, villa:false, revs:31, rate:4.74, sky:['#D6C7AF','#F1ECE1'], land:'#7A5A32', live:true,
       desc:'A single room for a couple at Appa, an artist\'s home — the pool is 20 steps away, the lake about 200. The private bathroom has a tree growing inside it. Cold winters (bring layers), waterfalls in the monsoon, and very good stargazing. Three meals a day included.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Private bathroom'},
@@ -1084,6 +1084,7 @@ body{background:var(--bg);}
     <path d="M40 262 q30 -5 60 0 M300 268 q30 -5 60 0" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5"/></svg>`;}
   const MEDIA=window.CS_MEDIA||{imgs:{}};
   function photo(p){const g=(p.gallery||[])[p.cover||0];return g?`<img loading="lazy" src="${g.src}" alt="${esc(p.name)}">`:phSVG(p);}
+  const mealsIn=p=>!!p&&+p.ppWithout>=+p.ppWith;
   const mono=n=>n.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
   function plogoHTML(p){return p.logo?`<span class="plogo has"><img src="${p.logo}" alt="${esc(p.name)} logo"></span>`:`<span class="plogo" title="Logo placeholder">${mono(p.name)}</span>`;}
   (function seedMedia(){
@@ -1144,7 +1145,7 @@ body{background:var(--bg);}
     return null;}
 
   /* ═════════ AI CONCIERGE ═════════ */
-  function kb(){return PROPS.filter(p=>p.live).map(p=>`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${inr(p.ppWith)} with all meals, ${inr(p.ppWithout)} without (breakfast only). Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked ${BM.name} ${BM.y} dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' '+BM.name:'none — '+BM.name+' open'}.`).join('\n\n');}
+  function kb(){return PROPS.filter(p=>p.live).map(p=>`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${mealsIn(p)?inr(p.ppWith)+' with all three meals included (no without-meals option)':inr(p.ppWith)+' with all meals, '+inr(p.ppWithout)+' without (breakfast only)'}. Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked ${BM.name} ${BM.y} dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' '+BM.name:'none — '+BM.name+' open'}.`).join('\n\n');}
   function sysPrompt(n){return `You are the Calm Shade concierge — the always-awake WhatsApp host for a collective of independent homestays. Today is ${new Date().toDateString()}; bookings are open for ${BM.name} ${BM.y}. The guest opened this chat from "${n}", so start in that stay's context; if they ask about another Calm Shade stay, switch naturally and keep the thread coherent.
 
 STRICT RULES:
@@ -1169,7 +1170,7 @@ ${kb()}`;}
       chatHistory.push({role:'assistant',content:x});return x;
     }catch(e){
       const p=P(chat.propId);
-      const f=`Happy to help with ${p.name}! It takes ${p.cap.toLowerCase()} at ${inr(p.ppWith)} per head with all meals (${inr(p.ppWithout)} without). Which dates and how many guests?`;
+      const f=`Happy to help with ${p.name}! It takes ${p.cap.toLowerCase()} at ${inr(p.ppWith)} per head${mealsIn(p)?', all meals included':' with all meals ('+inr(p.ppWithout)+' without)'}. Which dates and how many guests?`;
       chatHistory.push({role:'assistant',content:f});
       return f+'\n\n(sample reply — live concierge unavailable right now)';
     }
@@ -1474,7 +1475,7 @@ ${kb()}`;}
           ${plogoHTML(p)}</div>
         <div class="bd"><div class="top"><h3>${esc(p.name)}</h3><span class="rate">${p.rate?'★ '+p.rate.toFixed(2)+(p.revs?' <em class="revs">('+p.revs+')</em>':''):(p.owner==='o1'?'':'New')}</span></div>
           <div class="sub">${esc(p.loc)} · hosted by ${esc(O(p.owner).name)}</div>
-          <div class="pr"><b>${inr(p.ppWithout)}</b> <span>/head</span><span class="wamini"><i>●</i> WhatsApp</span></div></div>
+          <div class="pr"><b>${inr(mealsIn(p)?p.ppWith:p.ppWithout)}</b> <span>/head${mealsIn(p)?' · 3 meals':''}</span><span class="wamini"><i>●</i> WhatsApp</span></div></div>
       </article>`).join(''):`<p class="empty">No stays match — try another filter.</p>`}
     </div>
     <div class="sep rv sep-leaf right" aria-hidden="true" data-name="noon"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M6 30 Q66 12 120 22 T230 16"/><path class="fl" d="M78 20 q7 -11 15 -3 q-9 8 -15 3z"/><path class="fl" d="M162 17 q9 -9 15 -1 q-10 7 -15 1z"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1537,8 +1538,8 @@ ${kb()}`;}
             <span class="seclabel">Details</span>
             <div class="drows">
               <div class="drow"><span class="dk">Sleeps</span><span class="dv">${esc(p.cap)}</span></div>
-              <div class="drow"><span class="dk">Per head · with all meals</span><span class="dv">${inr(p.ppWith)} / night</span></div>
-              <div class="drow"><span class="dk">Per head · without meals</span><span class="dv">${inr(p.ppWithout)} / night</span></div>
+              <div class="drow"><span class="dk">Per head${mealsIn(p)?' · 3 meals included':' · with all meals'}</span><span class="dv">${inr(p.ppWith)} / night</span></div>
+              ${mealsIn(p)?'':`<div class="drow"><span class="dk">Per head · without meals</span><span class="dv">${inr(p.ppWithout)} / night</span></div>`}
               <div class="drow"><span class="dk">Pets</span><span class="dv">${p.pet?'Welcome':'Not allowed'}</span></div>
               <div class="drow"><span class="dk">Entire place</span><span class="dv">${p.villa?'Bookable':'Rooms only'}</span></div>
               <div class="drow"><span class="dk">Amenities</span><span class="dv">${esc(p.amen)}</span></div>
@@ -1572,7 +1573,7 @@ ${kb()}`;}
         </div>
 
         <aside class="book-card">
-          <div class="bk-price"><b>${inr(p.ppWithout)}</b><span>/head/night · ${inr(p.ppWith)} with meals</span></div>
+          <div class="bk-price"><b>${inr(mealsIn(p)?p.ppWith:p.ppWithout)}</b><span>/head/night · ${mealsIn(p)?'3 meals included':inr(p.ppWith)+' with meals'}</span></div>
           <button class="bk-mtog" onclick="CS.bkToggle()">📅 ${bk.days.length?bkLabel()+' · '+bk.heads+' guests':'Choose dates & guests (optional)'}</button>
           <div class="bk-plan${bkOpen?' open':''}">
             <div class="steprow"><span class="bplbl">Guests</span>
@@ -2024,8 +2025,8 @@ ${kb()}`;}
     tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:7,vipDiscount:7000,vvipNights:30,vvipDiscount:40000,
     holdHours:48,firstNight:'2027-01-25',lastNight:'2027-02-28',passLast:'2027-02-25',encoreFrom:'2027-02-26',
     upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in',
-    rate_calmshet:8000,rateWe_calmshet:8000,extra_calmshet:0,extraWe_calmshet:0,
-    rate_lefarm:6700,rateWe_lefarm:9800,extra_lefarm:1500,extraWe_lefarm:1500,
+    rate_calmshet:8000,rateWe_calmshet:8000,extra_calmshet:4000,extraWe_calmshet:4000,
+    rate_lefarm:6700,rateWe_lefarm:9800,extra_lefarm:2360,extraWe_lefarm:2360,
     rate_shambhala:6510,rateWe_shambhala:7560,extra_shambhala:1995,extraWe_shambhala:2520,
     rate_theeya:8000,rateWe_theeya:8000,extra_theeya:0,extraWe_theeya:0,
     rate_ctheatre:8000,rateWe_ctheatre:8000,extra_ctheatre:0,extraWe_ctheatre:0,
@@ -2513,12 +2514,13 @@ ${kb()}`;}
     const h=CSB.hold;
     if(h.last&&h.last.prop===p.id)return csPayBlock(h.last)+`<button class="fx-x" style="align-self:flex-start;margin:6px 0 12px" onclick="CS.csDone()">Done · hold more nights</button>`;
     if(!bk.days.length)return '';
+    if(mealsIn(p))h.meals=true;
     const pp=h.meals?p.ppWith:p.ppWithout,total=pp*bk.heads*bk.days.length;
     if(!h.open)return `<button class="fx-btn" style="width:100%;justify-content:center;margin:12px 0 10px" onclick="CS.csOpen()">Hold ${esc(bkLabel())} · ${inr(total)}</button>`;
     const F=(k,l,t,ex)=>`<div class="fx-field"><label for="csh-${k}">${l}</label><input id="csh-${k}" type="${t}" value="${esc(h[k])}" oninput="CS.csF('${k}',this.value)" ${ex||''}></div>`;
     return `<form class="fx-panel" style="margin:12px 0 10px;gap:10px" onsubmit="event.preventDefault();CS.csHold()">
       <b class="fx-h2" style="font-size:17px">Hold ${esc(bkLabel())}</b>
-      <div class="fx-chips"><button type="button" class="fx-chip ${h.meals?'on':''}" onclick="CS.csMeals(true)">With all meals · ${inr(p.ppWith)}</button><button type="button" class="fx-chip ${h.meals?'':'on'}" onclick="CS.csMeals(false)">Breakfast only · ${inr(p.ppWithout)}</button></div>
+      ${mealsIn(p)?`<div class="fx-note">${inr(p.ppWith)} per head per night · breakfast, lunch, evening tea and dinner included</div>`:`<div class="fx-chips"><button type="button" class="fx-chip ${h.meals?'on':''}" onclick="CS.csMeals(true)">With all meals · ${inr(p.ppWith)}</button><button type="button" class="fx-chip ${h.meals?'':'on'}" onclick="CS.csMeals(false)">Breakfast only · ${inr(p.ppWithout)}</button></div>`}
       <div class="fx-lines"><div><span>${bk.days.length} night${bk.days.length>1?'s':''} × ${bk.heads} guest${bk.heads>1?'s':''} × ${inr(pp)}</span><b>${inr(total)}</b></div></div>
       ${F('name','Full name','text','required maxlength="80" autocomplete="name"')}${F('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${F('email','Email (optional)','email','maxlength="120" autocomplete="email"')}
       ${h.err?`<div class="fx-err">${esc(h.err)}</div>`:''}
