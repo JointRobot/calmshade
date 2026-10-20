@@ -498,7 +498,7 @@ function default_schedule() {
 const LOGO_GROUPS = ['curator','venue','partner','sponsor'];
 function default_logos() {
   $l = []; $i = 0;
-  foreach (['KRUNK','Bandish Project','Bhavishyavani','Animela','Wench Film Festival'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
+  foreach (['KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
   foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com']] as [$nm,$u])
     $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
   return $l;

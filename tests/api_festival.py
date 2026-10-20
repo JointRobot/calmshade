@@ -116,7 +116,7 @@ c,j=call('admin',None,True); b=[x for x in j['bookings'] if x['ref']==jeep['ref'
 c,j=call('state'); sc=j['schedule']
 check('default programme',len(sc)==27 and sum(1 for i in sc if i['kind']=='dhol')==13 and all(i['date']>='2027-02-12' for i in sc),len(sc))
 check('exhibits run all festival',sum(1 for i in sc if i['kind']=='exhibit' and i['to']=='2027-03-19')==10,[i['title'] for i in sc if i['kind']=='exhibit'])
-check('default logos',len(j['logos'])==11 and {l['group'] for l in j['logos']}=={'curator','venue'},j['logos'][:2])
+check('default logos',len(j['logos'])==12 and {l['group'] for l in j['logos']}=={'curator','venue'},j['logos'][:2])
 c,j=call('schedule_set',{'items':[{'date':'2027-02-14','to':'2027-02-16','time':'19:00','spot':'calmshet','title':'Run','kind':'workshop'},{'date':'2027-02-14','to':'2027-02-10','spot':'','title':'Bad range','kind':'zzz'}]},True)
 T={i['title']:i for i in j.get('schedule',[])}; check('schedule ranges',c==200 and T['Run']['to']=='2027-02-16' and T['Run']['kind']=='workshop' and T['Bad range']['to']=='' and T['Bad range']['kind']=='show' and T['Run']['access']=='all',j)
 c,j=call('schedule_set',{'items':[]}); check('schedule needs desk',c in (401,403),c)
