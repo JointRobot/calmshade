@@ -96,4 +96,16 @@ call('approve',{'id':lid,'status':'approved'},True)
 c,j=call('book',{'stays':[st('L-'+str(lid),'2027-02-20',1,1,3)],'passes':[],'guest':g('9600000001')}); check('partner price 4000+3x2000 ticket',c==200 and j['total']==10000,(c,j))
 c,j=call('admin',None,True); check('admin lists',c==200 and len(j['bookings'])>10 and len(j['listings'])==1,c)
 c,j=call('nope'); check('unknown action',c==404,c)
+# timetable: starting programme until the desk saves its own; ranges and kinds; logo panel
+c,j=call('state'); sc=j['schedule']
+check('default programme',len(sc)==27 and sum(1 for i in sc if i['kind']=='dhol')==13 and all(i['date']>='2027-02-12' for i in sc),len(sc))
+check('exhibits run all festival',sum(1 for i in sc if i['kind']=='exhibit' and i['to']=='2027-03-19')==10,[i['title'] for i in sc if i['kind']=='exhibit'])
+check('default logos',len(j['logos'])==11 and {l['group'] for l in j['logos']}=={'curator','venue'},j['logos'][:2])
+c,j=call('schedule_set',{'items':[{'date':'2027-02-14','to':'2027-02-16','time':'19:00','spot':'calmshet','title':'Run','kind':'workshop'},{'date':'2027-02-14','to':'2027-02-10','spot':'','title':'Bad range','kind':'zzz'}]},True)
+T={i['title']:i for i in j.get('schedule',[])}; check('schedule ranges',c==200 and T['Run']['to']=='2027-02-16' and T['Run']['kind']=='workshop' and T['Bad range']['to']=='' and T['Bad range']['kind']=='show' and T['Run']['access']=='all',j)
+c,j=call('schedule_set',{'items':[]}); check('schedule needs desk',c in (401,403),c)
+c,j=call('logos_set',{'items':[{'name':'KRUNK','group':'curator','img':'uploads/202610/'+'a'*24+'.png','url':'https://krunk.in'},{'name':'X','group':'nope'},{'name':'Y','group':'sponsor','img':'javascript:alert(1)','url':'ftp://x'}]},True)
+check('logos saved + cleaned',c==200 and len(j['logos'])==2 and j['logos'][0]['img'].startswith('uploads/') and j['logos'][1]['img']=='' and j['logos'][1]['url']=='',j)
+c,j=call('logos_set',{'items':[]}); check('logos need desk',c in (401,403),c)
+c,j=call('state'); check('state has saved logos',len(j['logos'])==2,j['logos'])
 print(f'PASS {ok}  FAIL {len(bad)}'); [print(' -',b) for b in bad]

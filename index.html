@@ -2131,7 +2131,7 @@ ${kb()}`;}
         <span class="fx-eyebrow">VIP tier · 12 Feb – 19 Mar 2027 · Kamshet</span>
         <h2>Stay <em>inside</em> APPA Art Fest</h2>
         <p>${total} rooms and a tent village inside the festival, plus partner homestays and camps nearby. Every night includes festival entry for two. Mix venues night by night: three nights at Le Farm, three at Calmshet, two at Theeya.</p>
-        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP stay</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
+        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP stay</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-btn ghost" href="appa/timetable/" style="text-decoration:none">📅 Timetable</a><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
       </div>
       <div class="fx-venues">${FX_VIP.map(u=>`<div class="fx-venue"><b>${esc(u.name)}</b><span>${u.rooms} ${u.kind==='single'?'single rooms':'rooms'} · from ${inr(fxFrom(u))}</span></div>`).join('')}
         <div class="fx-venue tent"><b>VIP Tent Village</b><span>${+FX.S.tents||0} tents inside the grounds · from ${inr(FX.S.tentNight)}</span></div></div>
@@ -2559,7 +2559,7 @@ ${kb()}`;}
         else it.nights.forEach(n=>{const x=days[n]=days[n]||{pass:0,stay:[]};x.stay.push(it.name);if(ppStayUnit[it.unit])stays[ppStayUnit[it.unit]]=1;});});});
     return {days,stays,tier,name,refs:(d&&d.bookings||[]).map(b=>b.ref)};
   }
-  const ppCan=(acc,item)=>!!acc.days[item.date]&&(item.access==='all'||(item.access==='vip'&&acc.tier)||(item.access==='vvip'&&acc.tier==='vvip'));
+  const ppCan=(acc,item,d)=>!!acc.days[d||item.date]&&(item.access==='all'||(item.access==='vip'&&acc.tier)||(item.access==='vvip'&&acc.tier==='vvip'));
   async function ppLoad(){
     if(!FX.tickets.length){PP.data={bookings:[],pending:0,stamps:{}};if(view==='passport')render();return;}
     PP.loading=true;
@@ -2602,7 +2602,7 @@ ${kb()}`;}
           <div class="fx-row between" style="align-items:flex-start"><div><span class="fx-eyebrow" style="color:var(--mute)">${s.n?'Venue '+s.n:'Around the lake'}${acc.stays[s.id]?' · your stay':''}</span><h3 class="fx-h2" style="margin-top:4px">${esc(s.name)}</h3><p class="fx-note">${esc(s.tag)}</p></div>
             <span class="fx-status ${st[s.id]?'confirmed':'pending'}">${st[s.id]?'stamped':'not yet'}</span></div>
           <ul class="pp-prog">${s.prog.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
-          ${here.length?`<div class="fx-lines">${here.map(i=>`<div><span>${fxShort(i.date)}${i.time?' · '+i.time:''} · ${esc(i.title)}</span><b>${ppCan(acc,i)?'✓ yours':(acc.days[i.date]?'🔒 '+i.access.toUpperCase():'not your day')}</b></div>`).join('')}</div>`:''}
+          ${here.length?`<div class="fx-lines">${here.map(i=>`<div><span>${i.to?(i.date<=FX.S.firstNight&&i.to>=FX.S.lastNight?'All festival':fxShort(i.date)+' – '+fxShort(i.to)):fxShort(i.date)}${i.time?' · '+i.time:''} · ${esc(i.title)}</span><b>${ppCan(acc,i)?'✓ yours':(acc.days[i.date]?'🔒 '+i.access.toUpperCase():'not your day')}</b></div>`).join('')}</div>`:''}
           ${st[s.id]?'':`<p class="fx-note">When you're there, scan the APPA QR poster at the entrance with your phone camera to collect this stamp.</p>`}
         </div></div></div>`;
   }
@@ -2614,12 +2614,12 @@ ${kb()}`;}
     const pv=Object.values(acc.days).map(x=>x.pass||0).filter(Boolean);const people=pv.length?Math.max(...pv):2;
     let html='',lastW=null;
     show.forEach(d=>{const w=PP_WEEKS.find(w=>d>=w.from&&d<=w.to);if(w&&w!==lastW){html+=`<div class="pp-week"><b>${esc(w.label)}</b><span>${fxShort(w.from)} – ${fxShort(w.to)} · ${esc(w.text)}</span></div>`;lastW=w;}
-      const a=acc.days[d];const items=sched.filter(i=>i.date===d);
+      const a=acc.days[d];const items=sched.filter(i=>d>=i.date&&d<=(i.to||i.date)&&!(i.to&&(i.kind==='exhibit'||i.kind==='fest')));
       html+=`<div class="pp-day${a?' mine':''}"><div class="pp-date"><b>${fxD(d).getUTCDate()}</b><span>${FDOW[fxD(d).getUTCDay()]}</span><span>${FMON[fxD(d).getUTCMonth()]}</span></div>
         <div style="min-width:0;display:flex;flex-direction:column;gap:6px">
           ${a?`<div class="pp-have">${a.pass?`<span>Day pass · ${a.pass} ${a.pass>1?'people':'person'}</span>`:''}${[...new Set(a.stay)].map(n=>`<span>Staying at ${esc(n)}</span>`).join('')}${acc.tier?`<span>${acc.tier.toUpperCase()} · every show</span>`:''}</div>`
             :`<div class="fx-row between"><span class="fx-note">Not in your passport yet · every venue open with a day pass</span><button class="fx-btn small" onclick="CS.pp('addDay','${d}',${people})">Add this day · ${inr(FX.S.dayPass)}/person</button></div>`}
-          ${items.length?`<ul class="pp-items">${items.map(i=>{const ok=ppCan(acc,i);const sp=ppSpot(i.spot);
+          ${items.length?`<ul class="pp-items">${items.map(i=>{const ok=ppCan(acc,i,d);const sp=ppSpot(i.spot);
             return `<li class="${ok?'ok':'lock'}"><span class="t">${i.time||'All day'}</span><span>${esc(i.title)}${sp?` · <button class="fx-x" onclick="CS.pp('goSpot','${sp.id}')">${esc(sp.name.replace(' & Festival Square',''))}</button>`:''}</span>${ok?'':`<span class="pp-lock">${i.access==='all'?'needs this day':i.access==='vip'?'VIP':'VVIP'} 🔒</span>`}</li>`;}).join('')}</ul>`
             :(a?`<span class="fx-note">Every venue is open to you. Exact show times appear here as they're announced.</span>`:'')}
         </div></div>`;});

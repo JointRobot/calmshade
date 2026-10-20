@@ -37,6 +37,8 @@
   #moon { position: fixed; left: 50%; margin-left: -17px; top: 10px; width: 34px; height: 34px; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(circle at 38% 36%, #FFFFFF 0 38%, #EEF2FF 52%, #C9D6FF 70%); box-shadow: 0 0 14px 6px rgba(190,206,255,.5), 0 0 34px 14px rgba(150,170,255,.18); z-index: 1; }
   @media (max-width: 700px) { #moon { display: none; } }
   #soundbtn.on { background: var(--ink); }
+  #ttbtn { background: var(--card); color: var(--ink); border: 1px solid var(--rule); border-radius: 10px; font: 600 15px var(--font), sans-serif; padding: 7px 12px; min-height: 40px; text-decoration: none; display: inline-flex; align-items: center; }
+  #ttlink { text-decoration: none; display: inline-flex; align-items: center; }
   #ticketsbtn { background: var(--gold); color: #23202A; border: 1px solid var(--gold); border-radius: 10px; font: 600 15px var(--font), sans-serif; padding: 7px 14px; cursor: pointer; min-height: 40px; }
   .spacer { flex: 1; }
   #panel { position: fixed; right: 16px; top: 72px; bottom: 16px; width: 380px; background: var(--card); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.18); overflow: auto; padding: 20px 20px 16px; }
@@ -104,7 +106,8 @@
     header { padding: 8px; gap: 6px; } #brand { font-size: 18px; }
     /* keep APPA + Tickets + Guided tour together on the header's first row; the venue-number chips drop to their own row below, since all three plus six chips don't fit one line on a phone */
     #chips { order: 3; flex-basis: 100%; margin-top: 2px; } .seg button { font-size: 13px; padding: 6px 8px; }
-    #tourbtn, #ticketsbtn, #soundbtn { font-size: 12px; padding: 5px 9px; min-height: 34px; }
+    #tourbtn, #ticketsbtn, #soundbtn, #ttbtn { font-size: 12px; padding: 5px 9px; min-height: 34px; }
+    #ttbtn .tx { display: none; }
     .introbox h1 { font-size: 46px; }
   }
 </style>
@@ -119,6 +122,7 @@
   <div class="seg" id="chips" aria-label="Venues"></div>
   <div class="spacer"></div>
   <button id="soundbtn" title="Sound on/off" aria-pressed="false">🔇</button>
+  <a id="ttbtn" href="../timetable/" aria-label="Timetable">📅<span class="tx">&nbsp;Timetable</span></a>
   <button id="ticketsbtn">🎟 Tickets</button>
   <button id="tourbtn">Guided tour</button>
 </header>
@@ -128,7 +132,7 @@
   <h1 id="i-h1"></h1>
   <div class="tagline" id="i-tag"></div>
   <p id="i-text"></p>
-  <div class="row" style="justify-content:center"><button class="cbtn primary" id="enter" disabled>Loading…</button></div>
+  <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><button class="cbtn primary" id="enter" disabled>Loading…</button><a class="cbtn" id="ttlink" href="../timetable/">See the timetable</a></div>
 </div></div>
 <audio id="score" preload="none"></audio>
 <script type="module" src="./src/app/app.js"></script>

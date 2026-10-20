@@ -444,7 +444,35 @@ function kv_get($k) { $st = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $s
 function kv_set($k, $v) { db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$k]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$k, $v]); }
 function stamp_secret() { $s = kv_get('stamp_secret'); if (!$s) { $s = bin2hex(random_bytes(24)); kv_set('stamp_secret', $s); } return $s; }
 function stamp_sig($spot) { return substr(hash_hmac('sha256', 'stamp|'.$spot, stamp_secret()), 0, 12); }
-function schedule() { $j = json_decode((string)kv_get('schedule'), true); return is_array($j) ? $j : []; }
+function schedule() { $v = kv_get('schedule'); if ($v === null) return default_schedule(); $j = json_decode((string)$v, true); return is_array($j) ? $j : []; }
+/* The starting programme (Karthik, 20 Oct 2026), shown until the desk saves its own timetable. Items can run over a range
+   (date..to): exhibits and mini-festivals run all 36 days. kind: show | exhibit | fest | dhol | workshop | adventure. */
+function default_schedule() {
+  $F = '2027-02-12'; $L = '2027-03-19'; $out = []; $n = 0;
+  $add = function ($date, $to, $spot, $title, $kind, $time = '') use (&$out, &$n) { $n++; $out[] = ['id'=>'d'.$n,'date'=>$date,'to'=>$to,'time'=>$time,'spot'=>$spot,'title'=>$title,'access'=>'all','kind'=>$kind]; };
+  foreach (['calmshet','purrom','ctheatre','theeya','lefarm','shambhala'] as $v) $add($F, $L, $v, 'K. N. Ramachandran exhibit', 'exhibit');
+  $add($F, $L, 'lefarm', 'Dashavatar exhibit', 'exhibit'); $add($F, $L, 'theeya', 'Pyoba Awards exhibit', 'exhibit');
+  $add($F, $L, 'ctheatre', 'Antique & Kitsch exhibit', 'exhibit'); $add($F, $L, 'purrom', 'Maval Comics exhibit', 'exhibit');
+  $add($F, $L, 'lefarm', 'Animela · the anime festival: comics, films, toys', 'fest');
+  $add($F, $L, 'purrom', 'Wench Film Festival', 'fest'); $add($F, $L, 'ctheatre', 'The Company Theatre festival', 'fest');
+  $add($F, '', 'calmshet', 'Opening day', 'show');
+  /* the village dhol pathak: a different venue on every big night (day 3, 6 and 9 of each chapter), and across the lake on Shivaji Jayanti */
+  $ven = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala'];
+  for ($c = 0; $c < 4; $c++) foreach ([3, 6, 9] as $i => $k) { $d = addDays($F, $c * 9 + $k - 1); $add($d, '', $ven[($c * 3 + $i) % 6], 'Dhol pathak', 'dhol', '18:30'); }
+  $add('2027-02-19', '', '', 'Shivaji Jayanti · the dhol pathak across the lake', 'dhol', '17:00');
+  usort($out, fn($x,$y)=>strcmp($x['date'].$x['time'], $y['date'].$y['time']));
+  return $out;
+}
+/* Logo panel on the public timetable: everyone involved (curators, venues, partners) and sponsors (shown beside the APPA logo). */
+const LOGO_GROUPS = ['curator','venue','partner','sponsor'];
+function default_logos() {
+  $l = []; $i = 0;
+  foreach (['KRUNK','Bandish Project','Bhavishyavani','Animela','Wench Film Festival'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
+  foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com']] as [$nm,$u])
+    $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
+  return $l;
+}
+function logos() { $v = kv_get('logos'); if ($v === null) return default_logos(); $j = json_decode((string)$v, true); return is_array($j) ? $j : []; }
 /* Confirmed festival bookings this device holds tickets for, plus their venue stamps */
 function passport_data($tickets) {
   db()->exec('CREATE TABLE IF NOT EXISTS fest_stamps (ref VARCHAR(16) NOT NULL, spot VARCHAR(20) NOT NULL, at BIGINT NOT NULL)');
@@ -475,7 +503,7 @@ try {
 switch ($a) {
   case 'state':
     out(['ok'=>true,'settings'=>settings(),'listings'=>public_listings(),'occ'=>(object)occupancy(),'now'=>time(),
-         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule()]);
+         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule(),'logos'=>logos()]);
 
   case 'book': {
     if ($m !== 'POST') fail('Use POST');
@@ -889,14 +917,27 @@ switch ($a) {
     need_admin(); $b = body(); $items = [];
     foreach (array_slice((array)($b['items'] ?? []), 0, 350) as $it) {
       $d = (string)($it['date'] ?? ''); $tm = (string)($it['time'] ?? ''); $sp = (string)($it['spot'] ?? '');
-      $ac = in_array($it['access'] ?? 'all', ['all','vip','vvip'], true) ? $it['access'] : 'all';
-      $ti = clean($it['title'] ?? '', 100);
+      $ac = (string)($it['access'] ?? 'all'); if (!in_array($ac, ['all','vip','vvip'], true)) $ac = 'all';
+      $ti = clean($it['title'] ?? '', 100); $to = (string)($it['to'] ?? '');
+      $kd = in_array($it['kind'] ?? 'show', ['show','exhibit','fest','dhol','workshop','adventure'], true) ? $it['kind'] : 'show';
       if (!valid_date($d) || $ti === '' || ($tm !== '' && !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $tm)) || ($sp !== '' && !in_array($sp, STAMP_SPOTS, true))) continue;
-      $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'date'=>$d,'time'=>$tm,'spot'=>$sp,'title'=>$ti,'access'=>$ac];
+      if ($to !== '' && (!valid_date($to) || $to <= $d)) $to = '';
+      $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'date'=>$d,'to'=>$to,'time'=>$tm,'spot'=>$sp,'title'=>$ti,'access'=>$ac,'kind'=>$kd];
     }
     usort($items, fn($x,$y)=>strcmp($x['date'].$x['time'], $y['date'].$y['time']));
     kv_set('schedule', json_encode($items));
     out(['ok'=>true,'schedule'=>$items]);
+  }
+  case 'logos_set': {
+    need_admin(); $b = body(); $items = [];
+    foreach (array_slice((array)($b['items'] ?? []), 0, 120) as $it) {
+      $nm = clean($it['name'] ?? '', 60); $g = (string)($it['group'] ?? ''); if ($nm === '' || !in_array($g, LOGO_GROUPS, true)) continue;
+      $img = (string)($it['img'] ?? ''); if ($img !== '' && !preg_match('#^(uploads/\d{6}/[a-f0-9]{24}\.(jpg|png|webp)|https://[^\s"<>]{4,300})$#', $img)) $img = '';
+      $url = (string)($it['url'] ?? ''); if ($url !== '' && !preg_match('#^https?://[^\s"<>]{3,300}$#', $url)) $url = '';
+      $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'group'=>$g,'img'=>$img,'url'=>$url];
+    }
+    kv_set('logos', json_encode($items));
+    out(['ok'=>true,'logos'=>$items]);
   }
 
   default: fail('Unknown action', 404);
