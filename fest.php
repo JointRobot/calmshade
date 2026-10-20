@@ -472,6 +472,10 @@ function default_logos() {
     $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
   return $l;
 }
+/* Private sponsor pipeline: desk only, never in the public state. */
+const SPONSOR_TIERS = ['Title','Chapter','Venue','Big night','Event or stage','Artist','In-kind / barter','Other'];
+const SPONSOR_STATUS = ['Lead','In talks','Proposal sent','Confirmed','Paid','Not now'];
+function sponsors() { $j = json_decode((string)kv_get('sponsors'), true); return is_array($j) ? $j : []; }
 function logos() { $v = kv_get('logos'); if ($v === null) return default_logos(); $j = json_decode((string)$v, true); return is_array($j) ? $j : []; }
 /* Confirmed festival bookings this device holds tickets for, plus their venue stamps */
 function passport_data($tickets) {
@@ -610,7 +614,7 @@ switch ($a) {
       $bs[] = ['ref'=>$r['ref'],'status'=>$status,'passOnly'=>!has_stay($r['items']),'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
     }
     $ls = array_map(fn($l)=>['id'=>$l['id'],'status'=>$l['status'],'createdAt'=>(int)$l['created_at'],'data'=>json_decode($l['data'], true),'contact'=>json_decode($l['contact'], true)], listings_all());
-    out(['ok'=>true,'bookings'=>$bs,'listings'=>$ls,'store'=>is_mysql() ? 'mysql' : 'sqlite']);
+    out(['ok'=>true,'bookings'=>$bs,'listings'=>$ls,'store'=>is_mysql() ? 'mysql' : 'sqlite','sponsors'=>sponsors()]);
   }
   case 'status': {
     need_admin(); $b = body(); $s = (string)($b['status'] ?? '');
@@ -792,7 +796,8 @@ switch ($a) {
     if (!preg_match('#^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$#', $u, $mm)) fail('Send a JPEG, PNG or WebP photo.');
     $bin = base64_decode($mm[2], true); $info = $bin ? @getimagesizefromstring($bin) : false;
     $ext = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'][$info['mime'] ?? ''] ?? null;
-    if (!$info || !$ext || $info[0] < 200 || $info[1] < 150 || $info[0] > 6000 || $info[1] > 6000) fail('That file is not a usable photo.');
+    $minW = $isAdmin ? 40 : 200; $minH = $isAdmin ? 30 : 150; /* the desk also uploads logos, which can be small */
+    if (!$info || !$ext || $info[0] < $minW || $info[1] < $minH || $info[0] > 6000 || $info[1] > 6000) fail('That file is not a usable photo.');
     $dir = __DIR__.'/uploads/'.gmdate('Ym');
     if (!is_dir($dir)) @mkdir($dir, 0755, true);
     $root = __DIR__.'/uploads/.htaccess';
@@ -927,6 +932,18 @@ switch ($a) {
     usort($items, fn($x,$y)=>strcmp($x['date'].$x['time'], $y['date'].$y['time']));
     kv_set('schedule', json_encode($items));
     out(['ok'=>true,'schedule'=>$items]);
+  }
+  case 'sponsors_set': {
+    need_admin(); $b = body(); $items = [];
+    foreach (array_slice((array)($b['items'] ?? []), 0, 300) as $it) {
+      $nm = clean($it['name'] ?? '', 80); if ($nm === '') continue;
+      $tier = in_array($it['tier'] ?? '', SPONSOR_TIERS, true) ? $it['tier'] : 'Other';
+      $st = in_array($it['status'] ?? '', SPONSOR_STATUS, true) ? $it['status'] : 'Lead';
+      $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'tier'=>$tier,'what'=>clean($it['what'] ?? '', 80),
+        'status'=>$st,'value'=>max(0, (int)($it['value'] ?? 0)),'contact'=>clean($it['contact'] ?? '', 120),'notes'=>clean($it['notes'] ?? '', 600),'updated'=>time()];
+    }
+    kv_set('sponsors', json_encode($items));
+    out(['ok'=>true,'sponsors'=>$items]);
   }
   case 'logos_set': {
     need_admin(); $b = body(); $items = [];

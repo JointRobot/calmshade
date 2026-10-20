@@ -890,6 +890,12 @@ body{background:var(--bg);}
 #cs-app .pp-two{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:24px; align-items:start;}
 #cs-app .pp-mapwrap{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px;}
 #cs-app .pp-map{width:100%; height:auto; display:block;}
+.lg-desk{display:flex; flex-wrap:wrap; gap:10px;}
+.lg-it{border:1px solid var(--line); border-radius:12px; padding:10px; width:170px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; background:var(--card);}
+.lg-it.on{border-color:var(--accent);}
+.lg-it img{max-height:44px; max-width:140px;}
+.lg-it b{font-family:var(--serif,Georgia),serif; font-style:italic;}
+.lg-it span{font-size:13px;}
 #cs-app .pp-land{fill:#EFE3C9; stroke:#E2D3BA;}
 #cs-app .pp-road{fill:none; stroke:#D9C6A6; stroke-width:2; stroke-dasharray:6 6;}
 #cs-app .pp-lake{fill:#BFD3DA; stroke:#A9C3CC;}
@@ -2073,7 +2079,7 @@ ${kb()}`;}
     return j;}
   function fxQuiet(){const a=document.activeElement;return !(a&&a.closest&&a.closest('#cs-app')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));}
   async function fxLoad(){
-    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;FX.synced=Date.now();FX.S.schedule=j.schedule||[];
+    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;FX.synced=Date.now();FX.S.schedule=j.schedule||[];FX.S.logos=j.logos||[];
       const before=FX.cart.stays.length;FX.cart.stays=FX.cart.stays.filter(st=>fxU(st.unit));
       if(FX.cart.stays.length<before){fxSave();toast('A partner stay in your trip is no longer listed, so it was removed');}}
     catch(e){FX.offline=true;clearTimeout(fxLoad.t);fxLoad.t=setTimeout(()=>{if(view==='fest')fxLoad();},15000);}
@@ -2354,7 +2360,7 @@ ${kb()}`;}
         ${lrows?`<div class="fx-tbl"><table><thead><tr><th>Property</th><th>Contact</th><th>Rooms × adults</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>${lrows}</tbody></table></div>`:'<p class="fx-note">No applications yet.</p>'}</div></div>
       <div class="pan"><div class="ph2"><h3>Festival prices and rules</h3></div><div class="pb"><form onsubmit="event.preventDefault();CS.fx('deskSettings')">
         <div class="fx-grid2">${FX_VIP.map(v=>SF('rate_'+v.id,v.name+' — real rate, weeknight (₹)')+SF('rateWe_'+v.id,v.name+' — real rate, Fri/Sat night (₹)')+(v.kind==='room'?SF('extra_'+v.id,v.name+' — extra adult, weeknight (₹)')+SF('extraWe_'+v.id,v.name+' — extra adult, Fri/Sat (₹)'):'')).join('')}${SF('extraGuest','Tent extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Festival ticket / day pass per person (₹) — added to every room night per guest')}${SF('partnerMarkup','Festival ticket added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipPct','VIP discount (% off the booking)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipPct','VVIP discount (% off the booking)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
-        <div class="eacts"><button class="b-save" type="submit">Save festival prices</button><span class="fx-note" style="align-self:center">Stored in ${esc(D.data.store==='mysql'?'MySQL':'the built-in SQLite file')}.</span></div></form></div></div>`+ppDeskHTML();}
+        <div class="eacts"><button class="b-save" type="submit">Save festival prices</button><span class="fx-note" style="align-self:center">Stored in ${esc(D.data.store==='mysql'?'MySQL':'the built-in SQLite file')}.</span></div></form></div></div>`+ppDeskHTML()+lgDeskHTML()+spDeskHTML();}
   async function fxDeskLoad(){const D=FX.desk;if(!D.key){D.err='Enter the desk key.';render();return;}
     D.busy=true;D.err='';render();
     try{D.data=await fxCall('admin',null,true);fxLS('desk',D.key);await fxLoad();csAdminLoad(true);}catch(e){D.data=null;D.err=e.message;}
@@ -2549,7 +2555,7 @@ ${kb()}`;}
     {from:'2027-03-02',to:'2027-03-10',label:'Chapter 3 · Tech, Electronica & AI',text:'Electronic music, digital art, AI and immersive installations.'},
     {from:'2027-03-11',to:'2027-03-19',label:'Chapter 4 · All Forms, Together',text:'Everything at once: music, art, workshops and special collaborations.'}];
   /* ═════════ APPA ART PASSPORT — stamps, map, itinerary ═════════ */
-  const PP={data:null,loading:false,err:'',tab:'stamps',sel:'calmshet',mine:true,pendingStamp:null,justStamped:null,posters:null,sched:{date:'2027-02-12',time:'',spot:'',title:'',access:'all'}};
+  const PP={data:null,loading:false,err:'',tab:'stamps',sel:'calmshet',mine:true,pendingStamp:null,justStamped:null,posters:null,sched:{date:'2027-02-12',to:'',time:'',spot:'',title:'',access:'all',kind:'show'}};
   const ppSpot=id=>PP_SPOTS.find(s=>s.id===id);
   const ppStayUnit={calmshet:'calmshet',lefarm:'lefarm',shambhala:'shambhala',theeya:'theeya',ctheatre:'ctheatre',purrom:'purrom'};
   function ppAccess(){
@@ -2669,17 +2675,63 @@ ${kb()}`;}
       ${PP.posters?`<div class="pp-posters">${PP.posters.links.map(l=>{const s=ppSpot(l.spot);const c=(PP.posters.counts||{})[l.spot]||0;
         return `<div class="pp-poster"><span class="fx-eyebrow" style="color:var(--mute)">APPA Art Passport</span><b>${esc(s.name)}</b><div class="fx-qr" data-qr="${esc(base+'?stamp='+l.spot+'.'+l.sig)}"></div><span>Scan to stamp your passport</span><small class="pp-count">${c} stamp${c===1?'':'s'} so far</small></div>`;}).join('')}</div>`:''}
     </div></div>
-    <div class="pan"><div class="ph2"><h3>Timetable · shows guests see in their passport</h3></div><div class="pb">
+    <div class="pan"><div class="ph2"><h3>Timetable · public page and passports</h3><span class="sp"></span><a class="b-lt" href="appa/timetable/" target="_blank" rel="noopener">Open the public timetable ↗</a></div><div class="pb">
+      <p class="nt2" style="margin:0 0 12px">Everything here shows on calmshade.in/appa/timetable and in guests' passports. For something that runs many days (an exhibit, a mini-festival), pick an end day too.</p>
       <form class="fx-grid2" onsubmit="event.preventDefault();CS.pp('schedAdd')" style="align-items:end">
-        <div class="fx-field"><label for="pps-d">Day</label><select id="pps-d" onchange="CS.pp('schedF','date',this.value)">${days.map(d=>`<option value="${d}" ${S.date===d?'selected':''}>${fxFmt(d)}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="pps-d">Day</label><select id="pps-d" onchange="CS.pp('schedF','date',this.value)">${days.map(d=>`<option value="${d}" ${S.date===d?'selected':''}>${ppDayLbl(d)}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="pps-to">Runs until (optional)</label><select id="pps-to" onchange="CS.pp('schedF','to',this.value)"><option value="">Just that day</option>${days.filter(d=>d>S.date).map(d=>`<option value="${d}" ${S.to===d?'selected':''}>${ppDayLbl(d)}</option>`).join('')}</select></div>
         <div class="fx-field"><label for="pps-t">Time (optional)</label><input id="pps-t" type="time" value="${esc(S.time)}" onchange="CS.pp('schedF','time',this.value)"></div>
-        <div class="fx-field"><label for="pps-s">Venue</label><select id="pps-s" onchange="CS.pp('schedF','spot',this.value)"><option value="">Anywhere / roaming</option>${PP_SPOTS.map(s=>`<option value="${s.id}" ${S.spot===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="pps-s">Venue</label><select id="pps-s" onchange="CS.pp('schedF','spot',this.value)"><option value="">Across the lake / roaming</option>${PP_SPOTS.map(s=>`<option value="${s.id}" ${S.spot===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="pps-k">Type</label><select id="pps-k" onchange="CS.pp('schedF','kind',this.value)">${PP_KINDS.map(([k,l])=>`<option value="${k}" ${(S.kind||'show')===k?'selected':''}>${l}</option>`).join('')}</select></div>
         <div class="fx-field"><label for="pps-a">Who can attend</label><select id="pps-a" onchange="CS.pp('schedF','access',this.value)"><option value="all" ${S.access==='all'?'selected':''}>Everyone with that day</option><option value="vip" ${S.access==='vip'?'selected':''}>VIP and VVIP</option><option value="vvip" ${S.access==='vvip'?'selected':''}>VVIP only</option></select></div>
-        <div class="fx-field" style="grid-column:1/-1"><label for="pps-ti">Show or session</label><input id="pps-ti" value="${esc(S.title)}" oninput="CS.pp('schedF','title',this.value)" maxlength="100" placeholder="Opening night: Roots & Raga concert"></div>
-        <div><button class="b-save" type="submit">Add to timetable</button></div></form>
-      ${sched.length?`<div class="fx-tbl" style="margin-top:16px"><table><thead><tr><th>Day</th><th>Time</th><th>Show</th><th>Venue</th><th>Access</th><th></th></tr></thead><tbody>${sched.map(i=>`<tr><td>${fxFmt(i.date)}</td><td>${i.time||'All day'}</td><td>${esc(i.title)}</td><td>${esc((ppSpot(i.spot)||{name:'Anywhere'}).name)}</td><td>${i.access==='all'?'Everyone':i.access.toUpperCase()}</td><td><button class="fx-btn warn small" onclick="CS.pp('schedDel','${esc(i.id)}')">Remove</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="fx-note" style="margin-top:12px">Nothing scheduled yet. Until you add times, passports show each venue’s programme.</p>'}
+        <div class="fx-field" style="grid-column:1/-1"><label for="pps-ti">Show, act or session</label><input id="pps-ti" value="${esc(S.title)}" oninput="CS.pp('schedF','title',this.value)" maxlength="100" placeholder="Bandish Project live"></div>
+        <div class="fx-row"><button class="b-save" type="submit">${S.id?'Save changes':'Add to timetable'}</button>${S.id?`<button class="b-lt" type="button" onclick="CS.pp('schedCancel')">Cancel edit</button>`:''}</div></form>
+      ${sched.length?`<div class="fx-tbl" style="margin-top:16px"><table><thead><tr><th>When</th><th>Show</th><th>Venue</th><th>Type</th><th>Access</th><th></th></tr></thead><tbody>${sched.map(i=>`<tr${S.id===i.id?' style="background:#FFF2DC"':''}><td>${fxFmt(i.date)}${i.to?' – '+fxFmt(i.to):''}${i.time?'<br>'+i.time:''}</td><td>${esc(i.title)}</td><td>${esc((ppSpot(i.spot)||{name:'Across the lake'}).name)}</td><td>${esc((PP_KINDS.find(k=>k[0]===(i.kind||'show'))||['',''])[1])}</td><td>${i.access==='all'?'Everyone':String(i.access).toUpperCase()}</td><td style="white-space:nowrap"><button class="fx-btn ghost small" onclick="CS.pp('schedEdit','${esc(i.id)}')">Edit</button> <button class="fx-btn warn small" onclick="CS.pp('schedDel','${esc(i.id)}')">${FX.arm==='s'+i.id?'Tap again':'Remove'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="fx-note" style="margin-top:12px">Nothing scheduled yet.</p>'}
     </div></div>`;
   }
+  const PP_KINDS=[['show','Show or performance'],['exhibit','Exhibit'],['fest','Mini-festival'],['workshop','Workshop'],['dhol','Dhol pathak'],['adventure','Adventure']];
+  const ppDayLbl=d=>{const i=fxDiff(FX.S.firstNight,d),k=i%9+1;return fxFmt(d)+' · Ch '+(Math.floor(i/9)+1)+' day '+k+(k%3===0?' ★':'');};
+  /* logo panel on the public timetable (curators, venues, partners) + sponsors beside the APPA logo */
+  const LG={f:{name:'',group:'curator',url:'',img:''},edit:null,busy:false};
+  const LG_GROUPS=[['curator','Curator or collective'],['venue','Venue'],['partner','Partner'],['sponsor','Sponsor (shown beside the APPA logo)']];
+  function lgDeskHTML(){
+    const ls=FX.S.logos||[];const f=LG.f;
+    return `<div class="pan"><div class="ph2"><h3>Logos · the people behind APPA</h3></div><div class="pb">
+      <p class="nt2" style="margin:0 0 12px">These appear under the public timetable. Sponsors appear beside the APPA logo at the top. A logo without a picture shows its name.</p>
+      <form class="fx-grid2" onsubmit="event.preventDefault();CS.pp('lgSave')" style="align-items:end">
+        <div class="fx-field"><label for="lg-n">Name</label><input id="lg-n" value="${esc(f.name)}" maxlength="60" oninput="CS.pp('lgF','name',this.value)" placeholder="KRUNK" required></div>
+        <div class="fx-field"><label for="lg-g">Shown as</label><select id="lg-g" onchange="CS.pp('lgF','group',this.value)">${LG_GROUPS.map(([k,l])=>`<option value="${k}" ${f.group===k?'selected':''}>${l}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="lg-u">Website (optional)</label><input id="lg-u" type="text" inputmode="url" autocapitalize="off" value="${esc(f.url)}" maxlength="300" oninput="CS.pp('lgF','url',this.value)" placeholder="https://"></div>
+        <div class="fx-field"><label for="lg-i">Logo picture (PNG works best)</label><input id="lg-i" type="file" accept="image/png,image/jpeg,image/webp" onchange="CS.pp('lgImg',this.files[0])">${f.img?`<span class="fx-note">Picture added ✓ <button class="fx-x" type="button" onclick="CS.pp('lgF','img','')">remove</button></span>`:''}${LG.busy?'<span class="fx-note">Uploading…</span>':''}</div>
+        <div class="fx-row"><button class="b-save" type="submit" ${LG.busy?'disabled':''}>${LG.edit?'Save changes':'Add logo'}</button>${LG.edit?`<button class="b-lt" type="button" onclick="CS.pp('lgCancel')">Cancel edit</button>`:''}</div></form>
+      ${LG_GROUPS.map(([g,l])=>{const xs=ls.filter(x=>x.group===g);return xs.length?`<h4 style="margin:16px 0 8px">${esc(l)}</h4><div class="lg-desk">${xs.map(x=>`<div class="lg-it${LG.edit===x.id?' on':''}">${x.img?`<img src="${esc(x.img)}" alt=""><span>${esc(x.name)}</span>`:`<b>${esc(x.name)}</b><span class="fx-note">no picture yet</span>`}<div><button class="fx-x" onclick="CS.pp('lgEdit','${esc(x.id)}')">Edit</button> · <button class="fx-x" onclick="CS.pp('lgMove','${esc(x.id)}',-1)">↑</button> <button class="fx-x" onclick="CS.pp('lgMove','${esc(x.id)}',1)">↓</button> · <button class="fx-x" style="${FX.arm==='l'+x.id?'color:#B03A22':''}" onclick="CS.pp('lgDel','${esc(x.id)}')">${FX.arm==='l'+x.id?'Tap again':'Remove'}</button></div></div>`).join('')}</div>`:'';}).join('')}
+    </div></div>`;}
+  async function lgSave(items){LG.busy=true;render();try{const r=await fxCall('logos_set',{items},true);FX.S.logos=r.logos;toast('Logos saved');}catch(e){toast(e.message);}LG.busy=false;render();}
+  function lgShrink(file){return new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{const s=Math.min(1,600/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.max(40,Math.round(img.width*s));c.height=Math.max(30,Math.round(img.height*s));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);let d=c.toDataURL('image/png');if(d.length>3200000)d=c.toDataURL('image/webp',.9);res(d);};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('That file is not a picture we can read.'));};img.src=url;});}
+  /* private sponsor tracker (desk only; never shown publicly) */
+  const SP_TIERS=['Title','Chapter','Venue','Big night','Event or stage','Artist','In-kind / barter','Other'],SP_STATUS=['Lead','In talks','Proposal sent','Confirmed','Paid','Not now'];
+  const SPX={f:{name:'',tier:'Chapter',what:'',status:'Lead',value:'',contact:'',notes:''},edit:null};
+  function spDeskHTML(){
+    const xs=(FX.desk.data&&FX.desk.data.sponsors)||[];const f=SPX.f;
+    const sum=st=>xs.filter(x=>st.includes(x.status)).reduce((a,x)=>a+(+x.value||0),0);
+    return `<div class="pan"><div class="ph2"><h3>Sponsors · private tracker</h3></div><div class="pb">
+      <p class="nt2" style="margin:0 0 12px">Only visible here, behind the desk key. To show a sponsor's logo on the site, add it under Logos as a sponsor.</p>
+      <div class="stats" style="margin:0 0 14px"><div class="stat" style="--stc:var(--r3)"><div class="k">In the pipeline</div><div class="v">${inr(sum(['Lead','In talks','Proposal sent']))}</div></div><div class="stat" style="--stc:var(--r4)"><div class="k">Confirmed</div><div class="v">${inr(sum(['Confirmed']))}</div></div><div class="stat" style="--stc:var(--r1)"><div class="k">Paid</div><div class="v">${inr(sum(['Paid']))}</div></div></div>
+      <form class="fx-grid2" onsubmit="event.preventDefault();CS.pp('spSave')" style="align-items:end">
+        <div class="fx-field"><label for="sp-n">Sponsor or brand</label><input id="sp-n" value="${esc(f.name)}" maxlength="80" oninput="CS.pp('spF','name',this.value)" required></div>
+        <div class="fx-field"><label for="sp-t">Tier</label><select id="sp-t" onchange="CS.pp('spF','tier',this.value)">${SP_TIERS.map(t=>`<option ${f.tier===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="sp-w">What they back</label><input id="sp-w" value="${esc(f.what)}" maxlength="80" oninput="CS.pp('spF','what',this.value)" placeholder="Chapter 2 · Le Farm · an artist…"></div>
+        <div class="fx-field"><label for="sp-s">Status</label><select id="sp-s" onchange="CS.pp('spF','status',this.value)">${SP_STATUS.map(t=>`<option ${f.status===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="fx-field"><label for="sp-v">Value (₹, cash or barter)</label><input id="sp-v" type="number" min="0" value="${esc(f.value)}" oninput="CS.pp('spF','value',this.value)"></div>
+        <div class="fx-field"><label for="sp-c">Contact person / phone / email</label><input id="sp-c" value="${esc(f.contact)}" maxlength="120" oninput="CS.pp('spF','contact',this.value)"></div>
+        <div class="fx-field" style="grid-column:1/-1"><label for="sp-no">Notes</label><textarea id="sp-no" rows="2" maxlength="600" oninput="CS.pp('spF','notes',this.value)" placeholder="What we offered, what they asked, next step">${esc(f.notes)}</textarea></div>
+        <div class="fx-row"><button class="b-save" type="submit">${SPX.edit?'Save changes':'Add sponsor'}</button>${SPX.edit?`<button class="b-lt" type="button" onclick="CS.pp('spCancel')">Cancel edit</button>`:''}</div></form>
+      ${xs.length?`<div class="fx-tbl" style="margin-top:16px"><table><thead><tr><th>Sponsor</th><th>Tier · what</th><th>Status</th><th>Value</th><th>Contact · notes</th><th></th></tr></thead><tbody>${xs.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.tier)}${x.what?'<br><span class="fx-note">'+esc(x.what)+'</span>':''}</td><td><span class="fx-status ${x.status==='Paid'||x.status==='Confirmed'?'confirmed':x.status==='Not now'?'cancelled':'pending'}">${esc(x.status)}</span></td><td class="num">${x.value?inr(x.value):'—'}</td><td>${esc(x.contact)}${x.notes?'<br><span class="fx-note">'+esc(x.notes)+'</span>':''}</td><td style="white-space:nowrap"><button class="fx-btn ghost small" onclick="CS.pp('spEdit','${esc(x.id)}')">Edit</button> <button class="fx-btn warn small" onclick="CS.pp('spDel','${esc(x.id)}')">${FX.arm==='p'+x.id?'Tap again':'Remove'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="fx-note" style="margin-top:12px">No sponsors tracked yet.</p>'}
+    </div></div>`;}
+  async function spSave(items){try{const r=await fxCall('sponsors_set',{items},true);FX.desk.data.sponsors=r.sponsors;toast('Sponsors saved');}catch(e){toast(e.message);}render();}
   async function ppSched(items){try{const r=await fxCall('schedule_set',{items},true);FX.S.schedule=r.schedule;toast('Timetable saved');}catch(e){toast(e.message);}render();}
 
 
@@ -2687,9 +2739,28 @@ ${kb()}`;}
   function ppDo(a,x,y){
     const sched=FX.S.schedule||[];
     if(a==='posters'){ppPosters();return;}
-    if(a==='schedF'){PP.sched[x]=y;return;}
-    if(a==='schedAdd'){if(!PP.sched.title.trim())return toast('Add the show name');ppSched(sched.concat([Object.assign({},PP.sched)]));PP.sched.title='';return;}
-    if(a==='schedDel'){ppSched(sched.filter(i=>i.id!==x));return;}
+    if(a==='schedF'){PP.sched[x]=y;if(x==='date'&&PP.sched.to&&PP.sched.to<=y)PP.sched.to='';if(x==='date')render();return;}
+    if(a==='schedAdd'){const it=Object.assign({},PP.sched);if(!it.title.trim())return toast('Add the show name');
+      ppSched(it.id?sched.map(i=>i.id===it.id?it:i):sched.concat([it]));PP.sched=Object.assign({},PP.sched,{id:'',title:'',to:''});return;}
+    if(a==='schedEdit'){const i=sched.find(i=>i.id===x);if(i){PP.sched=Object.assign({to:'',kind:'show',time:''},i);render();document.getElementById('pps-ti')?.scrollIntoView({block:'center'});}return;}
+    if(a==='schedCancel'){PP.sched=Object.assign({},PP.sched,{id:'',title:'',to:''});render();return;}
+    if(a==='schedDel'){if(FX.arm!=='s'+x){FX.arm='s'+x;render();return;}FX.arm=null;ppSched(sched.filter(i=>i.id!==x));return;}
+    const LS=FX.S.logos||[];
+    if(a==='lgF'){LG.f[x]=y;if(x==='img')render();return;}
+    if(a==='lgImg'){if(!x)return;LG.busy=true;render();lgShrink(x).then(d=>fetch(FX_API+'?a=upload',{method:'POST',headers:{'Content-Type':'application/json','X-Fest-Key':FX.desk.key},body:JSON.stringify({data:d})})).then(r=>r.json().then(j=>{if(!r.ok||!j.src)throw new Error(j.error||'Upload failed');LG.f.img=j.src;})).catch(e=>toast(e.message)).finally(()=>{LG.busy=false;render();});return;}
+    if(a==='lgSave'){const f=Object.assign({},LG.f);if(!f.name.trim())return toast('Add a name');if(f.url&&!/^https?:\/\//.test(f.url))f.url='https://'+f.url;
+      lgSave(LG.edit?LS.map(l=>l.id===LG.edit?Object.assign({},l,f):l):LS.concat([f]));LG.edit=null;LG.f={name:'',group:f.group,url:'',img:''};return;}
+    if(a==='lgEdit'){const l=LS.find(l=>l.id===x);if(l){LG.edit=x;LG.f={name:l.name,group:l.group,url:l.url||'',img:l.img||''};render();document.getElementById('lg-n')?.scrollIntoView({block:'center'});}return;}
+    if(a==='lgCancel'){LG.edit=null;LG.f={name:'',group:LG.f.group,url:'',img:''};render();return;}
+    if(a==='lgMove'){const i=LS.findIndex(l=>l.id===x),g=LS[i]&&LS[i].group;let j=i+y;while(j>=0&&j<LS.length&&LS[j].group!==g)j+=y;if(i<0||j<0||j>=LS.length)return;const n=LS.slice();[n[i],n[j]]=[n[j],n[i]];lgSave(n);return;}
+    if(a==='lgDel'){if(FX.arm!=='l'+x){FX.arm='l'+x;render();return;}FX.arm=null;lgSave(LS.filter(l=>l.id!==x));return;}
+    const SX=(FX.desk.data&&FX.desk.data.sponsors)||[];
+    if(a==='spF'){SPX.f[x]=y;return;}
+    if(a==='spSave'){const f=Object.assign({},SPX.f,{value:+SPX.f.value||0});if(!f.name.trim())return toast('Add the sponsor name');
+      spSave(SPX.edit?SX.map(p=>p.id===SPX.edit?Object.assign({},p,f):p):SX.concat([f]));SPX.edit=null;SPX.f={name:'',tier:'Chapter',what:'',status:'Lead',value:'',contact:'',notes:''};return;}
+    if(a==='spEdit'){const p=SX.find(p=>p.id===x);if(p){SPX.edit=x;SPX.f={name:p.name,tier:p.tier,what:p.what||'',status:p.status,value:p.value||'',contact:p.contact||'',notes:p.notes||''};render();document.getElementById('sp-n')?.scrollIntoView({block:'center'});}return;}
+    if(a==='spCancel'){SPX.edit=null;SPX.f={name:'',tier:'Chapter',what:'',status:'Lead',value:'',contact:'',notes:''};render();return;}
+    if(a==='spDel'){if(FX.arm!=='p'+x){FX.arm='p'+x;render();return;}FX.arm=null;spSave(SX.filter(p=>p.id!==x));return;}
     ppActBase(a,x,y);
   }
   /* ═════════ CURATE YOUR STAY — VIP (6+ nights) and VVIP (9+ nights) planner across the festival venues ═════════ */
