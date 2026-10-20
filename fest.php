@@ -71,9 +71,11 @@ function is_mysql() { return defined('FEST_DB_DSN') && stripos(FEST_DB_DSN, 'mys
 
 /* ---------- settings & inventory ---------- */
 const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partnerShareCouple'=>8000,'partnerShareSingle'=>4000,
-  'tentNight'=>9000,'tents'=>20,'dayPass'=>2000,'partnerMarkup'=>2000,'surgeMax'=>20,'vipNights'=>7,'vipDiscount'=>7000,
-  'vvipNights'=>30,'vvipDiscount'=>40000,'holdHours'=>48,'firstNight'=>'2027-02-12','lastNight'=>'2027-03-20',
-  'passLast'=>'2027-03-15','encoreFrom'=>'2027-03-16','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
+  'tentNight'=>9000,'tents'=>20,'dayPass'=>2000,'partnerMarkup'=>2000,'surgeMax'=>20,'vipNights'=>6,'vipPct'=>6,
+  /* 3-6-9 (Karthik, 20 Oct 2026): festival 12 Feb – 19 Mar 2027 = 36 days in four 9-day chapters, no Encore.
+     VIP = 6+ nights inside, 6% off; VVIP = 9+ nights (a full chapter), 9% off the whole booking. */
+  'vvipNights'=>9,'vvipPct'=>9,'holdHours'=>48,'firstNight'=>'2027-02-12','lastNight'=>'2027-03-19',
+  'passLast'=>'2027-03-19','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
   'contact'=>'karthik@xtrathin.in',
   /* Venue real rates (what the venue itself charges, per room per night incl. its taxes) — guests pay this
      PLUS a festival ticket (dayPass) per guest per night; the venue is paid exactly this. Researched 14 Oct 2026:
@@ -202,15 +204,10 @@ function quote($stays, $passes, $occ) {
   }
   $pn = count($prem);
   $tier = $pn >= $S['vvipNights'] ? 'vvip' : ($pn >= $S['vipNights'] ? 'vip' : '');
-  if (!$tier) {
-    foreach ($lines as $l) {
-      if ($l['kind'] !== 'stay') continue;
-      if (end($l['nights']) >= $S['encoreFrom']) { $err[] = 'The Encore nights are for VIP and VVIP trips only.'; break; }
-    }
-  }
   $stayT = array_sum(array_map(fn($l)=>$l['kind']==='stay'?$l['total']:0, $lines));
   $payout = array_sum(array_map(fn($l)=>$l['payout']??0, $lines));
-  $disc = $tier === 'vvip' ? $S['vvipDiscount'] : ($tier === 'vip' ? $S['vipDiscount'] : 0);
+  $pct = $tier === 'vvip' ? $S['vvipPct'] : ($tier === 'vip' ? $S['vipPct'] : 0);
+  $disc = (int)round(($stayT + $pt) * $pct / 100);
   return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'discount'=>$disc,'total'=>max(0,$stayT+$pt-$disc),'payout'=>$payout,'tier'=>$tier,'premiumNights'=>$pn], array_values(array_unique($err))];
 }
 
@@ -442,7 +439,7 @@ function cs_public_prop($l, $host) {
 }
 
 /* ---------- APPA Art Passport: venue stamps + timetable ---------- */
-const STAMP_SPOTS = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala','secretfarm','square','island'];
+const STAMP_SPOTS = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala','square','island'];
 function kv_get($k) { $st = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $st->execute([$k]); $r = $st->fetch(); return $r ? $r['v'] : null; }
 function kv_set($k, $v) { db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$k]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$k, $v]); }
 function stamp_secret() { $s = kv_get('stamp_secret'); if (!$s) { $s = bin2hex(random_bytes(24)); kv_set('stamp_secret', $s); } return $s; }
@@ -632,7 +629,7 @@ switch ($a) {
   case 'settings': {
     need_admin(); $b = body(); $in = (array)($b['settings'] ?? []); $s = [];
     foreach (DEF as $k => $v) if (array_key_exists($k, $in)) $s[$k] = is_int($v) ? max(0, (int)$in[$k]) : clean($in[$k], 120);
-    foreach (['firstNight','lastNight','passLast','encoreFrom'] as $k) if (isset($s[$k]) && !valid_date($s[$k])) fail($k.' must be a date like 2027-02-12');
+    foreach (['firstNight','lastNight','passLast'] as $k) if (isset($s[$k]) && !valid_date($s[$k])) fail($k.' must be a date like 2027-02-12');
     $v = json_encode(array_merge(settings(), $s));
     db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute(['settings']);
     db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute(['settings', $v]);

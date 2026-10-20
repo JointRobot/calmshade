@@ -57,8 +57,8 @@ export const KEYS = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[3], k[4]]);
 // on a tall phone screen the arch is framed higher (a lower look-at height), so it sits above the caption text instead of behind it
 export const KEYS_PORTRAIT = KEYS0.map(k => [tsc(k[0]), k[1], k[2], k[5] ?? k[3], k[6] ?? k[4]]);
 const TOUR0 = {
-  title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '12 Feb to 20 Mar 2027  ·  One lake. Many venues. A living ecosystem.'],
-  end: [95.2, 99, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '12 Feb to 20 Mar 2027  ·  A brighter tomorrow'],
+  title: [0.6, 8.2, 'APPA ART FEST 2027', 'When minds co-create', '12 Feb to 19 Mar 2027  ·  One lake. Many venues. A living ecosystem.'],
+  end: [95.2, 99, 'APPA ART FEST 2027', 'People · Planet · Art · Community', '12 Feb to 19 Mar 2027  ·  A brighter tomorrow'],
   captions: [
     [9, 16, 'Your festival journey', 'Check-in & the square', 'Walk in under the arch, pick your ride, gather at the fire'],
     [18, 25.5, 'Venue 1', 'Calmshet', 'The past two years, fashion, art, opening night'],
@@ -69,12 +69,12 @@ const TOUR0 = {
     [54.5, 60, 'Venue 6', 'Shambhala by the Lake', 'Intimate music, long meals, artist residencies'],
     [62, 68, 'Discover', 'Hidden APPA', 'Offbeat acts in fields and forests, by cycle or on foot'],
     [71, 76, 'On the lake', 'Island Cinema', 'Films on an island, reached by boat'],
-    // the four festival weeks, recapped over a wide hold before the Encore
-    [76.3, 79, 'Week 1 · 12 to 19 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
-    [79.2, 81.9, 'Week 2 · 20 to 26 Feb', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
-    [82.1, 84.8, 'Week 3 · 27 Feb to 5 Mar', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
-    [85, 87.7, 'Weeks 4 and 5 · 6 to 15 Mar', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
-    [88.5, 94.5, 'The Encore · 16 to 20 Mar', 'VVIP & VIP only', 'The final five days: special access and personal meet-ups with resident artists']
+    // the four 9-day chapters, recapped over a wide hold, then the 3-6-9 rhythm
+    [76.3, 79, 'Chapter 1 · 12 to 20 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
+    [79.2, 81.9, 'Chapter 2 · 21 Feb to 1 Mar', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
+    [82.1, 84.8, 'Chapter 3 · 2 to 10 Mar', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
+    [85, 87.7, 'Chapter 4 · 11 to 19 Mar', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
+    [88.5, 94.5, '36 days · 3 · 6 · 9', 'A big night every third day', 'Intimate on day 3, something different on day 6, the big one on day 9']
   ],
   subs: [
     [11, 14.8, 'Park the car. Pick a cycle.'], [20, 23.5, 'Where the story begins.'], [27, 30.5, 'Horror films after dark.'],

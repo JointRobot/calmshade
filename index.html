@@ -1352,7 +1352,7 @@ ${kb()}`;}
         <span class="seclabel">Curated</span>
         <h2>Can we help curate your travel?</h2>
         <p>Pick your dates and the route you'd love to wander — the concierge stitches the collective's <b>available</b> homes into a day-by-day itinerary you can edit until it's yours.<br>This map grows with every host who joins: soon, whole journeys drawn dot to dot.</p>
-        <div class="fx-warn" style="margin-top:14px;max-width:72ch;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><span><b>Coming for APPA Art Fest 2027?</b> VIP and VVIP guests can curate a week or the whole month across the festival venues, with every show included.</span><button class="fx-btn small" onclick="CS.fx('openCurate')">Curate your festival stay</button></div>
+        <div class="fx-warn" style="margin-top:14px;max-width:72ch;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><span><b>Coming for APPA Art Fest 2027?</b> VIP and VVIP guests can curate six nights, a whole chapter or all 36 days across the festival venues, with every show included.</span><button class="fx-btn small" onclick="CS.fx('openCurate')">Curate your festival stay</button></div>
       </div>
       <div class="cur-grid">
         <div class="cmap">${mapSVG()}
@@ -2022,8 +2022,8 @@ ${kb()}`;}
   /* ═════════ APPA ART FEST 2027 — festival stays, a VIP tier on Calm Shade ═════════ */
   const FX_API='fest.php';
   const FX_DEF={coupleNight:12000,singleNight:6000,extraGuest:2000,partnerShareCouple:8000,partnerShareSingle:4000,
-    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:7,vipDiscount:7000,vvipNights:30,vvipDiscount:40000,
-    holdHours:48,firstNight:'2027-02-12',lastNight:'2027-03-20',passLast:'2027-03-15',encoreFrom:'2027-03-16',
+    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:6,vipPct:6,vvipNights:9,vvipPct:9,
+    holdHours:48,firstNight:'2027-02-12',lastNight:'2027-03-19',passLast:'2027-03-19',
     upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in',
     rate_calmshet:8000,rateWe_calmshet:8000,extra_calmshet:4000,extraWe_calmshet:4000,
     rate_lefarm:6700,rateWe_lefarm:9800,extra_lefarm:2360,extraWe_lefarm:2360,
@@ -2060,7 +2060,8 @@ ${kb()}`;}
   const fxShort=s=>{const d=fxD(s);return d.getUTCDate()+' '+FMON[d.getUTCMonth()];};
   const fxRange=(a,n)=>Array.from({length:Math.max(0,n)},(_,i)=>fxAdd(a,i));
   const fxNights=()=>fxRange(FX.S.firstNight,fxDiff(FX.S.firstNight,FX.S.lastNight)+1);
-  const fxEnc=d=>d>=FX.S.encoreFrom;
+  const fxEnc=d=>false; /* no Encore since 20 Oct 2026 */
+  const fxPct=t=>t==='vvip'?+FX.S.vvipPct:t==='vip'?+FX.S.vipPct:0;
   const fxKey=()=>Math.random().toString(36).slice(2,10);
 
   async function fxCall(a,body,admin){
@@ -2106,7 +2107,7 @@ ${kb()}`;}
     FX.cart.stays.forEach(s=>{const p=fxPriceStay(s);if(!p)return;lines.push({s,p});stays+=p.total;if(fxPrem(p.u))p.nights.forEach(d=>prem.add(d));});
     const passes=FX.cart.passes.reduce((a,p)=>a+p.qty*FX.S.dayPass,0);const pn=prem.size;
     const tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
-    const discount=tier==='vvip'?+FX.S.vvipDiscount:tier==='vip'?+FX.S.vipDiscount:0;
+    const discount=Math.round((stays+passes)*fxPct(tier)/100);
     return {lines,stays,passes,discount,total:Math.max(0,stays+passes-discount),tier,pn};}
   const fxEncOpen=()=>fxTrip().tier!=='';
   function fxIssues(t){const w=[],e=[],byNight={};
@@ -2119,8 +2120,6 @@ ${kb()}`;}
     if(out.length)e.push('Some nights in your trip ('+out.slice(0,3).map(fxShort).join(', ')+') are outside the festival dates now. Remove them.');
     const badPass=FX.cart.passes.filter(p=>p.date<FX.S.firstNight||p.date>FX.S.passLast);
     if(badPass.length)e.push('A day pass in your trip is outside the festival days. Remove it.');
-    const enc=ns.filter(fxEnc);
-    if(enc.length&&!t.tier)e.push('The Encore nights are for VIP and VVIP guests. Add '+(FX.S.vipNights-t.pn)+' more nights inside the festival, or remove them.');
     for(const {s,p} of t.lines)for(const d of p.nights){const l=fxLeft(p.u,d)-fxCartOcc(s.unit,d,s.key);if(l<s.rooms){e.push(p.u.name+' has only '+Math.max(0,l)+' left on '+fxShort(d)+'.');break;}}
     return {w,e};}
 
@@ -2129,10 +2128,10 @@ ${kb()}`;}
     const total=FX_VIP.reduce((s,u)=>s+u.rooms,0);
     return `<section class="fx-band rv"><div class="fx-band-in">
       <div class="fx-band-txt">
-        <span class="fx-eyebrow">VIP tier · 12 Feb – 20 Mar 2027 · Kamshet</span>
+        <span class="fx-eyebrow">VIP tier · 12 Feb – 19 Mar 2027 · Kamshet</span>
         <h2>Stay <em>inside</em> APPA Art Fest</h2>
         <p>${total} rooms and a tent village inside the festival, plus partner homestays and camps nearby. Every night includes festival entry for two. Mix venues night by night: three nights at Le Farm, three at Calmshet, two at Theeya.</p>
-        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP week</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
+        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP stay</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
       </div>
       <div class="fx-venues">${FX_VIP.map(u=>`<div class="fx-venue"><b>${esc(u.name)}</b><span>${u.rooms} ${u.kind==='single'?'single rooms':'rooms'} · from ${inr(fxFrom(u))}</span></div>`).join('')}
         <div class="fx-venue tent"><b>VIP Tent Village</b><span>${+FX.S.tents||0} tents inside the grounds · from ${inr(FX.S.tentNight)}</span></div></div>
@@ -2146,7 +2145,7 @@ ${kb()}`;}
       <header class="fx-mast"><div>
         <span class="fx-eyebrow">APPA Art Fest 2027 · VIP tier on Calm Shade</span>
         <h1>Stays <em>&amp;</em> passes</h1>
-        <p>12 February to 20 March 2027 around the lake at Kamshet. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
+        <p>12 February to 19 March 2027 around the lake at Kamshet: 36 days in four 9-day chapters. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
       </div><nav class="fx-tabs">${tabs.map(([k,l])=>`<button class="fx-tab ${FX.tab===k?'on':''}" onclick="CS.fx('tab','${k}')">${l}</button>`).join('')}<button class="fx-tab" style="border-color:var(--accent);color:var(--accent)" onclick="CS.go('passport')">My passport</button></nav></header>
       ${FX.offline?`<div class="fx-err" style="margin-top:16px">We can't reach the booking desk right now, so the room counts may be out of date and booking is paused. We'll keep trying. <button class="fx-x" onclick="CS.fx('retry')">Try again now</button></div>`:''}
       <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}${FX.tab==='host'&&!FX.cart.stays.length&&!FX.cart.passes.length&&!FX.last&&!FX.ticket?' quiet':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
@@ -2160,7 +2159,7 @@ ${kb()}`;}
     if(f==='all'||f==='partners')groups.push(['Partner stays','homestays and camps nearby · festival entry included',fxPartners()]);
     let head='<tr><th class="rowh">Night of</th>';
     nights.forEach((d,i)=>{const dt=fxD(d);const wk=i>0&&dt.getUTCDay()===1;
-      head+=`<th class="${wk?'wk ':''}${fxEnc(d)?'enc':''}">${FDOW[dt.getUTCDay()].slice(0,2)}<span class="dn">${dt.getUTCDate()}</span>${(i===0||dt.getUTCDate()===1)?FMON[dt.getUTCMonth()]:(d===FX.S.encoreFrom?'Encore':'&nbsp;')}</th>`;});
+      head+=`<th class="${wk?'wk ':''}${fxEnc(d)?'enc':''}">${FDOW[dt.getUTCDay()].slice(0,2)}<span class="dn">${dt.getUTCDate()}</span>${(i===0||dt.getUTCDate()===1)?FMON[dt.getUTCMonth()]:'&nbsp;'}</th>`;});
     head+='</tr>';
     let rows='';
     groups.forEach(([g,sub,us])=>{
@@ -2175,9 +2174,9 @@ ${kb()}`;}
           rows+=`<td class="${wk?'wk':''}"><button class="fx-cell ${c}" data-fxu="${esc(u.id)}" data-fxd="${d}" title="${esc(u.name)} · ${fxFmt(d)} · ${l} of ${u.rooms} left${l?' · '+inr(fxPrice(u,d,u.kind==='single'?1:2)):''}" aria-label="${esc(u.name)}, ${fxFmt(d)}, ${l} left">${l||'–'}</button></td>`;});
         rows+='</tr>';});});
     const chip=(k,l)=>`<button class="fx-chip ${FX.filter===k?'on':''}" onclick="CS.fx('filter','${k}')">${l}</button>`;
-    return `<div><h2 class="fx-h2">Pick your nights</h2><p class="fx-sub">Each square is one night and the number is rooms left. Tap a night, then a later night in the same row to select a run. Prices rise up to ${FX.S.surgeMax}% as a place fills, so earlier is cheaper. ${FX.S.vipNights}+ nights inside the festival makes your trip VIP (${inr(FX.S.vipDiscount)} off); ${FX.S.vvipNights}+ makes it VVIP (${inr(FX.S.vvipDiscount)} off)${enc?'':' and opens a few extra nights at the end'}.</p></div>
+    return `<div><h2 class="fx-h2">Pick your nights</h2><p class="fx-sub">Each square is one night and the number is rooms left. Tap a night, then a later night in the same row to select a run. Prices rise up to ${FX.S.surgeMax}% as a place fills, so earlier is cheaper. ${FX.S.vipNights}+ nights inside the festival makes your trip VIP (${FX.S.vipPct}% off); ${FX.S.vvipNights}+, a full chapter, makes it VVIP (${FX.S.vvipPct}% off).</p></div>
       <div class="fx-row between"><div class="fx-chips">${chip('all','All')}${chip('rooms','VIP rooms')}${chip('tents','VIP tents')}${chip('partners','Partner stays')}</div>
-        <div class="fx-legend"><span><i class="fx-sw" style="background:#F1E7D4"></i>Plenty</span><span><i class="fx-sw" style="background:#F3DCAB"></i>Filling</span><span><i class="fx-sw" style="background:#F2C2AE"></i>Last few</span><span><i class="fx-sw" style="border-color:var(--ink)"></i>In your trip</span>${enc?'<span style="color:var(--accent)">Encore nights open</span>':''}</div></div>
+        <div class="fx-legend"><span><i class="fx-sw" style="background:#F1E7D4"></i>Plenty</span><span><i class="fx-sw" style="background:#F3DCAB"></i>Filling</span><span><i class="fx-sw" style="background:#F2C2AE"></i>Last few</span><span><i class="fx-sw" style="border-color:var(--ink)"></i>In your trip</span></div></div>
       ${FX.loaded?'':'<p class="fx-note">Loading live availability…</p>'}
       <div class="fx-board"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div>
       ${fxSelHTML()}`;}
@@ -2186,8 +2185,8 @@ ${kb()}`;}
     const T=[['Day pass',inr(S.dayPass),'per person, per day','Entry to the festival for one day: every venue, every open show.',['Access to all open venues for the day','Exhibitions, art walks and open workshops','No stay included']],
       ['VIP room, for 2','from '+inr(fxRoomFrom()),'per couple, per night','The venue\'s own room rate, plus festival tickets for two each night.',['A room at Calmshet, Le Farm, Shambhala, Theeya or The Company Theatre (Purrom single rooms from '+inr(fxFrom(FX_VIP.find(u=>u.id==='purrom')))+')','Festival tickets for every guest, every night you stay ('+inr(S.dayPass)+' each)','Each venue sets its own rate; weekends may cost more','Cycle or e-bike pickup at check-in','Kids under 10 free']],
       ['VIP tent, for 2',inr(S.tentNight),'per couple, per night','A tent inside the festival grounds, festival tickets included.',['Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in']],
-      ['VIP · '+S.vipNights+'+ nights',inr(S.vipDiscount)+' off','any '+S.vipNights+' or more nights inside the festival','A week at the festival with full access to every show and experience.',['All shows and experiences for your nights','Priority entry at every venue','Mix venues night by night, or use Curate']],
-      ['VVIP · '+S.vvipNights+' nights',inr(S.vvipDiscount)+' off','the full month, stay + experience','The whole festival, start to finish: full access plus a few things nobody else gets.',['All access, every venue, the whole month','A few special-access moments across the month','Personal meet-ups with resident artists','The Encore: the festival\'s final five days, 16–20 March']],
+      ['VIP · '+S.vipNights+'+ nights',S.vipPct+'% off','any '+S.vipNights+' or more nights inside the festival','Six nights or more at the festival, with full access to every show and experience.',['All shows and experiences for your nights','Priority entry at every venue','Mix venues night by night, or use Curate']],
+      ['VVIP · '+S.vvipNights+'+ nights',S.vvipPct+'% off','a full 9-day chapter or more, stay + experience','A whole chapter of the festival or more: full access plus a few things nobody else gets.',['Priority seating on all 12 big nights (every 3rd, 6th and 9th day)','One artist studio visit per chapter','One free adventure slot','All access, every venue, for your nights']],
       ['Partner stays','Host rate + '+inr(S.partnerMarkup),'per guest, per night','Homestays and camps near the lake, festival entry included.',['Festival entry for every guest, every night','Listed and approved by the festival team']]];
     return `<div style="margin-top:8px"><h2 class="fx-h2">What's included</h2><p class="fx-sub">Kids under 10 always enter free, on every ticket type. Every booking comes with your APPA Art Passport: the map, your itinerary and a stamp from each venue you visit.</p></div>
       <div class="fx-incl">${T.map(t=>`<div class="fx-panel" style="gap:6px"><b style="font-family:var(--display);font-style:italic;font-weight:600;font-size:18px">${esc(t[0])}</b><div><span class="fx-money" style="color:var(--accent);font-size:19px">${esc(t[1])}</span> <span class="fx-note">${esc(t[2])}</span></div><p class="fx-note" style="color:var(--ink)">${esc(t[3])}</p><ul class="pp-prog" style="font-size:13px">${t[4].map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>`).join('')}</div>`;}
@@ -2253,7 +2252,7 @@ ${kb()}`;}
     const {w,e}=fxIssues(t);
     const toV=Math.max(0,FX.S.vipNights-t.pn),toVV=Math.max(0,FX.S.vvipNights-t.pn);
     const tier=t.tier?`<span class="fx-tier ${t.tier}">${t.tier.toUpperCase()} · ${t.pn} nights inside</span>`:`<span class="fx-tier">${t.pn} of ${FX.S.vipNights} nights to VIP</span>`;
-    const goal=t.tier==='vvip'?'':t.tier==='vip'?`${toVV} more nights inside the festival for VVIP: ${inr(FX.S.vvipDiscount)} off and all-access moments.`:`${toV} more night${toV===1?'':'s'} inside the festival for VIP: ${inr(FX.S.vipDiscount)} off and every show.`;
+    const goal=t.tier==='vvip'?'':t.tier==='vip'?`${toVV} more nights inside the festival for VVIP: ${FX.S.vvipPct}% off, priority seating on the big nights and an artist studio visit.`:`${toV} more night${toV===1?'':'s'} inside the festival for VIP: ${FX.S.vipPct}% off and every show.`;
     const meter=Math.min(1,t.pn/(t.tier?FX.S.vvipNights:FX.S.vipNights));
     const f=FX.form;const FF=(k,l,ty,ex)=>`<div class="fx-field"><label for="fxg-${k}">${l}</label><input id="fxg-${k}" type="${ty}" value="${esc(f[k])}" oninput="CS.fx('guestF','${k}',this.value)" ${ex||''}></div>`;
     const checkout=FX.checkout?`<form style="display:flex;flex-direction:column;gap:10px" onsubmit="event.preventDefault();CS.fx('book')">
@@ -2354,7 +2353,7 @@ ${kb()}`;}
       <div class="pan"><div class="ph2"><h3>Partner host applications</h3></div><div class="pb">${hsLinkBox()}
         ${lrows?`<div class="fx-tbl"><table><thead><tr><th>Property</th><th>Contact</th><th>Rooms × adults</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>${lrows}</tbody></table></div>`:'<p class="fx-note">No applications yet.</p>'}</div></div>
       <div class="pan"><div class="ph2"><h3>Festival prices and rules</h3></div><div class="pb"><form onsubmit="event.preventDefault();CS.fx('deskSettings')">
-        <div class="fx-grid2">${FX_VIP.map(v=>SF('rate_'+v.id,v.name+' — real rate, weeknight (₹)')+SF('rateWe_'+v.id,v.name+' — real rate, Fri/Sat night (₹)')+(v.kind==='room'?SF('extra_'+v.id,v.name+' — extra adult, weeknight (₹)')+SF('extraWe_'+v.id,v.name+' — extra adult, Fri/Sat (₹)'):'')).join('')}${SF('extraGuest','Tent extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Festival ticket / day pass per person (₹) — added to every room night per guest')}${SF('partnerMarkup','Festival ticket added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipDiscount','VIP discount (₹)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipDiscount','VVIP discount (₹)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('encoreFrom','Encore starts')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
+        <div class="fx-grid2">${FX_VIP.map(v=>SF('rate_'+v.id,v.name+' — real rate, weeknight (₹)')+SF('rateWe_'+v.id,v.name+' — real rate, Fri/Sat night (₹)')+(v.kind==='room'?SF('extra_'+v.id,v.name+' — extra adult, weeknight (₹)')+SF('extraWe_'+v.id,v.name+' — extra adult, Fri/Sat (₹)'):'')).join('')}${SF('extraGuest','Tent extra adult per night (₹)')}${SF('tentNight','VIP tent per couple per night (₹)')}${SF('tents','VIP tents available')}${SF('dayPass','Festival ticket / day pass per person (₹) — added to every room night per guest')}${SF('partnerMarkup','Festival ticket added to partner stays, per guest-night (₹)')}${SF('surgeMax','Max price rise as places fill (%)')}${SF('vipNights','VIP from (nights inside)')}${SF('vipPct','VIP discount (% off the booking)')}${SF('vvipNights','VVIP from (nights inside)')}${SF('vvipPct','VVIP discount (% off the booking)')}${SF('holdHours','Hold unpaid bookings (hours)')}${SF('firstNight','First night')}${SF('lastNight','Last night')}${SF('passLast','Last day-pass day')}${SF('upi','UPI ID')}${SF('payee','UPI payee name')}${SF('contact','Booking contact email')}</div>
         <div class="eacts"><button class="b-save" type="submit">Save festival prices</button><span class="fx-note" style="align-self:center">Stored in ${esc(D.data.store==='mysql'?'MySQL':'the built-in SQLite file')}.</span></div></form></div></div>`+ppDeskHTML();}
   async function fxDeskLoad(){const D=FX.desk;if(!D.key){D.err='Enter the desk key.';render();return;}
     D.busy=true;D.err='';render();
@@ -2543,12 +2542,12 @@ ${kb()}`;}
       await csLoad();toast('Nights held · '+r.ref);
     }catch(e){h.busy=false;h.err=e.message;if(e.data&&e.data.priceChanged)h.expect=e.data.total;if(e.status===409)await csLoad();render();}
   }
-  const PP_SPOTS=[{"id": "calmshet", "n": 1, "name": "Calmshet", "tag": "The past two years, fashion and art", "prog": ["Opening night and major performances", "Art exhibition: paintings by the late K. N. Ramachandran", "Exhibit: artists from around India’s independence era", "Antique prints and lithographs", "Comics corner with an interactive, immersive AI exhibit", "Interactive installations and immersive experiences", "Short films", "10 resident painters working on the verandas", "A sculptor in residence, and sculpture on the lawn", "Pottery workshop", "Acoustic sets, sunset sets and sunset evening views", "The archive: every event of the last two years and their formats", "Fashion segment with a runway", "Facing the sunset: sound healing and meditation at dusk"], "xy": [300, 80], "short": "Calmshet"}, {"id": "purrom", "n": 2, "name": "Purrom", "tag": "Horror film festival in a healing retreat", "prog": ["Horror film festival, curated by Purrom", "Late-night screenings under the Sahyadri sky", "2 to 3 resident artists and painters", "One exhibition, in the clay huts", "One acoustic act, and music performances", "One hands-on workshop", "Sunrise meditation, yoga and sound healing", "Stays in the solo domes, the Glass House and the Chickoo house", "Flea and local food"], "xy": [468, 110], "short": "Purrom"}, {"id": "ctheatre", "n": 3, "name": "The Company Theatre", "tag": "Their own theatre festival", "prog": ["Theatre performances: the Company Theatre’s own festival", "Theatre workshops", "6 resident artists: painters and sculptors", "2 installations", "1 interactive installation", "An exhibit of K. N. Ramachandran’s work", "Film screenings and talks", "Facing the sunset: meditation at dusk"], "xy": [496, 222], "short": "Company Theatre"}, {"id": "theeya", "n": 4, "name": "Theeya Creation Village", "tag": "Voice, craft and community", "prog": ["Singers and song performances: the vocal stage", "Theatre", "Fine dine", "About 4 resident artists", "About 3 installations, made on site", "Music performances and sing-along evenings by the village fire", "Sunrise meditation, yoga and sound healing", "Workshops with local makers", "Sustainable living and food"], "xy": [460, 332], "short": "Theeya"}, {"id": "lefarm", "n": 5, "name": "Le Farm", "tag": "Big events and open debate", "prog": ["Big-scale concerts and music performances", "Political forums, debates and rallies (all voices, curated)", "Morning yoga, meditation and healing sessions", "Wine and cheese sessions, and fine dine", "A beer fest under the big top", "Farm visits, permaculture treks and temple visits", "About 12 resident artists: painters and sculptors", "About 5 exhibits: an antique exhibit and the K. N. Ramachandran sketches", "An AI futuristic interactive exhibit", "Woodcut workshop", "On-site parking for the big crowds", "Facing the sunrise: yoga and meditation on the lawns at first light"], "xy": [140, 332], "short": "Le Farm"}, {"id": "shambhala", "n": 6, "name": "Shambhala by the Lake", "tag": "Intimate music by the water", "prog": ["One art exhibition", "3 resident artists: painters, a rock-balancing artist, and acoustic musicians and singers", "Rock balancing by the water", "Tricks and a carpentry workshop", "Intimate music on the lakeside stage", "Jetty sessions, sunrise yoga and lakeside reflections", "Paragliding base for the brave", "Homely food and weekend barbecue"], "xy": [104, 222], "short": "Shambhala"}, {"id": "secretfarm", "n": 7, "name": "Secret Farm", "tag": "The biggest gatherings, with parking on site", "prog": ["Big-scale music performances", "Public forums, town halls and debates", "Theatre performances and award functions", "Different acoustic artists", "Multiple art installations", "Multiple interactive installations", "Four exhibitions", "One mega K. N. Ramachandran exhibition", "Farm visits, farm treks and permaculture", "Farm to table under the fruit trees", "On-site parking for the big crowds", "Flower polyhouses, buffalo stables, lotus pond: the working farm stays part of the show", "Facing the sunset: sound healing and meditation circles at dusk"], "xy": [132, 110], "short": "Secret Farm"}, {"id": "square", "n": 0, "name": "Check-in & Festival Square", "tag": "Where the journey starts, and where everyone gathers", "prog": ["Park your car and walk in under the APPA arch", "Pick up a cycle or an e-bike", "Your APPA passport and itinerary", "The fire pit: sing-alongs and stories every night", "A stage for open mics, local bands and the day’s surprises", "Flea, food and craft stalls on the shore", "Boats out to the Island Cinema"], "xy": [300, 374], "short": "Festival Square"}, {"id": "island", "n": 0, "name": "Island Cinema", "tag": "Films on an island in the middle of the lake", "prog": ["Open-air screenings every evening, under string lights", "Reached by boat from the jetties", "Short films, documentaries and the horror festival’s late shows", "Blankets and benches: bring a friend"], "xy": [300, 222], "short": "Island Cinema"}];
-  const PP_WEEKS=[{from:'2027-02-12',to:'2027-02-19',label:'Roots & Raga',text:'Classical, Maharashtra culture, fusion, desi cool and global artists.'},
-    {from:'2027-02-20',to:'2027-02-26',label:'Keeping it Real',text:'Hip-hop, rap, spoken word, poetry, rock and youth culture.'},
-    {from:'2027-02-27',to:'2027-03-05',label:'Tech, Electronica & AI',text:'Electronic music, digital art, AI and immersive installations.'},
-    {from:'2027-03-06',to:'2027-03-15',label:'All forms, together',text:'Everything at once: music, art, workshops and special collaborations.'},
-    {from:'2027-03-16',to:'2027-03-20',label:'The Encore',text:'The festival\'s final five days, for VIP and VVIP guests: special access and artist meet-ups.',encore:true}];
+  const PP_SPOTS=[{"id": "calmshet", "n": 1, "name": "Calmshet", "tag": "The past two years, fashion and art", "prog": ["Opening night and major performances", "Art exhibition: paintings by the late K. N. Ramachandran", "Exhibit: artists from around India’s independence era", "Antique prints and lithographs", "Comics corner with an interactive, immersive AI exhibit", "Interactive installations and immersive experiences", "Short films", "10 resident painters working on the verandas", "A sculptor in residence, and sculpture on the lawn", "Pottery workshop", "Acoustic sets, sunset sets and sunset evening views", "The archive: every event of the last two years and their formats", "Fashion segment with a runway", "Facing the sunset: sound healing and meditation at dusk"], "xy": [300, 80], "short": "Calmshet"}, {"id": "purrom", "n": 2, "name": "Purrom", "tag": "Horror film festival in a healing retreat", "prog": ["Horror film festival, curated by Purrom", "Late-night screenings under the Sahyadri sky", "2 to 3 resident artists and painters", "One exhibition, in the clay huts", "One acoustic act, and music performances", "One hands-on workshop", "Sunrise meditation, yoga and sound healing", "Stays in the solo domes, the Glass House and the Chickoo house", "Flea and local food"], "xy": [468, 110], "short": "Purrom"}, {"id": "ctheatre", "n": 3, "name": "The Company Theatre", "tag": "Their own theatre festival", "prog": ["Theatre performances: the Company Theatre’s own festival", "Theatre workshops", "6 resident artists: painters and sculptors", "2 installations", "1 interactive installation", "An exhibit of K. N. Ramachandran’s work", "Film screenings and talks", "Facing the sunset: meditation at dusk"], "xy": [496, 222], "short": "Company Theatre"}, {"id": "theeya", "n": 4, "name": "Theeya Creation Village", "tag": "Voice, craft and community", "prog": ["Singers and song performances: the vocal stage", "Theatre", "Fine dine", "About 4 resident artists", "About 3 installations, made on site", "Music performances and sing-along evenings by the village fire", "Sunrise meditation, yoga and sound healing", "Workshops with local makers", "Sustainable living and food"], "xy": [460, 332], "short": "Theeya"}, {"id": "lefarm", "n": 5, "name": "Le Farm", "tag": "Big events and open debate", "prog": ["Big-scale concerts and music performances", "Political forums, debates and rallies (all voices, curated)", "Morning yoga, meditation and healing sessions", "Wine and cheese sessions, and fine dine", "A beer fest under the big top", "Farm visits, permaculture treks and temple visits", "About 12 resident artists: painters and sculptors", "About 5 exhibits: an antique exhibit and the K. N. Ramachandran sketches", "An AI futuristic interactive exhibit", "Woodcut workshop", "On-site parking for the big crowds", "Facing the sunrise: yoga and meditation on the lawns at first light"], "xy": [140, 332], "short": "Le Farm"}, {"id": "shambhala", "n": 6, "name": "Shambhala by the Lake", "tag": "Intimate music by the water", "prog": ["One art exhibition", "3 resident artists: painters, a rock-balancing artist, and acoustic musicians and singers", "Rock balancing by the water", "Tricks and a carpentry workshop", "Intimate music on the lakeside stage", "Jetty sessions, sunrise yoga and lakeside reflections", "Paragliding base for the brave", "Homely food and weekend barbecue"], "xy": [104, 222], "short": "Shambhala"}, {"id": "square", "n": 0, "name": "Check-in & Festival Square", "tag": "Where the journey starts, and where everyone gathers", "prog": ["Park your car and walk in under the APPA arch", "Pick up a cycle or an e-bike", "Your APPA passport and itinerary", "The fire pit: sing-alongs and stories every night", "A stage for open mics, local bands and the day’s surprises", "Flea, food and craft stalls on the shore", "Boats out to the Island Cinema"], "xy": [300, 374], "short": "Festival Square"}, {"id": "island", "n": 0, "name": "Island Cinema", "tag": "Films on an island in the middle of the lake", "prog": ["Open-air screenings every evening, under string lights", "Reached by boat from the jetties", "Short films, documentaries and the horror festival’s late shows", "Blankets and benches: bring a friend"], "xy": [300, 222], "short": "Island Cinema"}];
+  /* four 9-day chapters (3-6-9): big nights on day 3, 6 and 9 of each */
+  const PP_WEEKS=[{from:'2027-02-12',to:'2027-02-20',label:'Chapter 1 · Roots & Raga',text:'Classical, Maharashtra culture, fusion, desi cool and global artists.'},
+    {from:'2027-02-21',to:'2027-03-01',label:'Chapter 2 · Keeping it Real',text:'Hip-hop, rap, spoken word, poetry, rock and youth culture.'},
+    {from:'2027-03-02',to:'2027-03-10',label:'Chapter 3 · Tech, Electronica & AI',text:'Electronic music, digital art, AI and immersive installations.'},
+    {from:'2027-03-11',to:'2027-03-19',label:'Chapter 4 · All Forms, Together',text:'Everything at once: music, art, workshops and special collaborations.'}];
   /* ═════════ APPA ART PASSPORT — stamps, map, itinerary ═════════ */
   const PP={data:null,loading:false,err:'',tab:'stamps',sel:'calmshet',mine:true,pendingStamp:null,justStamped:null,posters:null,sched:{date:'2027-02-12',time:'',spot:'',title:'',access:'all'}};
   const ppSpot=id=>PP_SPOTS.find(s=>s.id===id);
@@ -2619,7 +2618,6 @@ ${kb()}`;}
       html+=`<div class="pp-day${a?' mine':''}"><div class="pp-date"><b>${fxD(d).getUTCDate()}</b><span>${FDOW[fxD(d).getUTCDay()]}</span><span>${FMON[fxD(d).getUTCMonth()]}</span></div>
         <div style="min-width:0;display:flex;flex-direction:column;gap:6px">
           ${a?`<div class="pp-have">${a.pass?`<span>Day pass · ${a.pass} ${a.pass>1?'people':'person'}</span>`:''}${[...new Set(a.stay)].map(n=>`<span>Staying at ${esc(n)}</span>`).join('')}${acc.tier?`<span>${acc.tier.toUpperCase()} · every show</span>`:''}</div>`
-            :d>FX.S.passLast?`<span class="fx-note">The Encore · open to guests staying inside the festival on a VIP or VVIP trip (no day passes)</span>`
             :`<div class="fx-row between"><span class="fx-note">Not in your passport yet · every venue open with a day pass</span><button class="fx-btn small" onclick="CS.pp('addDay','${d}',${people})">Add this day · ${inr(FX.S.dayPass)}/person</button></div>`}
           ${items.length?`<ul class="pp-items">${items.map(i=>{const ok=ppCan(acc,i);const sp=ppSpot(i.spot);
             return `<li class="${ok?'ok':'lock'}"><span class="t">${i.time||'All day'}</span><span>${esc(i.title)}${sp?` · <button class="fx-x" onclick="CS.pp('goSpot','${sp.id}')">${esc(sp.name.replace(' & Festival Square',''))}</button>`:''}</span>${ok?'':`<span class="pp-lock">${i.access==='all'?'needs this day':i.access==='vip'?'VIP':'VVIP'} 🔒</span>`}</li>`;}).join('')}</ul>`
@@ -2694,8 +2692,8 @@ ${kb()}`;}
     if(a==='schedDel'){ppSched(sched.filter(i=>i.id!==x));return;}
     ppActBase(a,x,y);
   }
-  /* ═════════ CURATE YOUR STAY — VIP (7+ nights) and VVIP (30 nights) planner across the festival venues ═════════ */
-  const CU={from:'2027-02-12',n:7,rooms:1,guests:2,route:[],plan:null,err:'',auto:false,nightsOpen:false};
+  /* ═════════ CURATE YOUR STAY — VIP (6+ nights) and VVIP (9+ nights) planner across the festival venues ═════════ */
+  const CU={from:'2027-02-12',n:6,rooms:1,guests:2,route:[],plan:null,err:'',auto:false,nightsOpen:false};
   const cuUnits=()=>FX_VIP.concat([fxTent()]).filter(u=>u.rooms>0&&(u.kind==='single'||u.cap>=CU.guests));
   const cuFree=(u,d)=>fxLeft(u,d)-fxCartOcc(u.id,d)>=CU.rooms;
   function cuNights(){const last=CU.n>=FX.S.vipNights?FX.S.lastNight:FX.S.passLast;const ns=fxRange(CU.from,CU.n);return ns.filter(d=>d<=last);}
@@ -2731,7 +2729,7 @@ ${kb()}`;}
     CU.plan.forEach(p=>{const u=fxU(p.unit);total+=fxPrice(u,p.date,u.kind==='single'?1:CU.guests)*CU.rooms;prem.add(p.date);});
     const t=fxTrip();const all=new Set([...prem]);t.lines.forEach(({p})=>{if(fxPrem(p.u))p.nights.forEach(d=>all.add(d));});
     const pn=all.size,tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
-    const full=tier==='vvip'?+FX.S.vvipDiscount:tier==='vip'?+FX.S.vipDiscount:0;
+    const full=fxPct(tier);
     return {total,tier,pn,discount:Math.max(0,full-t.discount),had:t.discount};}
   function fxCurateHTML(){
     const S=FX.S;const ns=cuNights();const enc=ns.length>=S.vipNights;
@@ -2741,12 +2739,12 @@ ${kb()}`;}
     const q=cuQuote();
     const runs=[];if(CU.plan)CU.plan.forEach((p,i)=>{const r=runs[runs.length-1];if(r&&r.unit===p.unit)r.n++;else runs.push({unit:p.unit,from:p.date,n:1,i});});
     return `<div><h2 class="fx-h2">Curate your stay <span class="fx-tier vip" style="vertical-align:4px;margin-left:6px">VIP · VVIP</span></h2>
-      <p class="fx-sub">For a week or the whole month inside the festival. Choose your dates and the venues you'd love to wake up in, in order, and we split your nights across them by what's free. Leave the venues blank and we'll pick a route for you. ${S.vipNights}+ nights is VIP (${inr(S.vipDiscount)} off, every show, priority entry); ${S.vvipNights}+ is VVIP (${inr(S.vvipDiscount)} off, special-access moments and artist meet-ups, plus the Encore nights).</p></div>
+      <p class="fx-sub">For six nights, a whole chapter or the whole festival. Choose your dates and the venues you'd love to wake up in, in order, and we split your nights across them by what's free. Leave the venues blank and we'll pick a route for you. ${S.vipNights}+ nights is VIP (${S.vipPct}% off, every show, priority entry); ${S.vvipNights}+, a full chapter, is VVIP (${S.vvipPct}% off, priority seating on the big nights, an artist studio visit per chapter and a free adventure slot).</p></div>
       <div class="fx-panel">
         <div class="fx-row">
           <div class="fx-field" style="min-width:180px"><label for="cu-from">Arrive</label><select id="cu-from" onchange="CS.cu('from',this.value)">${opts.map(d=>`<option value="${d}" ${CU.from===d?'selected':''}>${fxFmt(d)}</option>`).join('')}</select></div>
           <div class="fx-kv"><span>Nights</span><div class="fx-step"><button onclick="CS.cu('n',-1)" ${CU.n<=S.vipNights?'disabled':''} aria-label="Fewer nights">−</button><output>${CU.n}</output><button onclick="CS.cu('n',1)" ${CU.n>=maxN?'disabled':''} aria-label="More nights">+</button></div></div>
-          <div class="fx-chips"><button class="fx-chip ${CU.n===7?'on':''}" onclick="CS.cu('preset',7)">A week · VIP</button><button class="fx-chip ${CU.n===14?'on':''}" onclick="CS.cu('preset',14)">Two weeks</button><button class="fx-chip ${CU.n>=S.vvipNights?'on':''}" onclick="CS.cu('preset',${S.vvipNights})">The month · VVIP</button></div>
+          <div class="fx-chips"><button class="fx-chip ${CU.n===S.vipNights?'on':''}" onclick="CS.cu('preset',${S.vipNights})">${S.vipNights} nights · VIP</button><button class="fx-chip ${CU.n===S.vvipNights?'on':''}" onclick="CS.cu('preset',${S.vvipNights})">A chapter · VVIP</button><button class="fx-chip ${CU.n>=maxN&&CU.from===S.firstNight?'on':''}" onclick="CS.cu('preset',99)">All 36 days</button></div>
         </div>
         <div class="fx-row">
           <div class="fx-kv"><span>Rooms</span><div class="fx-step"><button onclick="CS.cu('rooms',-1)" ${CU.rooms<=1?'disabled':''} aria-label="Fewer rooms">−</button><output>${CU.rooms}</output><button onclick="CS.cu('rooms',1)" ${CU.rooms>=4?'disabled':''} aria-label="More rooms">+</button></div></div>
@@ -2782,7 +2780,7 @@ ${kb()}`;}
     const S=FX.S;const maxN=()=>fxDiff(CU.from,S.lastNight)+1;
     if(a==='from'){CU.from=x;CU.n=Math.min(CU.n,maxN());CU.plan=null;}
     else if(a==='n'){CU.n=Math.max(S.vipNights,Math.min(maxN(),CU.n+x));CU.plan=null;}
-    else if(a==='preset'&&x>=S.vvipNights){CU.from=S.firstNight;CU.n=maxN();CU.plan=null;}
+    else if(a==='preset'&&x>=99){CU.from=S.firstNight;CU.n=maxN();CU.plan=null;}
     else if(a==='preset'){CU.n=x;if(fxDiff(CU.from,S.lastNight)+1<x)CU.from=fxAdd(S.lastNight,1-x)<S.firstNight?S.firstNight:fxAdd(S.lastNight,1-x);CU.n=Math.min(x,maxN());CU.plan=null;}
     else if(a==='rooms'){CU.rooms=Math.max(1,Math.min(4,CU.rooms+x));CU.plan=null;}
     else if(a==='guests'){CU.guests=Math.max(1,Math.min(4,CU.guests+x));CU.route=CU.route.filter(id=>fxU(id).cap>=CU.guests);CU.plan=null;}
@@ -2908,7 +2906,7 @@ ${kb()}`;}
       <b class="hf-h">Photos <span class="fx-note" style="font-weight:600">· up to 8, the first is the cover</span></b>
       <div class="hf-photos">${HF.photos.map((src,i)=>`<div class="hf-ph"><img src="${esc(src)}" alt="Photo ${i+1}">${i===0?'<span class="hf-cover">Cover</span>':`<button type="button" class="hf-mk" onclick="CS.hf('cover',${i})">Make cover</button>`}<button type="button" class="hf-x" onclick="CS.hf('rm',${i})" aria-label="Remove photo">×</button></div>`).join('')}
         ${HF.photos.length<8?`<label class="hf-add"><input type="file" accept="image/*" multiple hidden onchange="CS.hf('add',this)"><b>＋</b><span>${HF.uploading?'Uploading '+HF.uploading+'…':'Add photos'}</span></label>`:''}</div>
-      <b class="hf-h">For APPA Art Fest · 12 Feb – 20 Mar 2027</b>
+      <b class="hf-h">For APPA Art Fest · 12 Feb – 19 Mar 2027</b>
       <div class="fx-grid2">${F('rooms','Rooms or tents to offer','number','min="1" max="60" required')}${F('maxGuests','Max adults per room','number','min="1" max="8" required')}${F('rate','Your rate per room per night, for 2 (₹)','number','min="500" step="100" required')}</div>
       <p class="fx-note">Festival guests pay your rate plus ${inr(FX.S.partnerMarkup)} per guest per night for their festival entry. You receive your full rate, no commission.</p>
       <b class="hf-h">On Calm Shade, all year</b>

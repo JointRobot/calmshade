@@ -7,7 +7,8 @@ this file is the current state and the rules. Read both before changing anything
 ## 1. What this is
 - **Calm Shade** (`index.html`): an invite-only homestay collective with a WhatsApp-style AI concierge, host dashboard,
   creator console, the Grove (invite/trust system), curated multi-stay trips.
-- **APPA Art Fest 2027** (12 Feb – 20 Mar 2027, Encore 16–20 Mar = the final five days, Kamshet — dates changed by Karthik 14 Oct 2026): sold through Calm Shade as a VIP tier.
+- **APPA Art Fest 2027** (12 Feb – 19 Mar 2027 = 36 days in four 9-day chapters, **no Encore**, Kamshet — set by Karthik 20 Oct 2026; concept 3-6-9: every 3rd, 6th and 9th day of a chapter is a big night): sold through Calm Shade as a VIP tier.
+  Six venues (Secret Farm cancelled 13 Oct 2026). Agreed launch spec: Claude project doc `claude/launch-spec-oct-2026.md`. Public timetable: `appa/timetable/`.
   Festival booking, day passes, the Art Passport and partner-host listings all live inside `index.html`.
 - **The 3D festival app** (`appa/2027/`): isometric Three.js map + guided tour; its 🎟 Tickets panel links into booking.
 - **`fest.php`**: the only backend. PHP + PDO; SQLite by default, MySQL if configured. All money/availability rules
@@ -52,13 +53,13 @@ this file is the current state and the rules. Read both before changing anything
   Calmshet = ₹4,000/head incl. 3 meals (Karthik, 14 Oct) → room for two 8,000, extra adult 4,000. Le Farm = room
   rate derived from its 2019 villa rate (6,700 / 9,800) — **confirm**; extra adult 2,360 = lefarm.in tariff ₹2,000 + 18% GST
   (lefarm.in shows no base rate: "call to enquire", StayVista +91 9137023866; meals extra). Theeya = ₹4,000/head (Karthik, 14 Oct; extra adult 4,000).
-  Programme weeks (PP_WEEKS / copy.js / tour.js): Roots & Raga 12–19 Feb, Keeping it Real 20–26 Feb, Tech 27 Feb–5 Mar,
-  All forms 6–15 Mar, Encore 16–20 Mar (festival ends 20 Mar; day passes to 15 Mar). Tests use dates shifted +21 days (same weekdays).
+  Chapters (PP_WEEKS / copy.js / tour.js / appa/timetable): 1 Roots & Raga 12–20 Feb, 2 Keeping it Real 21 Feb–1 Mar,
+  3 Tech, Electronica & AI 2–10 Mar, 4 All Forms, Together 11–19 Mar. Last night 19 Mar; day passes every festival day.
   The Company Theatre (thecompanytheatre.net: no stay info) (8,000) and Purrom (purrom.com: 5 stays, 3 veg meals
   included, prices by WhatsApp +91 98200 24049 only) (4,000) — stand-ins reproducing the old ₹12,000 / ₹6,000. `coupleNight/singleNight/partnerShare*` are no longer used.
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.
-- Surge: up to +20% as a place fills. VIP = 7+ nights inside (−₹7,000). VVIP = 30+ (−₹40,000). Encore nights only
-  for VIP/VVIP trips. Partner stays = host rate + festival ticket (`partnerMarkup`, now ₹2,000) per guest-night, no commission. Day pass ₹2,000/person/day.
+- Surge: up to +20% as a place fills. VIP = 6+ nights inside, 6% off the booking (`vipPct`). VVIP = 9+ nights (a chapter), 9% off
+  (`vvipPct`) + priority seating on the 12 big nights, one artist studio visit per chapter, one free adventure slot. Partner stays = host rate + festival ticket (`partnerMarkup`, now ₹2,000) per guest-night, no commission. Day pass ₹2,000/person/day.
 - Holds: unpaid room bookings hold 48 h then release; day-pass-only orders never expire. Max 3 unpaid room holds per
   phone, 10 bookings per device per day. Payment = UPI to xtrathindesign@okicici (Karthikeyan Ramachandran), then the
   guest submits the UPI reference; staff confirm in the desk. UPI QR omits the amount above ₹1 lakh (pay in parts).
@@ -86,7 +87,7 @@ this file is the current state and the rules. Read both before changing anything
 - Don't hand-type or paste passwords/API keys into hPanel or files for him; prepare everything else and let him enter
   secrets himself. Never print secrets in chat or commits.
 - WhatsApp number 918799938193 stays everywhere; UPI payee and venue spellings as above (Le Farm, Calmshet, Purrom,
-  Theeya, Shambhala by the Lake, The Company Theatre, Secret Farm; town is Kamshet).
+  Theeya, Shambhala by the Lake, The Company Theatre; town is Kamshet).
 - Test every change (§7) before pushing; then verify live.
 
 ## 7. Testing

@@ -6,12 +6,12 @@
 //   { type: 'choice', label, channel, options: [{ label, value, text, actions }] }
 // Actions: { set: channel, arg, value } · { pulse: channel, arg, dur } · { go: 'area:<id>' | 'spot:<key>' | 'overview' } · { reveal: areaId } · { say: text }
 
+// four 9-day chapters (3-6-9): every 3rd, 6th and 9th day of a chapter is a big night
 const WEEKS = [
-  { label: 'Roots & Raga', dates: 'Week 1 · 12 to 19 Feb', text: 'Classical, Maharashtra culture, fusion, desi cool and global artists. The festival opens on 12 February.', value: 0 },
-  { label: 'Keeping it Real', dates: 'Week 2 · 20 to 26 Feb', text: 'Hip-hop, rap, spoken word, poetry, rock and youth culture.', value: 1 },
-  { label: 'Tech, Electronica & AI', dates: 'Week 3 · 27 Feb to 5 Mar', text: 'Electronic music, digital art, AI, immersive installations and tech-driven creativity.', value: 2 },
-  { label: 'All forms, together', dates: 'Weeks 4 and 5 · 6 to 15 Mar', text: 'A grand culmination of everything: music, art, workshops, community creations and special collaborations.', value: 3 },
-  { label: 'The Encore · VVIP/VIP only', dates: 'Final days · 16 to 20 Mar', text: 'The festival’s final five days, open only to VVIP and VIP guests: special access and personal meet-ups with resident artists.', value: 4, restricted: true }
+  { label: 'Roots & Raga', dates: 'Chapter 1 · 12 to 20 Feb', text: 'Classical, Maharashtra culture, fusion, desi cool and global artists. The festival opens on 12 February. Big nights 14, 17 and 20 Feb.', value: 0 },
+  { label: 'Keeping it Real', dates: 'Chapter 2 · 21 Feb to 1 Mar', text: 'Hip-hop, rap, spoken word, poetry, rock and youth culture. Big nights 23 and 26 Feb, 1 Mar.', value: 1 },
+  { label: 'Tech, Electronica & AI', dates: 'Chapter 3 · 2 to 10 Mar', text: 'Electronic music, digital art, AI, immersive installations and tech-driven creativity. Big nights 4, 7 and 10 Mar.', value: 2 },
+  { label: 'All forms, together', dates: 'Chapter 4 · 11 to 19 Mar', text: 'A grand culmination of everything: music, art, workshops, community creations and special collaborations. Big nights 13, 16 and 19 Mar.', value: 3 }
 ];
 const weekOptions = WEEKS.map(w => ({ label: w.label, value: w.value, text: `${w.dates}. ${w.text}`, actions: [{ set: 'dronesOn', value: w.value === 2 ? 1 : 0 }] }));
 const showToggle = (area, label, labelOn) => ({ type: 'toggle', label, labelOn, channel: 'stageOn', arg: area, on: 1, off: 0, also: [{ channel: 'crowd', arg: area, on: 1, off: 0.45 }] });
@@ -28,13 +28,13 @@ const search = q => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
 const BOOK = '../../';
 const TICKETS = {
   title: 'Tickets & stays', eyebrow: 'The ticket counter',
-  intro: 'Everything to come to APPA Art Fest 2027, from a single day to the whole month. Book online with live availability; pay by UPI.',
+  intro: 'Everything to come to APPA Art Fest 2027, from a single day to all 36 days. Book online with live availability; pay by UPI.',
   tiers: [
     { name: 'Day pass', price: '₹2,000', unit: 'per person, per day', blurb: 'Entry to the festival for one day: every venue, every open show.', bullets: ['Access to all open venues for the day', 'Exhibitions, art walks and open workshops', 'No stay included'], book: { label: 'Buy day passes', href: BOOK + '#appa-pass' } },
     { name: 'Stay + festival, for 2', price: 'from ₹10,500', unit: 'per couple, per night, inside the festival', blurb: 'The venue’s own room rate for the night, plus a festival ticket for each guest.', bullets: ['A room at Calmshet, Le Farm, Shambhala by the Lake, Theeya or The Company Theatre', 'Each venue sets its own rate; weekends may cost more', 'Festival tickets ₹2,000 per guest, every night you stay', 'Purrom single rooms from ₹6,000 a night; VIP tents ₹9,000 for 2', 'Cycle or e-bike pickup at check-in', 'Mix venues night by night', 'Kids under 10: free entry with a paying adult'], book: { label: 'See live availability', href: BOOK + '#appa' } },
-    { name: 'VIP · 1 week', price: '₹7,000 off', unit: 'any 7 or more nights inside the festival', blurb: 'A week at the festival with full access to every show and experience.', bullets: ['All shows and experiences for 7 days', 'Priority entry at every venue', 'A stay for the week inside the festival, across one or several venues', 'Curate your route, or let us plan it'], book: { label: 'Curate a VIP week', href: BOOK + '#appa-curate' } },
-    { name: 'VVIP · the month', price: '₹40,000 off', unit: '30 or more nights inside the festival, stay + experience', blurb: 'The whole festival, start to finish: full access plus a few things nobody else gets.', bullets: ['All access, every day of the festival, every venue', 'A few special-access moments across the month', 'Personal meet-ups with resident artists', 'Stay for the full run inside the festival', 'The Encore: 16 to 20 March, the festival’s final days'], book: { label: 'Curate the month', href: BOOK + '#appa-curate-month' } },
-    { name: 'Partner stays nearby', price: 'Host rate + ₹1,000', unit: 'per guest, per night', blurb: 'Homestays and camps around the lake, approved by the festival team, with festival entry included.', bullets: ['Festival entry for every guest, every night', 'Hosts can list their own place too'], book: { label: 'See partner stays', href: BOOK + '#appa' } }
+    { name: 'VIP · 6+ nights', price: '6% off', unit: 'any 6 or more nights inside the festival', blurb: 'Six nights or more at the festival, with full access to every show and experience.', bullets: ['All shows and experiences for your nights', 'Priority entry at every venue', 'Stay inside the festival, across one or several venues', 'Curate your route, or let us plan it'], book: { label: 'Curate a VIP stay', href: BOOK + '#appa-curate' } },
+    { name: 'VVIP · 9+ nights', price: '9% off', unit: 'a full 9-day chapter or more, stay + experience', blurb: 'A whole chapter of the festival or more: full access plus a few things nobody else gets.', bullets: ['Priority seating on all 12 big nights (every 3rd, 6th and 9th day)', 'One artist studio visit per chapter', 'One free adventure slot', 'All access, every venue, for your nights'], book: { label: 'Curate a VVIP stay', href: BOOK + '#appa-curate-month' } },
+    { name: 'Partner stays nearby', price: 'Host rate + ₹2,000', unit: 'per guest, per night', blurb: 'Homestays and camps around the lake, approved by the festival team, with festival entry included.', bullets: ['Festival entry for every guest, every night', 'Hosts can list their own place too'], book: { label: 'See partner stays', href: BOOK + '#appa' } }
   ],
   note: 'Kids under 10 always enter free, on every ticket type. Prices inside the festival rise up to 20% as venues fill, so earlier is cheaper. Payments go by UPI to Karthikeyan Ramachandran (xtrathindesign@okicici); the booking page gives you the exact amount and QR.',
   links: [{ label: 'Book tickets & stays', href: BOOK + '#appa', primary: true }, { label: 'My Art Passport', href: BOOK + '#passport' }],
@@ -72,7 +72,7 @@ const JOIN = {
     intro: 'APPA Art Fest 2027 is dedicated to the late artist K. N. Ramachandran: a month of art, people and nature across a whole lake, with cycles instead of cars and a new artist at work in every corner. Sponsors make it possible, and we make sure they are seen.',
     tiers: [
       { name: 'Title sponsor', unit: 'one only', blurb: 'The festival carries your name for the month.', bullets: ['“APPA Art Fest 2027 presented by …” on everything', 'Main-stage and inauguration branding on 12 February', 'Your name in the app, the tour and the press release', 'A private evening and artist meet-up for your guests', 'A film and reels package across the month'] },
-      { name: 'Week sponsor', unit: 'four available, one per week', blurb: 'Own a week and its theme: Roots & Raga, Keeping it Real, Tech & AI, All Forms Together.', bullets: ['Your name on that week’s programme and stages', 'Weekend headline slot branding', 'Social and reel features through the week'] },
+      { name: 'Chapter sponsor', unit: 'four available, one per 9-day chapter', blurb: 'Own a chapter and its theme: Roots & Raga, Keeping it Real, Tech & AI, All Forms Together.', bullets: ['Your name on that chapter’s programme and stages', 'Branding on its three big nights', 'Social and reel features through the chapter'] },
       { name: 'Venue sponsor', unit: 'one per venue', blurb: 'Be the presenting sponsor of one of the venues.', bullets: ['Your name beside the venue’s on the map and in the app', 'Signage at the venue', 'A curated moment with the venue’s resident artists'] },
       { name: 'Event or stage sponsor', unit: 'many available', blurb: 'Back one show, workshop, screening or stage.', bullets: ['Your name on the show’s billing and stage', 'Mentions in social posts and reels for the event'] },
       { name: 'Artist sponsor', unit: 'many available', blurb: 'Support one resident artist: materials, stay and travel.', bullets: ['Your name beside the artist’s work and residency', 'A studio visit and a piece for your collection or office'] },
@@ -87,15 +87,15 @@ export const COPY = {
   join: JOIN,
   brand: 'APPA', title: 'APPA Art Fest 2027',
   tickets: TICKETS,
-  intro: { eyebrow: '12 Feb to 20 Mar 2027', h1: 'APPA Art Fest 2027', tag: 'When minds co-create',
-    text: 'A festival of festivals: a month of art, people, nature and a better tomorrow, where every venue curates its own festival. One lake, many venues, a living ecosystem. Drag to look around, scroll or pinch to zoom, and tap any venue to see what happens there.',
+  intro: { eyebrow: '12 Feb to 19 Mar 2027', h1: 'APPA Art Fest 2027', tag: 'When minds co-create',
+    text: 'A festival of festivals: 36 days of art, people, nature and a better tomorrow, where every venue curates its own festival. One lake, many venues, a living ecosystem. Drag to look around, scroll or pinch to zoom, and tap any venue to see what happens there.',
     enter: 'Enter the festival', loading: 'Loading the festival…' },
   tourLabel: 'Guided tour', tourStop: 'Stop the tour',
   overview: { eyebrow: 'The festival at a glance', h2: 'One lake. Many venues. A living ecosystem.', text: 'Welcome to the festival of festivals. Each venue runs its own festival inside one big fest. Wake up to fine arts, installations, films, theatre, spoken word, fashion, forums, workshops, digital interactive installations, music and nature. Curate your experiences to create your memories.',
     quote: { text: 'Art procreates when minds co\u2011create.', by: 'Appa' },
     badges: [{ icon: '🐾', label: 'Pet friendly' }, { icon: '🧒', label: 'Kid friendly', note: 'under 10 always free' }],
     controls: [
-      { type: 'choice', label: '4 weeks, plus the Encore', channel: 'week', options: weekOptions },
+      { type: 'choice', label: 'Four 9-day chapters', channel: 'week', options: weekOptions },
       { type: 'slider', label: 'Time of day', channel: 'timeOfDay', min: 0.1, max: 1, step: 0.01, readout: v => (v < 0.3 ? 'Morning' : v < 0.45 ? 'Afternoon' : v < 0.62 ? 'Golden hour' : v < 0.8 ? 'Dusk' : 'Night') },
       { type: 'button', label: 'Light the lotus on the lake', actions: [{ pulse: 'lotusGlow', dur: 16 }, { go: 'spot:lotus' }] },
       { type: 'button', label: 'Find Hidden APPA', actions: [{ reveal: 'hidden' }, { go: 'area:hidden' }] }

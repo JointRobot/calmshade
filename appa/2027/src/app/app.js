@@ -164,7 +164,7 @@ function renderPanel() {
   if (c.text) pBody.appendChild(el('p', 'note', c.text));
   if (c.offerings) { pBody.appendChild(el('div', 'label', 'What happens here')); const ul = el('ul', 'offer'); c.offerings.forEach(s => { const [txt, key] = Array.isArray(s) ? s : [s]; const li = el('li', key ? 'go' : '', txt); if (key && COPY.spots[key]) { li.tabIndex = 0; li.title = 'Show it on the map'; li.onclick = () => goSpot(key); li.onkeydown = e => { if (e.key === 'Enter') goSpot(key); }; } ul.appendChild(li); }); pBody.appendChild(ul); }
   if (c.website) pBody.appendChild(row(linkBtn(c.website.label, c.website.url)));
-  if (COPY.weeks) { const w = COPY.weeks[Math.round(S.value('week'))]; if (w) { pBody.appendChild(el('div', 'label', 'This week')); pBody.appendChild(el('div', 'readout', `${w.dates} · ${w.label}`)); } }
+  if (COPY.weeks) { const w = COPY.weeks[Math.round(S.value('week'))]; if (w) { pBody.appendChild(el('div', 'label', 'This chapter')); pBody.appendChild(el('div', 'readout', `${w.dates} · ${w.label}`)); } }
   const spots = Object.keys(COPY.spots).filter(k => COPY.spots[k].area === A.area);
   if (spots.length) { pBody.appendChild(el('div', 'label', 'Try it')); const list = el('div', 'alist'); for (const k of spots) list.appendChild(btn(COPY.spots[k].title, () => goSpot(k))); pBody.appendChild(list); }
   pBody.appendChild(row(btn('← The map', goOverview, 'ghost')));

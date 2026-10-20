@@ -25,26 +25,23 @@ const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'th
 // The light turns as the camera leaves Shambhala (dusk from 60.5, twilight by Hidden APPA at ~64); the installation lights and
 // neon signs come on together at the lake (the 'lights' channel, ~69.5 to 73).
 // t=76 to 90: a wide, unhurried hold over the whole lake while the tour recaps all four festival weeks
-// (see project/tour.js captions); the Encore caption and the end card follow straight after (the camera closes in on the lit arch).
+// (see project/tour.js captions); the 3-6-9 caption and the end card follow straight after (the camera closes in on the lit arch).
 export const VISIT = { checkin: [9, 16], calmshet: [17, 25], purrom: [25.5, 31], company: [32, 37.5], theeya: [39, 45], lefarm: [47, 53.5], shambhala: [54.5, 60], hidden: [62, 68], island: [70, 76] };
 
 const TOD = [[0, 0.25], [16.5, 0.25], [19.5, 0.52], [25, 0.52], [27.5, 0.95], [37.5, 0.95], [40.5, 0.03], [45, 0.03], [48, 0.5], [53.5, 0.5], [56, 0.28], [60.5, 0.28], [63.5, 0.76], [68, 0.76], [71, 0.95], [120, 0.95]];
 export const CHANNELS = {
   // the light follows the place: check-in in the morning, Calmshet at an early sunset with its lights on, Purrom and the
   // theatre at night, Theeya at sunrise, Le Farm at sunset, Shambhala at noon, Hidden APPA at
-  // twilight, then the lake, the recap and the Encore at night. [time, timeOfDay]: 0 morning, 0.5 sunset, 1 night.
+  // twilight, then the lake, the recap and the 3-6-9 rhythm at night. [time, timeOfDay]: 0 morning, 0.5 sunset, 1 night.
   timeOfDay: { film: t => { let a = TOD[0]; if (t <= a[0]) return a[1]; for (let i = 1; i < TOD.length; i++) { const b = TOD[i]; if (t <= b[0]) return lerp(a[1], b[1], smooth((t - a[0]) / (b[0] - a[0]))); a = b; } return a[1]; }, app: 0.4, ease: 1.2 },
-  // 4 = the Encore (16–20 Mar, VVIP/VIP only), which the tour's final stretch (past t=88.5) represents.
-  week: { film: t => (t < 32 ? 0 : t < 52 ? 1 : t < 70 ? 2 : t < 88.5 ? 3 : 4), app: 0, ease: 0.05 },
+  week: { film: t => (t < 32 ? 0 : t < 52 ? 1 : t < 70 ? 2 : 3), app: 0, ease: 0.05 },
   buildIn: { film: (t, id) => { const i = Math.max(0, ORDER.indexOf(id)); return smooth(ramp(t, 1.0 + i * 0.42, 2.0 + i * 0.42)); }, app: 1 },
   stageOn: {
     film: (t, id) => { const v = VISIT[id]; const visit = v ? env(t, v[0] - 1.5, v[0] + 0.5, v[1] + 1, v[1] + 3) : 0; const finale = smooth(ramp(t, 78, 82)) * (id === 'calmshet' ? 1 : 0.7); return Math.max(visit, finale); },
     app: () => 0, ease: 0.5 },
   crowd: {
     film: (t, id) => { const v = VISIT[id]; const base = 0.35; const visit = v ? env(t, v[0] - 3, v[0], v[1] + 2, v[1] + 5) * 0.55 : 0; const finale = id === 'calmshet' ? 0.35 + 0.65 * smooth(ramp(t, 76, 84)) : 0;
-      // the Encore is small and exclusive by design: once the finale crowd settles, calmshet hushes back down.
-      const encoreHush = (id === 'calmshet' && t > 88.5) ? 0.4 : 1;
-      return Math.max(base + visit, finale) * encoreHush; },
+      return Math.max(base + visit, finale); },
     app: id => (id === 'calmshet' ? 0.6 : 0.45), ease: 1.0 },
   lotusGlow: { film: t => smooth(ramp(t, 69.5, 74)), app: 0, ease: 0.8 },
   // installation lights and neon signs (dark from Hidden APPA on, but lit only at the lake); in the app they follow the dark as before

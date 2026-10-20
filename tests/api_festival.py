@@ -21,7 +21,7 @@ c,j=call('state'); check('state',c==200 and j['ok'] and j['deskReady'],j)
 for nm,b in [('unknown unit',{'stays':[st('nope','2027-02-16',1)],'passes':[]}),('zero rooms',{'stays':[st('calmshet','2027-02-16',1,0)],'passes':[]}),
   ('too long',{'stays':[st('calmshet','2027-02-16',50)],'passes':[]}),('before fest',{'stays':[st('calmshet','2027-02-10',2)],'passes':[]}),
   ('too many guests',{'stays':[st('calmshet','2027-02-16',1,1,5)],'passes':[]}),('bad date',{'stays':[st('calmshet','2027-02-30',1)],'passes':[]}),
-  ('pass after',{'stays':[],'passes':[{'date':'2027-03-16','qty':1}]}),('empty',{'stays':[],'passes':[]}),('rooms > total',{'stays':[st('theeya','2027-02-16',1,5)],'passes':[]})]:
+  ('pass after',{'stays':[],'passes':[{'date':'2027-03-20','qty':1}]}),('empty',{'stays':[],'passes':[]}),('rooms > total',{'stays':[st('theeya','2027-02-16',1,5)],'passes':[]})]:
     c,j=call('book',{**b,'guest':g('9000000001')}); check(nm,c==409 and 'error' in j,(c,j))
 c,j=call('book',raw=b'{not json'); check('malformed json',c==400,(c,j))
 c,j=call('book',{'stays':[st('calmshet','2027-02-16',1)],'passes':[],'guest':{'name':'','phone':'9000000001'}}); check('no name',c==400,(c,j))
@@ -37,15 +37,18 @@ wins=[j for c,j in res if c==200]; check('race: exactly 4 win',len(wins)==4,[c f
 c,j=call('state'); check('race: occ 4',j['occ'].get('theeya',{}).get('2027-03-03')==4,j['occ'])
 # surge: 5th room impossible; price of remaining nights unaffected
 clear_hits()
-# encore needs VIP
-c,j=call('book',{'stays':[st('purrom','2027-03-16',2,1,1)],'passes':[],'guest':g('9200000001')}); check('encore blocked',c==409,(c,j))
-c,j=call('book',{'stays':[st('purrom','2027-03-12',9,1,1)],'passes':[],'guest':g('9200000001')}); check('encore with vip',c==200 and j['tier']=='vip',(c,j))
+# no Encore: the last nights are open to everyone; VIP from 6 nights (6% off), VVIP from 9 (9% off)
+c,j=call('quote',{'stays':[st('purrom','2027-03-18',2,1,1)],'passes':[]}); check('last nights open without VIP',j['ok'] and j['quote']['tier']=='' and j['quote']['discount']==0,j)
+c,j=call('quote',{'stays':[st('purrom','2027-03-12',5,1,1)],'passes':[]}); check('5 nights not VIP',j['ok'] and j['quote']['tier']=='',j)
+c,j=call('quote',{'stays':[st('purrom','2027-03-12',6,1,1)],'passes':[]}); x=j['quote']; check('6 nights = vip, 6% off',x['tier']=='vip' and x['discount']==round(x['stays']*6/100) and x['total']==x['stays']-x['discount'],x)
+c,j=call('book',{'stays':[st('purrom','2027-03-12',6,1,1)],'passes':[],'guest':g('9200000001')}); check('book vip',c==200 and j['tier']=='vip' and j['total']==x['total'],(c,j))
 vip=j
-# festival runs 12 Feb – 20 Mar 2027; Encore = final five days 16–20 Mar (VIP/VVIP); day passes to 15 Mar
+# festival runs 12 Feb – 19 Mar 2027 (36 days); day passes every festival day
 c,j=call('quote',{'stays':[st('shambhala','2027-02-12',1)],'passes':[]}); check('opening night 12 Feb bookable',j['ok'],j)
 c,j=call('quote',{'stays':[st('shambhala','2027-02-11',1)],'passes':[]}); check('11 Feb outside festival',not j['ok'],j)
-c,j=call('quote',{'stays':[],'passes':[{'date':'2027-03-15','qty':1}]}); check('day pass on 15 Mar',j['ok'],j)
-c,j=call('quote',{'stays':[st('purrom','2027-03-20',2,1,1)],'passes':[]}); check('21 Mar outside festival',not j['ok'],j)
+c,j=call('quote',{'stays':[],'passes':[{'date':'2027-03-19','qty':1}]}); check('day pass on 19 Mar',j['ok'],j)
+c,j=call('quote',{'stays':[st('purrom','2027-03-19',1,1,1)],'passes':[]}); check('19 Mar last night bookable',j['ok'],j)
+c,j=call('quote',{'stays':[st('purrom','2027-03-19',2,1,1)],'passes':[]}); check('20 Mar outside festival',not j['ok'],j)
 # venue real rate + festival ticket per guest per night; venue paid exactly its real rate
 q=lambda *a:call('quote',{'stays':[st(*a)],'passes':[]})[1]['quote']
 x=q('shambhala','2027-02-16',1); check('shambhala weeknight 6500+2x2000',x['total']==10500 and x['payout']==6510,x)
@@ -54,7 +57,7 @@ x=q('shambhala','2027-02-16',1,1,3); check('shambhala 3 adults +extra +3 tickets
 x=q('purrom','2027-02-16',1,1,1); check('purrom single 4000+1 ticket',x['total']==6000 and x['payout']==4000,x)
 x=q('calmshet','2027-02-16',1); check('calmshet 2x4000 + 2 tickets',x['total']==12000 and x['payout']==8000,x)
 x=q('calmshet','2027-02-16',1,1,3); check('calmshet 3 adults 3x4000 + 3 tickets',x['total']==12000+6000 and x['payout']==12000,x)
-c,j=call('quote',{'stays':[st('lefarm','2027-02-15',30)],'passes':[]}); check('vvip quote',j['quote']['tier']=='vvip' and j['quote']['discount']==40000,j['quote'] and j['quote']['tier'])
+c,j=call('quote',{'stays':[st('lefarm','2027-02-15',9)],'passes':[]}); check('vvip quote: 9 nights, 9% off',j['quote']['tier']=='vvip' and j['quote']['discount']==round(j['quote']['stays']*9/100),j['quote'])
 # phone cap
 clear_hits()
 for i in range(3): call('book',{'stays':[st('ctheatre','2027-02-17',1)],'passes':[],'guest':g('9300000001')})
