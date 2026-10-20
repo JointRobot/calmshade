@@ -96,6 +96,22 @@ call('approve',{'id':lid,'status':'approved'},True)
 c,j=call('book',{'stays':[st('L-'+str(lid),'2027-02-20',1,1,3)],'passes':[],'guest':g('9600000001')}); check('partner price 4000+3x2000 ticket',c==200 and j['total']==10000,(c,j))
 c,j=call('admin',None,True); check('admin lists',c==200 and len(j['bookings'])>10 and len(j['listings'])==1,c)
 c,j=call('nope'); check('unknown action',c==404,c)
+# adventures: ₹50 deposit per person now, balance at the venue; seats per slot; holds release like rooms
+clear_hits()
+c,j=call('state'); check('state has adventures',set(j['adv'])=={'kayak','paraglide','jeep'} and len(j['adv']['kayak']['slots'])==18,j.get('adv'))
+c,j=call('quote',{'stays':[],'passes':[],'advs':[{'adv':'kayak','date':'2027-02-14','slot':'07:20','qty':2}]}); x=j['quote']
+check('kayak quote: deposit now',j['ok'] and x['total']==100 and x['advs']==100 and x['balance']==600 and x['discount']==0,x)
+c,j=call('quote',{'stays':[st('purrom','2027-03-12',6,1,1)],'passes':[],'advs':[{'adv':'paraglide','date':'2027-03-13','slot':'wind','qty':1}]}); x=j['quote']
+check('vip discount ignores deposits',x['tier']=='vip' and x['discount']==round(x['stays']*6/100) and x['total']==x['stays']-x['discount']+50 and x['balance']==3450,x)
+for nm,a in [('bad slot',{'adv':'kayak','date':'2027-02-14','slot':'12:00','qty':1}),('bad adv',{'adv':'zip','date':'2027-02-14','slot':'wind','qty':1}),('outside fest',{'adv':'jeep','date':'2027-03-20','slot':'20:30','qty':1}),('zero people',{'adv':'jeep','date':'2027-02-14','slot':'20:30','qty':0})]:
+    c,j=call('quote',{'stays':[],'passes':[],'advs':[a]}); check('adv '+nm,not j['ok'],j)
+c,j=call('book',{'stays':[],'passes':[],'advs':[{'adv':'jeep','date':'2027-02-20','slot':'20:30','qty':4}],'guest':g('9700000001')}); check('book jeep 4',c==200 and j['total']==200 and not j['passOnly'],(c,j))
+jeep=j
+c,j=call('quote',{'stays':[],'passes':[],'advs':[{'adv':'jeep','date':'2027-02-20','slot':'20:30','qty':2}]}); check('jeep full: 1 left',not j['ok'] and 'only 1 place left' in j['errors'][0],j)
+c,j=call('state'); check('advOcc counts the hold',j['advOcc'].get('jeep|2027-02-20|20:30')==4,j['advOcc'])
+sql("UPDATE fest_bookings SET created_at=created_at-200000 WHERE ref='"+jeep['ref']+"'")
+c,j=call('quote',{'stays':[],'passes':[],'advs':[{'adv':'jeep','date':'2027-02-20','slot':'20:30','qty':5}]}); check('unpaid adv hold releases',j['ok'],j)
+c,j=call('admin',None,True); b=[x for x in j['bookings'] if x['ref']==jeep['ref']][0]; check('expired adv booking shows expired',b['status']=='expired',b['status'])
 # timetable: starting programme until the desk saves its own; ranges and kinds; logo panel
 c,j=call('state'); sc=j['schedule']
 check('default programme',len(sc)==27 and sum(1 for i in sc if i['kind']=='dhol')==13 and all(i['date']>='2027-02-12' for i in sc),len(sc))

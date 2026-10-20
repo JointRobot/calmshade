@@ -891,6 +891,16 @@ body{background:var(--bg);}
 #cs-app .pp-mapwrap{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px;}
 #cs-app .pp-map{width:100%; height:auto; display:block;}
 .lg-desk{display:flex; flex-wrap:wrap; gap:10px;}
+.fx-advs{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin:14px 0;}
+.fx-adv{display:flex; flex-direction:column; gap:2px; align-items:flex-start; text-align:left; border:1px solid var(--line); background:var(--card); border-radius:12px; padding:10px 12px; font:inherit; color:inherit; cursor:pointer;}
+.fx-adv.on{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+.fx-adv.soon{cursor:default; opacity:.75; border-style:dashed;}
+.fx-adv .ic{font-size:24px;} .fx-adv small{color:var(--mute); font-size:12px; line-height:1.3;}
+.fx-slots{display:flex; flex-wrap:wrap; gap:8px;}
+.fx-slot{border:1px solid var(--line); background:var(--card); border-radius:10px; padding:6px 10px; font:inherit; font-size:14px; font-weight:600; color:inherit; cursor:pointer; display:flex; flex-direction:column; align-items:center; min-width:84px;}
+.fx-slot small{font-weight:400; font-size:11px; color:var(--mute);}
+.fx-slot.on{background:var(--ink); color:#FFF6EA; border-color:var(--ink);} .fx-slot.on small{color:#E9DCC6;}
+.fx-slot:disabled{opacity:.45; cursor:not-allowed;}
 .lg-it{border:1px solid var(--line); border-radius:12px; padding:10px; width:170px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; background:var(--card);}
 .lg-it.on{border-color:var(--accent);}
 .lg-it img{max-height:44px; max-width:140px;}
@@ -2028,7 +2038,7 @@ ${kb()}`;}
   /* ═════════ APPA ART FEST 2027 — festival stays, a VIP tier on Calm Shade ═════════ */
   const FX_API='fest.php';
   const FX_DEF={coupleNight:12000,singleNight:6000,extraGuest:2000,partnerShareCouple:8000,partnerShareSingle:4000,
-    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:6,vipPct:6,vvipNights:9,vvipPct:9,
+    tentNight:9000,tents:20,dayPass:2000,partnerMarkup:2000,surgeMax:20,vipNights:6,vipPct:6,vvipNights:9,vvipPct:9,advDeposit:50,adv_kayak:350,advCap_kayak:6,adv_paraglide:3500,advCap_paraglide:200,adv_jeep:1000,advCap_jeep:5,
     holdHours:48,firstNight:'2027-02-12',lastNight:'2027-03-19',passLast:'2027-03-19',
     upi:'xtrathindesign@okicici',payee:'Karthikeyan Ramachandran',contact:'karthik@xtrathin.in',
     rate_calmshet:8000,rateWe_calmshet:8000,extra_calmshet:4000,extraWe_calmshet:4000,
@@ -2052,7 +2062,8 @@ ${kb()}`;}
   const fxLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem('appa-'+k)||'null');localStorage.setItem('appa-'+k,JSON.stringify(v));}catch(e){return null;}};
   const FX={S:Object.assign({},FX_DEF),occ:{},listings:[],loaded:false,offline:false,deskReady:false,
     tab:'stay',filter:'all',sel:null,rooms:1,guests:2,passDays:[],passQty:2,
-    cart:(c=>c&&Array.isArray(c.stays)&&Array.isArray(c.passes)?{stays:c.stays.filter(x=>x&&x.unit&&/^\d{4}-\d\d-\d\d$/.test(x.from)&&x.n>0&&x.rooms>0),passes:c.passes.filter(x=>x&&/^\d{4}-\d\d-\d\d$/.test(x.date)&&x.qty>0)}:{stays:[],passes:[]})(fxLS('cart')),
+    cart:(c=>c&&Array.isArray(c.stays)&&Array.isArray(c.passes)?{stays:c.stays.filter(x=>x&&x.unit&&/^\d{4}-\d\d-\d\d$/.test(x.from)&&x.n>0&&x.rooms>0),passes:c.passes.filter(x=>x&&/^\d{4}-\d\d-\d\d$/.test(x.date)&&x.qty>0),advs:(Array.isArray(c.advs)?c.advs:[]).filter(x=>x&&x.adv&&/^\d{4}-\d\d-\d\d$/.test(x.date)&&x.slot&&x.qty>0)}:{stays:[],passes:[],advs:[]})(fxLS('cart')),
+    advSel:{adv:'kayak',date:'2027-02-12',slot:'',qty:2},advDef:{},advOcc:{},
     tickets:(Array.isArray(fxLS('tickets'))?fxLS('tickets'):[]).filter(t=>t&&t.ref&&t.token),mine:[],arm:null,find:{open:false,ref:'',phone:'',err:''},
     checkout:false,busy:false,last:null,err:'',tripOpen:false,
     form:Object.assign({name:'',phone:'',email:'',note:''},fxLS('guest')||{}),utr:'',
@@ -2079,7 +2090,7 @@ ${kb()}`;}
     return j;}
   function fxQuiet(){const a=document.activeElement;return !(a&&a.closest&&a.closest('#cs-app')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));}
   async function fxLoad(){
-    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;FX.synced=Date.now();FX.S.schedule=j.schedule||[];FX.S.logos=j.logos||[];
+    try{const j=await fxCall('state');FX.S=Object.assign({},FX_DEF,j.settings||{});FX.occ=j.occ||{};FX.listings=j.listings||[];FX.deskReady=!!j.deskReady;FX.offline=false;FX.synced=Date.now();FX.S.schedule=j.schedule||[];FX.S.logos=j.logos||[];FX.advDef=j.adv||{};FX.advOcc=j.advOcc||{};
       const before=FX.cart.stays.length;FX.cart.stays=FX.cart.stays.filter(st=>fxU(st.unit));
       if(FX.cart.stays.length<before){fxSave();toast('A partner stay in your trip is no longer listed, so it was removed');}}
     catch(e){FX.offline=true;clearTimeout(fxLoad.t);fxLoad.t=setTimeout(()=>{if(view==='fest')fxLoad();},15000);}
@@ -2112,9 +2123,13 @@ ${kb()}`;}
   function fxTrip(){const prem=new Set();let stays=0;const lines=[];
     FX.cart.stays.forEach(s=>{const p=fxPriceStay(s);if(!p)return;lines.push({s,p});stays+=p.total;if(fxPrem(p.u))p.nights.forEach(d=>prem.add(d));});
     const passes=FX.cart.passes.reduce((a,p)=>a+p.qty*FX.S.dayPass,0);const pn=prem.size;
+    const advs=FX.cart.advs.reduce((a,x)=>a+x.qty*fxAdvDep(x.adv),0),balance=FX.cart.advs.reduce((a,x)=>a+x.qty*(fxAdvPrice(x.adv)-fxAdvDep(x.adv)),0);
     const tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
     const discount=Math.round((stays+passes)*fxPct(tier)/100);
-    return {lines,stays,passes,discount,total:Math.max(0,stays+passes-discount),tier,pn};}
+    return {lines,stays,passes,advs,balance,discount,total:Math.max(0,stays+passes-discount)+advs,tier,pn};}
+  const fxAdvPrice=id=>+FX.S['adv_'+id]||0,fxAdvDep=id=>Math.min(fxAdvPrice(id),+FX.S.advDeposit||0),fxAdvCap=id=>+FX.S['advCap_'+id]||0;
+  const fxAdvLeft=(id,d,sl,skip)=>fxAdvCap(id)-(FX.advOcc[id+'|'+d+'|'+sl]||0)-FX.cart.advs.filter((x,i)=>i!==skip&&x.adv===id&&x.date===d&&x.slot===sl).reduce((a,x)=>a+x.qty,0);
+  const fxSlotLbl=sl=>sl==='wind'?'Time set by the wind':sl==='00:15'?'12:15 am':(([h,m])=>((+h%12)||12)+':'+m+(+h<12?' am':' pm'))(sl.split(':'));
   const fxEncOpen=()=>fxTrip().tier!=='';
   function fxIssues(t){const w=[],e=[],byNight={};
     t.lines.forEach(({p})=>p.nights.forEach(d=>{(byNight[d]=byNight[d]||[]).push(p.u.name);}));
@@ -2126,6 +2141,7 @@ ${kb()}`;}
     if(out.length)e.push('Some nights in your trip ('+out.slice(0,3).map(fxShort).join(', ')+') are outside the festival dates now. Remove them.');
     const badPass=FX.cart.passes.filter(p=>p.date<FX.S.firstNight||p.date>FX.S.passLast);
     if(badPass.length)e.push('A day pass in your trip is outside the festival days. Remove it.');
+    FX.cart.advs.forEach((x,i)=>{const l=fxAdvLeft(x.adv,x.date,x.slot,i);if(x.qty>l)e.push(((FX.advDef[x.adv]||{}).name||'An adventure')+' on '+fxShort(x.date)+' has only '+Math.max(0,l)+' place'+(l===1?'':'s')+' left. Change the slot or people.');if(x.date<FX.S.firstNight||x.date>FX.S.lastNight)e.push('An adventure in your trip is outside the festival days. Remove it.');});
     for(const {s,p} of t.lines)for(const d of p.nights){const l=fxLeft(p.u,d)-fxCartOcc(s.unit,d,s.key);if(l<s.rooms){e.push(p.u.name+' has only '+Math.max(0,l)+' left on '+fxShort(d)+'.');break;}}
     return {w,e};}
 
@@ -2145,8 +2161,8 @@ ${kb()}`;}
 
   /* festival page */
   function fest(){
-    const tabs=[['stay','Stay + festival'],['curate','Curate · VIP'],['pass','Day passes'],['host','List your stay']];
-    const body=FX.tab==='pass'?fxPassHTML():FX.tab==='host'?fxHostHTML():FX.tab==='curate'?fxCurateHTML():fxStayHTML()+fxIncludedHTML();
+    const tabs=[['stay','Stay + festival'],['curate','Curate · VIP'],['pass','Day passes'],['adv','Adventures'],['host','List your stay']];
+    const body=FX.tab==='adv'?fxAdvHTML():FX.tab==='pass'?fxPassHTML():FX.tab==='host'?fxHostHTML():FX.tab==='curate'?fxCurateHTML():fxStayHTML()+fxIncludedHTML();
     return `<div class="page fx">
       <header class="fx-mast"><div>
         <span class="fx-eyebrow">APPA Art Fest 2027 · VIP tier on Calm Shade</span>
@@ -2154,7 +2170,7 @@ ${kb()}`;}
         <p>12 February to 19 March 2027 around the lake at Kamshet: 36 days in four 9-day chapters. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
       </div><nav class="fx-tabs">${tabs.map(([k,l])=>`<button class="fx-tab ${FX.tab===k?'on':''}" onclick="CS.fx('tab','${k}')">${l}</button>`).join('')}<button class="fx-tab" style="border-color:var(--accent);color:var(--accent)" onclick="CS.go('passport')">My passport</button></nav></header>
       ${FX.offline?`<div class="fx-err" style="margin-top:16px">We can't reach the booking desk right now, so the room counts may be out of date and booking is paused. We'll keep trying. <button class="fx-x" onclick="CS.fx('retry')">Try again now</button></div>`:''}
-      <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}${FX.tab==='host'&&!FX.cart.stays.length&&!FX.cart.passes.length&&!FX.last&&!FX.ticket?' quiet':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
+      <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}${FX.tab==='host'&&!FX.cart.stays.length&&!FX.cart.passes.length&&!FX.cart.advs.length&&!FX.last&&!FX.ticket?' quiet':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
     </div>`;}
 
   function fxStayHTML(){
@@ -2241,19 +2257,39 @@ ${kb()}`;}
           <div class="fx-kv"><span>Days</span><b>${n}</b></div><div class="fx-kv"><span>Total</span><b class="fx-money">${inr(n*FX.passQty*FX.S.dayPass)}</b></div></div>
         <div class="fx-row"><button class="fx-btn" onclick="CS.fx('addPass')" ${n?'':'disabled'}>Add passes to my trip</button>${n?`<button class="fx-btn ghost" onclick="CS.fx('clearPass')">Clear days</button>`:''}</div></div>`;}
 
+  const ADV_INFO={kayak:{icon:'🛶',unit:'per person · 20 minutes on the lake',when:'Mornings 7–10 and evenings 3:30–6:30'},paraglide:{icon:'🪂',unit:'per person · tandem flight with a pilot',when:'Once a day; the pilots set the time by the wind'},jeep:{icon:'🚙',unit:'per person · about an hour, 4 or 5 to a jeep',when:'Night rides from 8:30 pm'}};
+  function fxAdvHTML(){
+    const A=FX.advDef,sel=FX.advSel,ids=Object.keys(A);
+    if(!ids.length)return `<div><h2 class="fx-h2">Adventures</h2><p class="fx-sub">Loading the adventure slots…</p></div>`;
+    if(!A[sel.adv])sel.adv=ids[0];
+    const days=fxRange(FX.S.firstNight,fxDiff(FX.S.firstNight,FX.S.lastNight)+1);if(!days.includes(sel.date))sel.date=days[0];
+    const a=A[sel.adv],dep=fxAdvDep(sel.adv),price=fxAdvPrice(sel.adv);
+    const slots=a.slots.map(sl=>({sl,left:fxAdvLeft(sel.adv,sel.date,sl)}));if(sel.slot&&!a.slots.includes(sel.slot))sel.slot='';
+    const maxQ=Math.max(1,Math.min(sel.adv==='jeep'?fxAdvCap('jeep'):10,sel.slot?fxAdvLeft(sel.adv,sel.date,sel.slot):10));if(sel.qty>maxQ)sel.qty=maxQ;
+    const cards=ids.map(id=>`<button class="fx-adv ${sel.adv===id?'on':''}" onclick="CS.fx('advSel','${id}')"><span class="ic">${(ADV_INFO[id]||{}).icon||'⛰'}</span><b>${esc(A[id].name)}</b><span class="fx-money">${inr(fxAdvPrice(id))}</span><small>${esc((ADV_INFO[id]||{}).unit||'per person')}</small></button>`).join('')
+      +`<div class="fx-adv soon"><span class="ic">🥾</span><b>Sunrise and sunset treks</b><small>Details soon · ask us on WhatsApp</small></div><div class="fx-adv soon"><span class="ic">💎</span><b>Crystal hunting</b><small>Details soon · ask us on WhatsApp</small></div>`;
+    return `<div><h2 class="fx-h2">Adventures</h2><p class="fx-sub">Book a slot with a small deposit of ${inr(+FX.S.advDeposit)} per person and pay the rest at the venue. Weekdays are quieter: the best time for the lake and the hills.</p></div>
+      <div class="fx-advs">${cards}</div>
+      <div class="fx-panel"><b class="fx-h2" style="font-size:18px">${esc(a.name)}</b><p class="fx-note" style="margin:0">${esc((ADV_INFO[sel.adv]||{}).when||'')}</p>
+        <div class="fx-grid2"><div class="fx-field"><label for="fxa-d">Day</label><select id="fxa-d" onchange="CS.fx('advDate',this.value)">${days.map(d=>`<option value="${d}" ${sel.date===d?'selected':''}>${fxFmt(d)}</option>`).join('')}</select></div>
+          <div class="fx-kv"><span>People</span><div class="fx-step"><button onclick="CS.fx('advQty',-1)" ${sel.qty<=1?'disabled':''} aria-label="Fewer">−</button><output>${sel.qty}</output><button onclick="CS.fx('advQty',1)" ${sel.qty>=maxQ?'disabled':''} aria-label="More">+</button></div></div></div>
+        <div class="fx-slots">${slots.map(({sl,left})=>`<button class="fx-slot ${sel.slot===sl?'on':''}" onclick="CS.fx('advSlot','${sl}')" ${left<=0?'disabled':''}>${esc(fxSlotLbl(sl))}<small>${left<=0?'full':left+' left'}</small></button>`).join('')}</div>
+        <div class="fx-lines"><div><span>Deposit now · ${sel.qty} × ${inr(dep)}</span><b>${inr(sel.qty*dep)}</b></div><div><span>Pay at the venue</span><b>${inr(sel.qty*(price-dep))}</b></div></div>
+        <div class="fx-row"><button class="fx-btn" onclick="CS.fx('addAdv')" ${sel.slot?'':'disabled'}>${sel.slot?'Add to my trip':'Pick a slot'}</button></div></div>`;}
   function fxHostHTML(){
     return `<div><h2 class="fx-h2">List your stay on Calm Shade</h2><p class="fx-sub">For APPA Art Fest 2027 and all year after it. Homestays, camps and farmstays near Kamshet: share your place once, and we sell your rooms to festival guests on the same calendar as the festival's own stays, then keep you in the Calm Shade collective when the festival ends. Approved places go live straight away and you get your own host login.</p></div>
       ${FX.hostSent?`<div class="fx-panel accent"><b class="fx-h2" style="font-size:18px">Thanks, ${esc(FX.hostSent)} is in for review</b><p class="fx-note">We'll call you within a couple of days. Once approved, you'll get a private link on WhatsApp${FX.host.email?' and email':''} to manage your listing, photos and bookings.</p><div><button class="fx-btn ghost small" onclick="CS.fx('hostAgain')">List another place</button></div></div>`:hfHTML()}`;
   }
 
   function fxTripHTML(){
-    const t=fxTrip();const count=FX.cart.stays.length+FX.cart.passes.length;
-    const passOnly=FX.cart.stays.length===0&&FX.cart.passes.length>0;
+    const t=fxTrip();const count=FX.cart.stays.length+FX.cart.passes.length+FX.cart.advs.length;
+    const passOnly=FX.cart.stays.length===0&&FX.cart.advs.length===0&&FX.cart.passes.length>0,slotsOnly=FX.cart.stays.length===0&&FX.cart.advs.length>0;
     const mob=`<div class="fx-mob"><div><b>Your trip</b> <span class="fx-note">${count} item${count===1?'':'s'}${t.tier?' · '+t.tier.toUpperCase():''}</span><div class="fx-money">${inr(t.total)}</div></div><button class="fx-btn small" onclick="CS.fx('toggleTrip')">${FX.tripOpen?'Close':'Review'}</button></div>`;
     if(FX.ticket){const b=FX.mine.find(m=>m.ref===FX.ticket);if(b)return mob+fxTicketHTML(b);FX.ticket=null;}
     if(FX.last)return mob+fxConfirmHTML();
     const items=t.lines.map(({s,p})=>({k:s.from,h:`<div class="fx-item"><div><div class="what">${esc(p.u.name)}</div><div class="when">${fxFmt(s.from)} → ${fxFmt(fxAdd(s.from,s.n))} · ${s.n} night${s.n>1?'s':''}<br>${s.rooms} ${p.u.kind==='tent'?'tent':'room'}${s.rooms>1?'s':''}${p.u.kind==='single'?'':' · '+s.guests+' adult'+(s.guests>1?'s':'')+' each'}</div></div><div style="text-align:right"><div class="fx-money">${inr(p.total)}</div><button class="fx-x" onclick="CS.fx('rmStay','${s.key}')">Remove</button></div></div>`}))
       .concat(FX.cart.passes.map((p,i)=>({k:p.date,h:`<div class="fx-item"><div><div class="what">Day pass</div><div class="when">${fxFmt(p.date)} · ${p.qty} ${p.qty>1?'people':'person'}</div></div><div style="text-align:right"><div class="fx-money">${inr(p.qty*FX.S.dayPass)}</div><button class="fx-x" onclick="CS.fx('rmPass',${i})">Remove</button></div></div>`})))
+      .concat(FX.cart.advs.map((x,i)=>({k:x.date+'~'+x.slot,h:`<div class="fx-item"><div><div class="what">${esc((FX.advDef[x.adv]||{}).name||x.adv)}</div><div class="when">${fxFmt(x.date)} · ${esc(fxSlotLbl(x.slot))} · ${x.qty} ${x.qty>1?'people':'person'}<br>${inr(x.qty*(fxAdvPrice(x.adv)-fxAdvDep(x.adv)))} at the venue</div></div><div style="text-align:right"><div class="fx-money">${inr(x.qty*fxAdvDep(x.adv))}</div><button class="fx-x" onclick="CS.fx('rmAdv',${i})">Remove</button></div></div>`})))
       .sort((a,b)=>a.k<b.k?-1:1).map(x=>x.h).join('');
     const {w,e}=fxIssues(t);
     const toV=Math.max(0,FX.S.vipNights-t.pn),toVV=Math.max(0,FX.S.vvipNights-t.pn);
@@ -2264,9 +2300,9 @@ ${kb()}`;}
     const checkout=FX.checkout?`<form style="display:flex;flex-direction:column;gap:10px" onsubmit="event.preventDefault();CS.fx('book')">
         ${FF('name','Full name','text','required maxlength="80" autocomplete="name"')}${FF('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${FF('email','Email','email','maxlength="120" autocomplete="email"')}
         <div class="fx-field"><label for="fxg-note">Anything we should know?</label><textarea id="fxg-note" rows="2" maxlength="300" oninput="CS.fx('guestF','note',this.value)" placeholder="Kids' ages, arrival time, food preferences">${esc(f.note)}</textarea></div>
-        <p class="fx-note">${passOnly?'Next you pay by UPI. Your ticket is confirmed as soon as the payment arrives, and you show it at the festival gate.':'We hold your rooms for '+FX.S.holdHours+' hours while you pay by UPI.'}</p>
+        <p class="fx-note">${passOnly?'Next you pay by UPI. Your ticket is confirmed as soon as the payment arrives, and you show it at the festival gate.':'We hold your '+(slotsOnly?'slots':'rooms')+' for '+FX.S.holdHours+' hours while you pay by UPI.'}</p>
         ${FX.err&&FX.tab!=='host'?`<div class="fx-err">${esc(FX.err)}</div>`:''}
-        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy||FX.offline?'disabled':''}>${FX.busy?(passOnly?'Preparing payment…':'Holding your rooms…'):(passOnly?'Continue to payment':'Hold my rooms')}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
+        <div class="fx-row"><button class="fx-btn" type="submit" ${FX.busy||FX.offline?'disabled':''}>${FX.busy?(passOnly?'Preparing payment…':slotsOnly?'Holding your slots…':'Holding your rooms…'):(passOnly?'Continue to payment':slotsOnly?'Hold my slots':'Hold my rooms')}</button><button class="fx-btn ghost" type="button" onclick="CS.fx('noCheckout')">Back</button></div></form>`
       :`<button class="fx-btn" style="justify-content:center" onclick="CS.fx('checkout')" ${e.length?'disabled':''}>${passOnly?'Buy '+(FX.cart.passes.reduce((a,p)=>a+p.qty,0)===1?'day pass':'day passes'):'Book this trip'}</button>`;
     const mine=FX.mine.length?`<div><b class="fx-h2" style="font-size:17px">Your bookings</b><div class="fx-items" style="margin-top:8px">${FX.mine.map(b=>`<div class="fx-item"><div><div class="what">${esc(b.ref)}</div><div class="when">${(b.items||[]).length} item${(b.items||[]).length===1?'':'s'} · ${inr(b.total)}</div></div><div style="text-align:right"><span class="fx-status ${b.status}">${b.status==='pending'&&b.passOnly?'unpaid':b.status}</span>${b.status==='confirmed'?`<br><button class="fx-x" onclick="CS.fx('ticket','${esc(b.ref)}')">Ticket</button> · <button class="fx-x" onclick="CS.go('passport')">Passport</button>`:''}${b.status==='pending'?`<br><button class="fx-x" onclick="CS.fx('pay','${esc(b.ref)}')">Pay</button> · <button class="fx-x" style="${FX.arm==='c'+b.ref?'color:#B03A22':''}" onclick="CS.fx('myCancel','${esc(b.ref)}')">${FX.arm==='c'+b.ref?'Tap again to cancel':'Cancel'}</button>`:''}</div></div>`).join('')}</div></div>`:'';
     const fd=FX.find;const findHTML=FX.offline?'':fd.open?`<form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('findGo')"><b style="font-size:13px">Find a booking made on another device</b>
@@ -2275,17 +2311,17 @@ ${kb()}`;}
       :`<button class="fx-x" style="align-self:flex-start" onclick="CS.fx('findToggle')">Booked on another phone? Find your booking</button>`;
     return mob+`<div class="fx-trip-head"><h2 class="fx-h2">Your trip</h2>${tier}</div>
       ${goal?`<div><div class="fx-meter"><i style="width:${meter*100}%"></i></div><p class="fx-note" style="margin-top:6px">${goal}</p></div>`:''}
-      ${count?`<div class="fx-items">${items}</div>`:'<p class="fx-note">Your trip is empty. Pick nights on the board or add day passes. You can combine several places across the festival.</p>'}
+      ${count?`<div class="fx-items">${items}</div>`:'<p class="fx-note">Your trip is empty. Pick nights on the board, or add day passes and adventures. You can combine several places across the festival.</p>'}
       ${w.map(x=>`<div class="fx-warn">${esc(x)}</div>`).join('')}${e.map(x=>`<div class="fx-err">${esc(x)}</div>`).join('')}
-      ${count?`<div class="fx-lines"><div><span>Stays</span><b>${inr(t.stays)}</b></div><div><span>Day passes</span><b>${inr(t.passes)}</b></div>${t.discount?`<div><span>${t.tier.toUpperCase()} discount</span><b>−${inr(t.discount)}</b></div>`:''}</div>
-        <div class="fx-tot"><span>Total</span><span>${inr(t.total)}</span></div>${checkout}`:''}
+      ${count?`<div class="fx-lines"><div><span>Stays</span><b>${inr(t.stays)}</b></div><div><span>Day passes</span><b>${inr(t.passes)}</b></div>${t.advs?`<div><span>Adventure deposits</span><b>${inr(t.advs)}</b></div>`:''}${t.discount?`<div><span>${t.tier.toUpperCase()} discount</span><b>−${inr(t.discount)}</b></div>`:''}</div>
+        <div class="fx-tot"><span>Total</span><span>${inr(t.total)}</span></div>${t.balance?`<p class="fx-note" style="margin:0">Plus ${inr(t.balance)} for adventures, paid at the venue.</p>`:''}${checkout}`:''}
       ${mine}${findHTML}`;}
 
   const fxUpi=b=>`upi://pay?pa=${encodeURIComponent(FX.S.upi)}&pn=${encodeURIComponent(FX.S.payee)}${b.total>100000?'':'&am='+Math.round(b.total)}&cu=INR&tn=${encodeURIComponent('APPA '+b.ref)}`;
   const fxWa=b=>'https://wa.me/918799938193?text='+encodeURIComponent(`Hi! I've held rooms for APPA Art Fest 2027. Booking ${b.ref}, total ${inr(b.total)}. Sharing my payment details here.`);
   const fxUntil=ts=>new Date(ts*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
   function fxConfirmHTML(){const b=FX.last;
-    return `<div class="fx-trip-head"><h2 class="fx-h2">${b.passOnly?'Pay for your passes':'Rooms held'}</h2><span class="fx-status pending">awaiting payment</span></div>
+    return `<div class="fx-trip-head"><h2 class="fx-h2">${b.passOnly?'Pay for your passes':b.slotsOnly?'Slots held':'Rooms held'}</h2><span class="fx-status pending">awaiting payment</span></div>
       <div class="fx-kv"><span>${b.passOnly?'Order reference':'Booking reference'}</span><b class="fx-ref">${esc(b.ref)}</b></div>
       <div class="fx-lines"><div><span>Total to pay</span><b>${inr(b.total)}</b></div>${b.passOnly?'':`<div><span>Held until</span><b>${esc(fxUntil(b.holdUntil))}</b></div>`}</div>
       ${b.total>100000?`<div class="fx-warn">UPI apps usually allow up to ${inr(100000)} per payment. Pay in parts of ${inr(100000)} or less with this QR (enter the amount yourself), and send every UPI reference below, separated by commas. Prefer a bank transfer? Ask us on WhatsApp.</div>`:''}
@@ -2299,6 +2335,7 @@ ${kb()}`;}
   function fxTicketHTML(b){
     const its=b.items||[];
     const lines=its.map(it=>it.kind==='pass'?`<div><span>Day pass · ${fxFmt(it.date)}</span><b>${it.qty} ${it.qty>1?'people':'person'}</b></div>`
+      :it.kind==='adv'?`<div><span>${esc(it.name)} · ${fxFmt(it.date)} · ${esc(fxSlotLbl(it.slot))}</span><b>${it.qty} · ${inr(it.balance)} at the venue</b></div>`
       :`<div><span>${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))}</span><b>${it.rooms*it.guests} ${it.rooms*it.guests>1?'guests':'guest'}</b></div>`).join('');
     return `<div class="fx-trip-head"><h2 class="fx-h2">Your ticket</h2><span class="fx-status confirmed">paid</span></div>
       <div class="fx-panel accent" style="gap:12px">
@@ -2329,7 +2366,7 @@ ${kb()}`;}
     const conf=bs.filter(b=>b.status==='confirmed'),pend=bs.filter(b=>b.status==='pending');
     const gross=conf.reduce((s,b)=>s+b.total,0),pay=conf.reduce((s,b)=>s+b.payout,0);
     let invT=0,invS=0;const ns=fxNights();FX_VIP.concat([fxTent()]).forEach(u=>{invT+=u.rooms*ns.length;ns.forEach(d=>invS+=fxOcc(u.id,d));});
-    const item=it=>it.kind==='stay'?`${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms}×${it.guests}`:`Day pass · ${fxShort(it.date)} · ${it.qty}`;
+    const item=it=>it.kind==='adv'?`${esc(it.name)} · ${fxShort(it.date)} ${esc(fxSlotLbl(it.slot))} · ${it.qty} (balance ${inr(it.balance)})`:it.kind==='stay'?`${esc(it.name)} · ${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms}×${it.guests}`:`Day pass · ${fxShort(it.date)} · ${it.qty}`;
     const qq=(D.q||'').trim().toUpperCase();
     const rows=bs.filter(b=>!qq||b.ref.includes(qq)).map(b=>{const g=b.guest||{};return `<tr><td><b>${esc(b.ref)}</b><br><span class="fx-note">${new Date(b.createdAt*1000).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span></td>
       <td><b>${esc(g.name||'')}</b><br><span class="fx-note">${g.phone?`<a href="https://wa.me/${esc(String(g.phone).replace(/\D/g,'').replace(/^(\d{10})$/,'91$1'))}" target="_blank" rel="noopener">${esc(g.phone)}</a>`:''} ${esc(g.email||'')}</span>${g.note?`<br><span class="fx-note">“${esc(g.note)}”</span>`:''}${b.utr?`<br><span class="fx-note">UPI ref <b>${esc(b.utr)}</b></span>`:''}</td>
@@ -2372,12 +2409,12 @@ ${kb()}`;}
     if(f.phone.replace(/\D/g,'').length<10){FX.err='Add a 10-digit phone number.';return render();}
     const t=fxTrip();if(fxIssues(t).e.length){FX.err=fxIssues(t).e[0];return render();}
     FX.busy=true;render();fxLS('guest',{name:f.name,phone:f.phone,email:f.email});
-    const payload={stays:FX.cart.stays.map(s=>({unit:s.unit,from:s.from,n:s.n,rooms:s.rooms,guests:s.guests})),passes:FX.cart.passes,guest:f,expectTotal:t.total};
+    const payload={stays:FX.cart.stays.map(s=>({unit:s.unit,from:s.from,n:s.n,rooms:s.rooms,guests:s.guests})),passes:FX.cart.passes,advs:FX.cart.advs.map(x=>({adv:x.adv,date:x.date,slot:x.slot,qty:x.qty})),guest:f,expectTotal:t.total};
     try{
       const r=await fxCall('book',payload);FX.tickets.push({ref:r.ref,token:r.token});fxSave();
-      FX.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,utrSent:false,passOnly:!payload.stays.length};
-      FX.cart={stays:[],passes:[]};FX.checkout=false;FX.form.note='';FX.utr='';FX.tripOpen=true;fxSave();
-      FX.busy=false;await fxLoad();render();fxDrawQR();toast((FX.last.passOnly?'Order placed · ':'Rooms held · ')+r.ref);
+      FX.last={ref:r.ref,token:r.token,total:r.total,holdUntil:r.holdUntil,utrSent:false,passOnly:!!r.passOnly,slotsOnly:!payload.stays.length&&payload.advs.length>0};
+      FX.cart={stays:[],passes:[],advs:[]};FX.checkout=false;FX.form.note='';FX.utr='';FX.tripOpen=true;fxSave();
+      FX.busy=false;await fxLoad();render();fxDrawQR();toast((FX.last.passOnly?'Order placed · ':FX.last.slotsOnly?'Slots held · ':'Rooms held · ')+r.ref);
     }catch(e){FX.busy=false;FX.err=e.message;if(e.data&&(e.data.priceChanged||e.status===409))await fxLoad();render();}
   }
 
@@ -2400,6 +2437,14 @@ ${kb()}`;}
         FX.cart.stays.push({key:fxKey(),unit:s.u,from:s.a,n,rooms:FX.rooms,guests:FX.guests});FX.sel=null;FX.last=null;fxSave();toast(fxU(s.u).name+' added to your trip');break;}
       case 'rmStay':FX.cart.stays=FX.cart.stays.filter(s=>s.key!==x);fxSave();break;
       case 'rmPass':FX.cart.passes.splice(x,1);fxSave();break;
+      case 'rmAdv':FX.cart.advs.splice(x,1);fxSave();break;
+      case 'advSel':FX.advSel.adv=x;FX.advSel.slot='';break;
+      case 'advDate':FX.advSel.date=x;FX.advSel.slot='';break;
+      case 'advSlot':FX.advSel.slot=x;break;
+      case 'advQty':FX.advSel.qty=Math.max(1,FX.advSel.qty+x);break;
+      case 'addAdv':{const v=FX.advSel;if(!v.slot)return;const l=fxAdvLeft(v.adv,v.date,v.slot);if(v.qty>l){toast('Only '+Math.max(0,l)+' places left in that slot');return;}
+        const e=FX.cart.advs.find(z=>z.adv===v.adv&&z.date===v.date&&z.slot===v.slot);if(e)e.qty+=v.qty;else FX.cart.advs.push({adv:v.adv,date:v.date,slot:v.slot,qty:v.qty});
+        v.slot='';FX.tripOpen=true;fxSave();toast('Added to your trip');break;}
       case 'passDay':{const i=FX.passDays.indexOf(x);i>=0?FX.passDays.splice(i,1):FX.passDays.push(x);break;}
       case 'passQty':FX.passQty=Math.max(1,Math.min(20,FX.passQty+x));break;
       case 'clearPass':FX.passDays=[];break;
@@ -2451,7 +2496,7 @@ ${kb()}`;}
     if(FX.last&&view==='fest')fxDrawQR();
   }
   window.addEventListener('popstate',()=>{const want=/^#(appa|fest)/i.test(location.hash)?'fest':/^#passport/i.test(location.hash)?'passport':'home';
-    {const t=(location.hash.match(/^#(?:appa|fest)-(stay|curate|pass|host)/i)||[])[1];if(t&&want==='fest'){FX.tab=t.toLowerCase();cuHash();if(view==='fest')render();}}
+    {const t=(location.hash.match(/^#(?:appa|fest)-(stay|curate|pass|adv|host)/i)||[])[1];if(t&&want==='fest'){FX.tab=t.toLowerCase();cuHash();if(view==='fest')render();}}
     if(want!==view&&(view==='fest'||view==='passport'||want!=='home')){view=want;if(want==='fest')fxLoad();if(want==='passport')ppLoad();render();window.scrollTo({top:0});}});
   document.addEventListener('click',ev=>{const c=ev.target.closest&&ev.target.closest('.fx-cell');if(c&&root.contains(c))fxAct('cell',c.dataset.fxu,c.dataset.fxd);});
 
@@ -2562,7 +2607,7 @@ ${kb()}`;}
     const d=PP.data;const days={},stays={};let tier='',name='';
     (d&&d.bookings||[]).forEach(b=>{if(b.tier==='vvip'||(b.tier==='vip'&&tier!=='vvip'))tier=b.tier;name=name||b.name;
       (b.items||[]).forEach(it=>{if(it.kind==='pass'){const x=days[it.date]=days[it.date]||{pass:0,stay:[]};x.pass+=it.qty;}
-        else it.nights.forEach(n=>{const x=days[n]=days[n]||{pass:0,stay:[]};x.stay.push(it.name);if(ppStayUnit[it.unit])stays[ppStayUnit[it.unit]]=1;});});});
+        else if(it.kind==='stay')it.nights.forEach(n=>{const x=days[n]=days[n]||{pass:0,stay:[]};x.stay.push(it.name);if(ppStayUnit[it.unit])stays[ppStayUnit[it.unit]]=1;});});});
     return {days,stays,tier,name,refs:(d&&d.bookings||[]).map(b=>b.ref)};
   }
   const ppCan=(acc,item,d)=>!!acc.days[d||item.date]&&(item.access==='all'||(item.access==='vip'&&acc.tier)||(item.access==='vvip'&&acc.tier==='vvip'));
@@ -3256,7 +3301,7 @@ ${kb()}`;}
   (function deepLink(){try{
     const q=new URLSearchParams(location.search).get('invite')||((location.hash.match(/#join-([A-Za-z0-9-]+)/i)||[])[1]);
     if(q)CS.invite(q);
-    else if(/^#(appa|fest)/i.test(location.hash)||new URLSearchParams(location.search).has('fest')){view='fest';const t=(location.hash.match(/^#(?:appa|fest)-(stay|curate|pass|host)/i)||[])[1];if(t)FX.tab=t.toLowerCase();cuHash();}
+    else if(/^#(appa|fest)/i.test(location.hash)||new URLSearchParams(location.search).has('fest')){view='fest';const t=(location.hash.match(/^#(?:appa|fest)-(stay|curate|pass|adv|host)/i)||[])[1];if(t)FX.tab=t.toLowerCase();cuHash();}
     else if(/^#passport/i.test(location.hash)){view='passport';setTimeout(ppLoad,0);}
     const stampQ=new URLSearchParams(location.search).get('stamp');
     if(stampQ&&/^[a-z]+\.[0-9a-f]{12}$/.test(stampQ)){const [sp,sg]=stampQ.split('.');view='passport';

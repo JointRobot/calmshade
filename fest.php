@@ -77,6 +77,9 @@ const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partne
   'vvipNights'=>9,'vvipPct'=>9,'holdHours'=>48,'firstNight'=>'2027-02-12','lastNight'=>'2027-03-19',
   'passLast'=>'2027-03-19','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
   'contact'=>'karthik@xtrathin.in',
+  /* Adventure add-ons (Karthik, 20 Oct 2026): book a slot with a small deposit per person now, pay the balance at the venue.
+     Prices per person; capacities per slot (kayak count per 20-minute slot is a placeholder until confirmed). */
+  'advDeposit'=>50,'adv_kayak'=>350,'advCap_kayak'=>6,'adv_paraglide'=>3500,'advCap_paraglide'=>200,'adv_jeep'=>1000,'advCap_jeep'=>5,
   /* Venue real rates (what the venue itself charges, per room per night incl. its taxes) — guests pay this
      PLUS a festival ticket (dayPass) per guest per night; the venue is paid exactly this. Researched 14 Oct 2026:
      Shambhala = published tariff (₹6,200 wk / ₹7,200 wkend for 2, extra adult ₹1,900 / ₹2,400) + 5% GST.
@@ -118,8 +121,24 @@ function units() {
   }
   return $u;
 }
+const ADV = [
+  'kayak'     => ['name'=>'Kayaking','slots'=>['07:00','07:20','07:40','08:00','08:20','08:40','09:00','09:20','09:40','15:30','15:50','16:10','16:30','16:50','17:10','17:30','17:50','18:10']],
+  'paraglide' => ['name'=>'Tandem paragliding','slots'=>['wind']],
+  'jeep'      => ['name'=>'Night jeep ride','slots'=>['20:30','21:45','23:00','00:15']],
+];
+/* adventure seats taken per adventure|date|slot, by active bookings (unpaid holds release like rooms) */
+function adv_occ() {
+  $S = settings(); $o = [];
+  foreach (db()->query("SELECT status, created_at, items FROM fest_bookings WHERE status IN ('pending','confirmed')") as $b) {
+    if (!active_booking($b, $S)) continue;
+    foreach (json_decode($b['items'], true) ?: [] as $it) if (($it['kind'] ?? '') === 'adv') { $k = $it['adv'].'|'.$it['date'].'|'.$it['slot']; $o[$k] = ($o[$k] ?? 0) + (int)$it['qty']; }
+  }
+  return $o;
+}
+/* a booking that holds something limited (rooms or adventure seats) expires if unpaid; day-pass-only orders don't */
+function has_hold($items) { foreach ((is_array($items) ? $items : (json_decode((string)$items, true) ?: [])) as $it) if (in_array($it['kind'] ?? '', ['stay','adv'], true)) return true; return false; }
 function has_stay($items) { foreach ((is_array($items) ? $items : (json_decode((string)$items, true) ?: [])) as $it) if (($it['kind'] ?? '') === 'stay') return true; return false; }
-function show_status($r, $S) { return ($r['status'] === 'pending' && has_stay($r['items']) && !active_booking($r, $S)) ? 'expired' : $r['status']; }
+function show_status($r, $S) { return ($r['status'] === 'pending' && has_hold($r['items']) && !active_booking($r, $S)) ? 'expired' : $r['status']; }
 function active_booking($b, $S) {
   if ($b['status'] === 'confirmed') return true;
   if ($b['status'] !== 'pending') return false;
@@ -174,10 +193,11 @@ function host_payout($u, $rooms, $n, $S) {
 function valid_date($d) { return is_string($d) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) && checkdate((int)substr($d,5,2),(int)substr($d,8,2),(int)substr($d,0,4)); }
 
 /* Price and validate a trip against the live inventory. Returns [quote, errors]. */
-function quote($stays, $passes, $occ) {
+function quote($stays, $passes, $occ, $advs = []) {
   $S = settings(); $U = units(); $err = []; $lines = []; $prem = []; $want = [];
-  if (!is_array($stays) || !is_array($passes) || count($stays) + count($passes) === 0) return [null, ['Your trip is empty.']];
-  if (count($stays) > 20 || count($passes) > 40) return [null, ['That trip has too many items.']];
+  if (!is_array($advs)) $advs = [];
+  if (!is_array($stays) || !is_array($passes) || count($stays) + count($passes) + count($advs) === 0) return [null, ['Your trip is empty.']];
+  if (count($stays) > 20 || count($passes) > 40 || count($advs) > 20) return [null, ['That trip has too many items.']];
   foreach ($stays as $s) {
     $id = (string)($s['unit'] ?? ''); $u = $U[$id] ?? null;
     if (!$u) { $err[] = 'One of the stays in your trip is no longer available.'; continue; }
@@ -202,13 +222,23 @@ function quote($stays, $passes, $occ) {
     if (!valid_date($d) || $d < $S['firstNight'] || $d > $S['passLast'] || $q < 1 || $q > 30) { $err[] = 'Check your day pass dates.'; continue; }
     $lines[] = ['kind'=>'pass','date'=>$d,'qty'=>$q,'total'=>$q * $S['dayPass']]; $pt += $q * $S['dayPass'];
   }
+  $at = 0; $ao = $advs ? adv_occ() : []; $aw = [];
+  foreach ($advs as $a) {
+    $id = (string)($a['adv'] ?? ''); $d = (string)($a['date'] ?? ''); $sl = (string)($a['slot'] ?? ''); $q = (int)($a['qty'] ?? 0); $A = ADV[$id] ?? null;
+    if (!$A || !valid_date($d) || $d < $S['firstNight'] || $d > $S['lastNight'] || !in_array($sl, $A['slots'], true) || $q < 1 || $q > 20) { $err[] = 'Check the adventure date, slot and people.'; continue; }
+    $k = $id.'|'.$d.'|'.$sl; $aw[$k] = ($aw[$k] ?? 0) + $q; $left = (int)$S['advCap_'.$id] - ($ao[$k] ?? 0);
+    if ($aw[$k] > $left) { $err[] = $A['name'].' on '.gmdate('j M', strtotime($d)).($sl === 'wind' ? '' : ' at '.$sl).' has only '.max(0, $left).' place'.($left === 1 ? '' : 's').' left.'; continue; }
+    $price = (int)$S['adv_'.$id]; $dep = min($price, (int)$S['advDeposit']);
+    $lines[] = ['kind'=>'adv','adv'=>$id,'name'=>$A['name'],'date'=>$d,'slot'=>$sl,'qty'=>$q,'price'=>$price,'deposit'=>$dep,'total'=>$dep * $q,'balance'=>($price - $dep) * $q];
+    $at += $dep * $q;
+  }
   $pn = count($prem);
   $tier = $pn >= $S['vvipNights'] ? 'vvip' : ($pn >= $S['vipNights'] ? 'vip' : '');
   $stayT = array_sum(array_map(fn($l)=>$l['kind']==='stay'?$l['total']:0, $lines));
   $payout = array_sum(array_map(fn($l)=>$l['payout']??0, $lines));
   $pct = $tier === 'vvip' ? $S['vvipPct'] : ($tier === 'vip' ? $S['vipPct'] : 0);
-  $disc = (int)round(($stayT + $pt) * $pct / 100);
-  return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'discount'=>$disc,'total'=>max(0,$stayT+$pt-$disc),'payout'=>$payout,'tier'=>$tier,'premiumNights'=>$pn], array_values(array_unique($err))];
+  $disc = (int)round(($stayT + $pt) * $pct / 100); /* adventure deposits are not discounted */
+  return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'advs'=>$at,'balance'=>array_sum(array_map(fn($l)=>$l['balance']??0, $lines)),'discount'=>$disc,'total'=>max(0,$stayT+$pt-$disc)+$at,'payout'=>$payout,'tier'=>$tier,'premiumNights'=>$pn], array_values(array_unique($err))];
 }
 
 /* ---------- helpers ---------- */
@@ -243,6 +273,7 @@ function trip_lines($items) {
   $out = [];
   foreach ($items as $it) {
     if ($it['kind'] === 'stay') $out[] = '- '.$it['name'].': '.gmdate('j M', strtotime($it['nights'][0])).' to '.gmdate('j M', strtotime(addDays(end($it['nights']), 1))).', '.count($it['nights']).' night(s), '.$it['rooms'].' room(s), '.$it['guests'].' adult(s) each — '.inr($it['total']);
+    elseif ($it['kind'] === 'adv') $out[] = '- '.$it['name'].' '.gmdate('j M', strtotime($it['date'])).($it['slot'] === 'wind' ? ' (time set by the wind)' : ' at '.$it['slot']).' × '.$it['qty'].' — deposit '.inr($it['total']).', balance '.inr($it['balance']).' at the venue';
     else $out[] = '- Day pass '.gmdate('j M', strtotime($it['date'])).' × '.$it['qty'].' — '.inr($it['total']);
   }
   return $out;
@@ -507,7 +538,7 @@ try {
 switch ($a) {
   case 'state':
     out(['ok'=>true,'settings'=>settings(),'listings'=>public_listings(),'occ'=>(object)occupancy(),'now'=>time(),
-         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule(),'logos'=>logos()]);
+         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule(),'logos'=>logos(),'adv'=>ADV,'advOcc'=>(object)adv_occ()]);
 
   case 'book': {
     if ($m !== 'POST') fail('Use POST');
@@ -519,11 +550,11 @@ switch ($a) {
     throttle('book', 10, 86400, 'Too many bookings from this device today. Message us on WhatsApp and we will help.');
     $S0 = settings(); $mineOpen = 0;
     foreach (db()->query("SELECT status, created_at, guest, items FROM fest_bookings WHERE status='pending'") as $r)
-      if (has_stay($r['items']) && active_booking($r, $S0) && digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') === digits($phone)) $mineOpen++;
+      if (has_hold($r['items']) && active_booking($r, $S0) && digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') === digits($phone)) $mineOpen++;
     if ($mineOpen >= 3) fail('You already have 3 unpaid bookings on hold. Pay or cancel one of them first.', 429);
     lock_start(); $ok = false;
     try {
-      [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy());
+      [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? []);
       if ($err) { lock_end(false); out(['error'=>$err[0],'errors'=>$err], 409); }
       if (isset($b['expectTotal']) && (int)$b['expectTotal'] !== $q['total']) { lock_end(false); out(['error'=>'Prices changed while you were booking. Your trip now costs ₹'.number_format($q['total']).'. Review it and book again.','priceChanged'=>true], 409); }
       do { $ref = new_ref(); $st = db()->prepare('SELECT 1 FROM fest_bookings WHERE ref=?'); $st->execute([$ref]); } while ($st->fetch());
@@ -535,17 +566,17 @@ switch ($a) {
     $S = settings(); $until = gmdate('j M, H:i', $now + $S['holdHours']*3600 + 19800).' IST';
     $body = array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], trip_lines($q['items']),
       [$q['discount'] ? strtoupper($q['tier']).' discount: −'.inr($q['discount']) : '', 'Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : '']);
-    $passOnly = !has_stay($q['items']);
+    $passOnly = !has_hold($q['items']); $what = has_stay($q['items']) ? 'rooms are' : 'adventure slots are';
     if ($passOnly) $body = array_values(array_filter($body, fn($l)=>strpos($l, 'Held until') !== 0));
     notify($S['contact'], ($passOnly ? 'New day-pass order ' : 'New festival booking ').$ref.' · '.inr($q['total']), $body);
-    if ($email) notify($email, ($passOnly ? 'Your APPA Art Fest day passes · ' : 'Your APPA Art Fest rooms are held · ').$ref, array_merge(['Hi '.$name.',', '', $passOnly
+    if ($email) notify($email, ($passOnly ? 'Your APPA Art Fest day passes · ' : 'Your APPA Art Fest '.$what.' held · ').$ref, array_merge(['Hi '.$name.',', '', $passOnly
         ? 'Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page. Your ticket is confirmed as soon as the payment arrives.'
-        : 'Your rooms are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.', ''], trip_lines($q['items']), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
+        : 'Your '.$what.' held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.', ''], trip_lines($q['items']), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
     out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + $S['holdHours']*3600,'passOnly'=>$passOnly]);
   }
 
   case 'quote': {
-    $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy());
+    $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? []);
     out(['ok'=>!$err,'quote'=>$q,'errors'=>$err]);
   }
 
@@ -564,7 +595,7 @@ switch ($a) {
       $st = db()->prepare('SELECT ref,token,status,created_at,tier,total,items,utr,guest FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
       $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
       $status = show_status($r, $S);
-      $res[] = ['ref'=>$r['ref'],'status'=>$status,'name'=>(json_decode($r['guest'], true) ?: [])['name'] ?? '','passOnly'=>!has_stay($r['items']),'tier'=>$r['tier'],'total'=>(int)$r['total'],'createdAt'=>(int)$r['created_at'],'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'items'=>json_decode($r['items'], true),'utrSent'=>!empty($r['utr'])];
+      $res[] = ['ref'=>$r['ref'],'status'=>$status,'name'=>(json_decode($r['guest'], true) ?: [])['name'] ?? '','passOnly'=>!has_hold($r['items']),'tier'=>$r['tier'],'total'=>(int)$r['total'],'createdAt'=>(int)$r['created_at'],'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'items'=>json_decode($r['items'], true),'utrSent'=>!empty($r['utr'])];
     }
     out(['ok'=>true,'bookings'=>$res]);
   }
@@ -611,7 +642,7 @@ switch ($a) {
     $bs = [];
     foreach (db()->query('SELECT * FROM fest_bookings ORDER BY created_at DESC') as $r) {
       $status = show_status($r, $S);
-      $bs[] = ['ref'=>$r['ref'],'status'=>$status,'passOnly'=>!has_stay($r['items']),'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
+      $bs[] = ['ref'=>$r['ref'],'status'=>$status,'passOnly'=>!has_hold($r['items']),'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
     }
     $ls = array_map(fn($l)=>['id'=>$l['id'],'status'=>$l['status'],'createdAt'=>(int)$l['created_at'],'data'=>json_decode($l['data'], true),'contact'=>json_decode($l['contact'], true)], listings_all());
     out(['ok'=>true,'bookings'=>$bs,'listings'=>$ls,'store'=>is_mysql() ? 'mysql' : 'sqlite','sponsors'=>sponsors()]);

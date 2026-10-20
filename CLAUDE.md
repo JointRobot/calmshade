@@ -24,11 +24,12 @@ this file is the current state and the rules. Read both before changing anything
 | Path | What |
 |---|---|
 | `index.html` | Whole site, one file (~3 MB, media base64-embedded). One `<style>`, one main `<script>` IIFE. Navigate by banners: `ACCESS`, `THE GROVE`, `AI CONCIERGE`, `CURATED TRIP`, `VIEWS`, `APPA ART FEST 2027`, `CURATE YOUR STAY`, `APPA ART PASSPORT`, `CALM SHADE BOOKINGS`, `PARTNER HOSTS`, `RENDER`, `PUBLIC API`. |
-| `fest.php` | Backend: routes by `?a=`. Festival: `state book quote mine find utr cancel list admin status approve settings`. Homestays: `cs_state cs_book cs_mine cs_utr cs_cancel cs_admin cs_status cs_props`. Passport: `passport stamp stamp_links schedule_set`. Hosts: `upload host_me host_save host_status host_link_request`. Concierge: `ai`. |
+| `fest.php` | Backend: routes by `?a=`. Festival: `state book quote mine find utr cancel list admin status approve settings`. Timetable/logos/sponsors: `schedule_set logos_set sponsors_set` (desk key). Homestays: `cs_state cs_book cs_mine cs_utr cs_cancel cs_admin cs_status cs_props`. Passport: `passport stamp stamp_links schedule_set`. Hosts: `upload host_me host_save host_status host_link_request`. Concierge: `ai`. |
 | `fest-config.php` | **Server only, gitignored.** Holds `FEST_ADMIN_KEY` (desk key) and optionally `FEST_DB_*`, `ANTHROPIC_KEY`, `AI_MODEL`, `AI_DAILY_CAP`, `FEST_MAIL_FROM`. |
 | `fest-data/` | **Server only, gitignored.** SQLite DB (`fest.sqlite`), auto-created, web access denied by auto-written `.htaccess`. This is the live booking data — back it up, never delete. |
 | `uploads/` | **Server only, gitignored.** Host photos. Auto `.htaccess` blocks script execution. |
 | `appa/2027/` | Festival app (guided tour plays in 90 s: authored on a 105 s timeline, mapped by `tsc()`/`untsc()` in `story.js`; each venue arrives wide, pushes in to a signboard, pulls back). Edit only `project/` (`site.js` layout, `tour.js` tour camera, `copy.js` all words incl. ticket prices, `story.js`, `cast.js`, `look.js`). See `appa/2027/README.md`. |
+| `appa/timetable/` | Public timetable (36 days × 6 venues, big nights, runs-all-festival, logo panel, sponsor line). Reads `fest.php?a=state` (`schedule`, `logos`). Phone = day cards, desktop = grid. |
 | `tests/` | Test suites + `run.sh` (see §7). |
 | `api.php` | Not on this branch (only on stale `main`, and unsafe there). The concierge goes through `fest.php?a=ai`. |
 
@@ -60,6 +61,15 @@ this file is the current state and the rules. Read both before changing anything
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.
 - Surge: up to +20% as a place fills. VIP = 6+ nights inside, 6% off the booking (`vipPct`). VVIP = 9+ nights (a chapter), 9% off
   (`vvipPct`) + priority seating on the 12 big nights, one artist studio visit per chapter, one free adventure slot. Partner stays = host rate + festival ticket (`partnerMarkup`, now ₹2,000) per guest-night, no commission. Day pass ₹2,000/person/day.
+- Timetable (desk → Timetable): items `{date, to?, time, spot, title, access, kind}`; kind = show/exhibit/fest/workshop/dhol/adventure;
+  items running all 36 days show in "Running all 36 days". Until the desk saves, `default_schedule()` (KNR exhibit at every venue,
+  Dashavatar, Pyoba Awards, Antique & Kitsch, Maval Comics, Animela, Wench Film Festival, theatre festival, dhol pathak on the
+  12 big nights + Shivaji Jayanti) is shown. Logos (desk → Logos): groups curator/venue/partner/sponsor; sponsors show beside the
+  APPA logo. Sponsor tracker (desk → Sponsors) is private: only in the `admin` payload, never in `state`.
+- Adventures (`ADV` in fest.php, cart line kind `adv`): kayaking ₹350 (18 × 20-min slots 7–10 am, 3:30–6:30 pm, `advCap_kayak` 6 =
+  placeholder), tandem paragliding ₹3,500 (one 'wind' slot a day, cap 200), night jeep ride ₹1,000 (20:30/21:45/23:00/00:15, cap 5).
+  Guest pays `advDeposit` ₹50 per person now, balance at the venue; deposits are not discounted; unpaid holds expire like rooms.
+  Treks and crystal hunting are listed as "details soon". VVIP's free adventure slot is honoured by hand (not automatic).
 - Holds: unpaid room bookings hold 48 h then release; day-pass-only orders never expire. Max 3 unpaid room holds per
   phone, 10 bookings per device per day. Payment = UPI to xtrathindesign@okicici (Karthikeyan Ramachandran), then the
   guest submits the UPI reference; staff confirm in the desk. UPI QR omits the amount above ₹1 lakh (pay in parts).
@@ -92,7 +102,7 @@ this file is the current state and the rules. Read both before changing anything
 
 ## 7. Testing
 `bash tests/run.sh` (needs PHP 8 with pdo_sqlite, Python 3, Playwright with Chromium, Pillow). It starts a local PHP
-server on 127.0.0.1:8099 with a throwaway SQLite DB and a test desk key, runs 8 suites (~170 checks: festival API incl.
+server on 127.0.0.1:8099 with a throwaway SQLite DB and a test desk key, runs 10 suites (~230 checks: festival API incl.
 a concurrent last-room race, homestays API, festival UI, homestay UI, day passes, passport, curate planner, partner
 hosts end to end), then cleans up. Expected: all PASS except 4 concierge checks in `api_homestays` without an API key.
 Don't run it with a real `fest-config.php` in the working tree (the script refuses).
