@@ -1227,7 +1227,7 @@ switch ($a) {
     $day = 'ai-'.gmdate('Ymd'); $row = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $row->execute([$day]); $n = (int)(($row->fetch() ?: ['v'=>0])['v']);
     if ($n >= (defined('AI_DAILY_CAP') ? AI_DAILY_CAP : 1500)) fail('The concierge has hit today\'s limit. Message us on WhatsApp.', 429);
     db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$day]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$day, (string)($n + 1)]);
-    $payload = json_encode(['model'=>defined('AI_MODEL') ? AI_MODEL : 'claude-haiku-4-5-20251001','max_tokens'=>min(800, max(50, (int)($b['max_tokens'] ?? 600))),'system'=>$sys,'messages'=>$clean]);
+    $payload = json_encode(['model'=>defined('AI_MODEL') ? AI_MODEL : 'claude-haiku-5-5','max_tokens'=>min(800, max(50, (int)($b['max_tokens'] ?? 600))),'system'=>$sys,'messages'=>$clean]);
     $ch = curl_init('https://api.anthropic.com/v1/messages');
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>$payload, CURLOPT_TIMEOUT=>45,
       CURLOPT_HTTPHEADER=>['Content-Type: application/json','anthropic-version: 2023-06-01','x-api-key: '.$key]]);
