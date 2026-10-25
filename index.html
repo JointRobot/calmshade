@@ -1680,6 +1680,7 @@ ${kb()}`;}
       ${login.err?`<div class="lg-err">${esc(login.err)}</div>`:''}
       <button class="b-rb" onclick="CS.id()" ${login.busy?'disabled':''}>${login.busy?'Sending…':'Email me a code'}</button>
       <div class="lg-alt"><button onclick="CS.invite()">Have an invite code? Join the collective</button></div>
+      <div class="lg-alt">${login.keyOpen?`<form onsubmit="event.preventDefault();CS.lgKey()" style="display:flex;flex-direction:column;gap:8px;text-align:left"><label for="lg-key"><b style="color:var(--ink)">Owner: sign in with the desk key</b></label><input id="lg-key" type="password" autocomplete="current-password" placeholder="Desk key" style="padding:10px;border:1px solid var(--line);border-radius:8px"><button class="b-rb" type="submit" ${login.busy?'disabled':''}>Sign in with desk key</button></form>`:`<button onclick="CS.lgKeyOpen()">Owner? Use the desk key instead</button>`}</div>
       <div class="lg-alt" style="text-align:left;border-top:1px solid var(--line);padding-top:14px;margin-top:16px"><b style="color:var(--ink)">Hosting through APPA Art Fest?</b> Sign in with the private link we sent you. Lost it? Get a new one by email:
         <div class="phrow"><input type="tel" placeholder="Your phone number" value="${esc(HS.linkReq.phone)}" oninput="CS.hsReqF(this.value)"><button onclick="CS.hsReq()" style="background:var(--ink)">Send link</button></div>
         ${HS.linkReq.msg?`<div class="nt2">${esc(HS.linkReq.msg)}</div>`:''}<button onclick="CS.fx('openHost')" style="margin-top:8px">Not listed yet? List your stay</button></div>
@@ -3313,6 +3314,10 @@ ${kb()}`;}
     del(id){PROPS=PROPS.filter(p=>p.id!==id);delete CAL[id];editing=null;edMedia=null;toast('Listing deleted');render();},
     /* auth */
     idT(v){login.id=v;},
+    lgKeyOpen(){login.keyOpen=true;login.err='';render();const i=document.getElementById('lg-key');if(i)i.focus();},
+    async lgKey(){const k=(document.getElementById('lg-key')||{}).value||'';if(!k)return;login.busy=true;login.err='';render();
+      try{const j=await lgCall('login_key',{key:k});lgSet({token:j.token,role:j.role});login={step:'id',id:'',err:'',target:null,code:''};await lgApply(j,j.token,true);render();toast('Welcome, Karthik');}
+      catch(e){login.busy=false;login.err=e.message;render();}},
     id(){login.id=(document.getElementById('lg-id')||{}).value||login.id;tryId();},
     otp(){tryOtp();},
     hop(el){if(el.value.length===1){const n=el.nextElementSibling;if(n&&n.tagName==='INPUT')n.focus();else CS.otp();}},

@@ -45,4 +45,8 @@ c,j=call('logout',{},{'X-Session':gt}); c,j=call('login_me',{},{'X-Session':gt})
 clear(); call('login_start',{'id':'bo@example.com'}); good=last_code('bo@example.com')
 for i in range(5): call('login_verify',{'id':'bo@example.com','code':str((int(good)+1+i)%1000000).zfill(6)})
 c,j=call('login_verify',{'id':'bo@example.com','code':good}); check('5 wrong tries -> expired',c==400,(c,j))
+clear()
+c,j=call('login_key',{'key':'wrong-key-000000'}); check('desk key sign-in: wrong key',c==403,(c,j))
+c,j=call('login_key',{'key':'test-desk-key-123456'}); check('desk key sign-in: owner',c==200 and j['role']=='owner' and len(j['token'])==40,(c,j))
+c,j2=call('admin',None,{'X-Fest-Key':j['token']}); check('desk key session opens desk',c==200,c)
 print(f'PASS {ok}  FAIL {len(bad)}'); [print(' -',x) for x in bad]

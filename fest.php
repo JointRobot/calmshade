@@ -390,13 +390,39 @@ function throttle($act, $max, $window, $msg) {
   $p->prepare('INSERT INTO fest_hits (ip,act,at) VALUES (?,?,?)')->execute([$ip, $act, $now]);
 }
 /* Best-effort email (Hostinger PHP mail). Never blocks a booking. */
-function notify($to, $subject, $lines) {
-  if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) return;
+/* Email. Best: a real Hostinger mailbox over SMTP — in fest-config.php (Karthik types the password himself):
+     define('FEST_SMTP_USER','bookings@calmshade.in'); define('FEST_SMTP_PASS','…');
+   (optional FEST_SMTP_HOST, default smtp.hostinger.com, port 465). Without it, PHP mail() with the mailbox as sender.
+   Returns true when the mail server accepted the message. */
+function mail_from() {
+  if (defined('FEST_SMTP_USER')) return FEST_SMTP_USER;
+  if (defined('FEST_MAIL_FROM')) return FEST_MAIL_FROM;
   $host = preg_replace('/[^a-z0-9.-]/i', '', $_SERVER['HTTP_HOST'] ?? 'calmshade.in');
-  $from = defined('FEST_MAIL_FROM') ? FEST_MAIL_FROM : 'bookings@'.preg_replace('/^www\./', '', $host);
-  $headers = 'From: APPA Art Fest <'.$from.">\r\nReply-To: ".settings()['contact']."\r\nContent-Type: text/plain; charset=UTF-8";
-  if (defined('FEST_MAIL_LOG')) { @file_put_contents(FEST_MAIL_LOG, json_encode(['to'=>$to,'subject'=>$subject,'body'=>implode("\n", $lines)])."\n", FILE_APPEND); return; } /* tests only */
-  @mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', implode("\n", $lines), $headers);
+  return 'bookings@'.preg_replace('/^www\./', '', $host);
+}
+function smtp_send($to, $subject, $body, $from) {
+  $host = defined('FEST_SMTP_HOST') ? FEST_SMTP_HOST : 'smtp.hostinger.com'; $port = defined('FEST_SMTP_PORT') ? (int)FEST_SMTP_PORT : 465;
+  $fp = @stream_socket_client(($port === 465 ? 'ssl://' : 'tcp://').$host.':'.$port, $en, $es, 15);
+  if (!$fp) { error_log('fest smtp connect: '.$es); return false; }
+  stream_set_timeout($fp, 15);
+  $read = function () use ($fp) { $r = ''; while (($l = fgets($fp, 1024)) !== false) { $r .= $l; if (strlen($l) < 4 || $l[3] === ' ') break; } return $r; };
+  $cmd = function ($c, $want) use ($fp, $read) { if ($c !== null) fwrite($fp, $c."\r\n"); $r = $read(); if (strpos($r, (string)$want) !== 0) throw new Exception(trim($r)); return $r; };
+  try {
+    $cmd(null, 220); $cmd('EHLO calmshade.in', 250);
+    if ($port !== 465) { $cmd('STARTTLS', 220); stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT); $cmd('EHLO calmshade.in', 250); }
+    $cmd('AUTH LOGIN', 334); $cmd(base64_encode(FEST_SMTP_USER), 334); $cmd(base64_encode(FEST_SMTP_PASS), 235);
+    $cmd('MAIL FROM:<'.$from.'>', 250); $cmd('RCPT TO:<'.$to.'>', 25); $cmd('DATA', 354);
+    $msg = 'From: Calm Shade <'.$from.">\r\nTo: <".$to.">\r\nReply-To: ".settings()['contact']."\r\nSubject: =?UTF-8?B?".base64_encode($subject)."?=\r\nDate: ".date('r')."\r\nMessage-ID: <".bin2hex(random_bytes(8)).'@calmshade.in>'."\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n".chunk_split(base64_encode($body));
+    $cmd($msg."\r\n.", 250); @fwrite($fp, "QUIT\r\n"); fclose($fp); return true;
+  } catch (Throwable $e) { error_log('fest smtp: '.$e->getMessage()); @fclose($fp); return false; }
+}
+function notify($to, $subject, $lines) {
+  if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
+  $body = implode("\n", $lines); $from = mail_from();
+  if (defined('FEST_MAIL_LOG')) { @file_put_contents(FEST_MAIL_LOG, json_encode(['to'=>$to,'subject'=>$subject,'body'=>$body])."\n", FILE_APPEND); return true; } /* tests only */
+  if (defined('FEST_SMTP_USER') && defined('FEST_SMTP_PASS')) return smtp_send($to, $subject, $body, $from);
+  $headers = 'From: Calm Shade <'.$from.">\r\nReply-To: ".settings()['contact']."\r\nContent-Type: text/plain; charset=UTF-8";
+  return @mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', $body, $headers, '-f'.$from);
 }
 function inr($n) { return '₹'.number_format((float)$n); }
 function trip_lines($items) {
@@ -1336,8 +1362,9 @@ switch ($a) {
     db()->prepare('DELETE FROM cs_codes WHERE expires < ?')->execute([time() - 86400]);
     $code = (string)random_int(100000, 999999);
     db()->prepare('INSERT INTO cs_codes (who,code_hash,expires,tries,created) VALUES (?,?,?,0,?)')->execute([$w[1], hash('sha256', $w[1].'|'.$code), time() + 600, time()]);
-    notify($w[1], 'Your Calm Shade sign-in code: '.$code, ['Your sign-in code is '.$code, '', 'It works for 10 minutes. If you didn\'t ask for it, ignore this email.', '', '— Calm Shade']);
-    out(['ok'=>true,'sentTo'=>mask_email($w[1])]);
+    $sent = notify($w[1], 'Your Calm Shade sign-in code: '.$code, ['Your sign-in code is '.$code, '', 'It works for 10 minutes. If you didn\'t ask for it, ignore this email.', '', '— Calm Shade']);
+    if (!$sent) fail('We couldn\'t send the email just now. Try again in a minute, or message us on WhatsApp.'.($w[0] === 'owner' ? ' (Owner: you can sign in with the desk key instead.)' : ''), 502);
+    out(['ok'=>true,'sentTo'=>mask_email($w[1]),'smtp'=>defined('FEST_SMTP_PASS')]);
   }
   case 'login_verify': {
     if ($m !== 'POST') fail('Use POST');
@@ -1354,6 +1381,16 @@ switch ($a) {
     $token = bin2hex(random_bytes(20)); $now = time();
     db()->prepare('INSERT INTO cs_sessions (token_hash,role,email,phone,host_id,created,seen) VALUES (?,?,?,?,?,?,?)')->execute([hash('sha256', $token), $w[0], $w[1], $w[2], $w[3]['id'] ?? null, $now, $now]);
     out(session_out(['role'=>$w[0],'email'=>$w[1],'phone'=>$w[2],'host_id'=>$w[3]['id'] ?? null], $token));
+  }
+  /* owner fallback while email is being set up: the desk key gives an owner session */
+  case 'login_key': {
+    if ($m !== 'POST') fail('Use POST');
+    throttle('loginkey', 10, 3600, 'Too many tries. Try again in an hour.');
+    $k = (string)(body()['key'] ?? '');
+    if (!defined('FEST_ADMIN_KEY') || strlen(FEST_ADMIN_KEY) < 12 || !hash_equals(FEST_ADMIN_KEY, $k)) { usleep(500000); fail('That desk key is not right.', 403); }
+    auth_init(); $token = bin2hex(random_bytes(20)); $now = time();
+    db()->prepare('INSERT INTO cs_sessions (token_hash,role,email,phone,host_id,created,seen) VALUES (?,?,?,?,?,?,?)')->execute([hash('sha256', $token), 'owner', OWNER_EMAILS[0], OWNER_PHONES[0], null, $now, $now]);
+    out(session_out(['role'=>'owner','email'=>OWNER_EMAILS[0],'phone'=>OWNER_PHONES[0],'host_id'=>null], $token));
   }
   case 'login_me': {
     $s = session_of($_SERVER['HTTP_X_SESSION'] ?? ''); if (!$s) fail('Signed out.', 401);
