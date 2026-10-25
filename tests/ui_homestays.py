@@ -31,20 +31,18 @@ async def main():
         # chat handoff with nothing picked
         await pg.evaluate("CS.chatHold('p3',3)"); await pg.wait_for_timeout(800)
         check('chatHold opens p3 with 3 guests',await pg.evaluate("document.querySelector('.det h1').textContent.includes('Calmshet Lakeview Room 1')"))
-        # curated
+        # find a stay: dates + people -> free rooms, cheapest first -> open with room and nights picked -> hold
         await pg.evaluate("CS.go('home')"); await pg.wait_for_timeout(800)
-        await pg.evaluate("CS.jump('.curated')"); await pg.wait_for_timeout(600)
-        today=datetime.date.today()
-        days=await pg.evaluate("[...document.querySelectorAll('.curated .gcal .dy:not(.dis):not(.bl)')].map(e=>parseInt(e.textContent))")
-        a,z=days[3],days[5]
-        await pg.evaluate(f"CS.curPick({a});CS.curPick({z});CS.curDot('p6')"); await pg.wait_for_timeout(300)
-        await pg.evaluate("CS.curGo()"); await pg.wait_for_timeout(3500)
-        await pg.fill('.curated input[placeholder="Full name"]','Trip Tester'); await pg.dispatch_event('.curated input[placeholder="Full name"]','input')
-        await pg.fill('.curated input[type="tel"]','9123409876'); await pg.dispatch_event('.curated input[type="tel"]','change')
-        await pg.wait_for_timeout(300)
-        await pg.click('.curated .wa-cta'); await pg.wait_for_timeout(2200)
-        t=await pg.inner_text('.curated'); cref=(re.search(r'CS-[A-Z0-9]{5}',t) or [None])[0]
-        check('curated held',cref and 'held for' in t,t[-400:])
+        fd=(datetime.date.today()+datetime.timedelta(days=12)).isoformat()
+        await pg.evaluate(f"CS.fsSet('from','{fd}');CS.fsSet('n','2');CS.fsSet('adults','5')"); await pg.wait_for_timeout(400)
+        t=await pg.inner_text('.curated'); check('find a stay lists free places','Calmshet' in t and 'Triangle' in t and '2 nights' in t,t[:600])
+        await pg.click('.fs-row:has-text("Calmshet")'); await pg.wait_for_timeout(800)
+        check('opens Calmshet with Triangle picked',await pg.evaluate("document.querySelector('.det h1').textContent.includes('Calmshet') && document.querySelector('.book-card').innerText.includes('Triangle')"))
+        await pg.evaluate("CS.csOpen()"); await pg.wait_for_timeout(200)
+        await pg.fill('#csh-name','Trip Tester'); await pg.dispatch_event('#csh-name','input'); await pg.fill('#csh-phone','9123409876'); await pg.dispatch_event('#csh-phone','input')
+        await pg.click('text=Hold my nights'); await pg.wait_for_timeout(2000)
+        t=await pg.inner_text('.book-card'); cref=(re.search(r'CS-[A-Z0-9]{5}',t) or [None])[0]
+        check('find-a-stay hold',cref and 'held' in t.lower(),t[:400])
         # host approval
         await pg.evaluate("CS.go('login')"); await pg.wait_for_timeout(300)
         await pg.fill('#lg-id','karthik@xtrathin.in'); await pg.evaluate("CS.id()"); await pg.wait_for_timeout(1000)

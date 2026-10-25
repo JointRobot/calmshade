@@ -402,6 +402,15 @@ table.tb tbody tr:hover{background:var(--bg);}
 .cur-head p{font-size:14px; color:var(--mute); line-height:1.8; max-width:72ch;}
 .cur-grid{display:grid; grid-template-columns:1.02fr .98fr; gap:46px; margin-top:34px; align-items:start;}
 @media (max-width:900px){ .cur-grid{grid-template-columns:1fr;} }
+.fs-box{max-width:820px;margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--rad-lg);padding:20px;box-shadow:var(--shadow);}
+.fs-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.fs-row{display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:center;text-align:left;width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 14px 8px 8px;cursor:pointer;font:inherit;color:inherit;}
+.fs-row:hover{border-color:var(--ink);}
+.fs-ph{width:72px;height:54px;border-radius:8px;overflow:hidden;display:block;}
+.fs-ph img,.fs-ph svg{width:100%;height:100%;object-fit:cover;display:block;}
+.fs-tx b,.fs-pr b{display:block;font-size:15px;} .fs-tx small,.fs-pr small{display:block;font-size:12px;color:var(--mute);margin-top:2px;}
+.fs-pr{text-align:right;}
+@media (max-width:640px){.fs-row{grid-template-columns:56px 1fr;}.fs-ph{width:56px;height:44px;}.fs-pr{grid-column:2;text-align:left;}.fs-box{padding:14px;}}
 .cmap{background:var(--card); border:1px solid var(--line); border-radius:var(--rad-lg); padding:18px; box-shadow:var(--shadow);}
 .cmap svg{width:100%; height:auto; display:block; border-radius:6px;}
 .cmap .cnote{font-size:11px; color:var(--mute); margin-top:12px; line-height:1.6;}
@@ -1084,6 +1093,10 @@ body{background:var(--bg);}
 
   /* ═════════ HELPERS ═════════ */
   const P=id=>PROPS.find(p=>p.id===id);
+  /* a booked room (e.g. calmshet.triangle) belongs to a listing: the place's one listing, or Calmshet's old room listing */
+  const ROOM_CS={'calmshet.cottage':'p1','calmshet.room1':'p3','calmshet.room2':'p2','calmshet.triangle':'p4','calmshet.appacottage':'p5','calmshet.appahouse':'p6'};
+  const listingOf=it=>P(it.prop)?it.prop:(it.place&&P('v-'+it.place))?'v-'+it.place:ROOM_CS[it.prop]||it.prop;
+  const PB=id=>P(id)||{id,name:String(id),owner:'o1',ppWith:0};
   const O=id=>OWNERS.find(o=>o.id===id);
   const propsOf=oid=>PROPS.filter(p=>p.owner===oid);
   const inr=n=>'₹'+Math.round(Number(n)).toLocaleString('en-IN');
@@ -1352,65 +1365,46 @@ ${kb()}`;}
       c+=`<div class="dy ${past?'dis':''}${sel?' sel':''}${inr2?' inr':''}" ${past?'':`onclick="CS.curPick(${d})" role="button" tabindex="0" aria-label="${d} ${BM.name}"`}>${d}${wxm[d]?`<em>${wxm[d].ic}${wxm[d].t}°</em>`:''}</div>`;}
     return `<div class="cal gcal">${c}</div>`;
   }
+  /* Find a stay (Karthik, 25 Oct 2026: replaces the map + multi-stop curator on the homepage).
+     One question — when, how many nights, how many people — and every room that is free for all of it, cheapest first. */
+  const FS={from:'',n:2,adults:2,open:false};
+  const fsNights=()=>FS.from?fxRange(FS.from,Math.max(1,Math.min(30,+FS.n||1))):[];
+  function fsResults(){
+    const ns=fsNights();if(!ns.length)return {rows:[],fest:false};const occ=CSB.occ||{};const fest=ns.some(d=>d>=FX.S.firstNight&&d<=FX.S.lastNight);const rows=[];
+    cardProps().forEach(p=>{
+      if(p.rooms)p.rooms.forEach(r=>{if(r.count<1)return;const st=occ[r.id]||{};if(ns.some(d=>st[d]))return;
+        const per=Math.max(1,r.max);const nr=Math.ceil(FS.adults/per);if(nr>r.count)return;const g=Math.ceil(FS.adults/nr);
+        const total=ns.reduce((a,d)=>a+roomPrice(p,r,d,g),0)*nr;rows.push({p,r,nr,g,total});});
+      else{if(capOf(p)<FS.adults)return;const st=occ[p.id]||{};if(ns.some(d=>st[d]))return;rows.push({p,r:null,nr:1,g:FS.adults,total:p.ppWith*FS.adults*ns.length});}});
+    rows.sort((a,b)=>a.total-b.total);
+    /* one line per place: its cheapest room that fits, plus how many other rooms there also fit */
+    const by=new Map();rows.forEach(x=>{const g=by.get(x.p.id);if(g)g.more.push(x);else by.set(x.p.id,Object.assign({},x,{more:[]}));});
+    return {rows:[...by.values()],fest};}
   function curated(){
-    const live=PROPS.filter(p=>p.live&&!p.rooms);
-    const ds=tripDates();
-    const rstops=tripStops();
-    const routeChips=rstops.length
-      ? rstops.map((id,i)=>`<span class="rstop">${i+1}. ${esc(P(id).name)}</span>`).join('<span class="rar">→</span>')+(cur.plan?`<span class="rempty" style="font-size:10px">· live from your itinerary</span>`:'')
-      : `<span class="rempty">${ds.length?'Tap available hotspots in travel order — up to '+ds.length+' stops for '+ds.length+' nights…':'Pick your dates first, then tap hotspots in travel order…'}</span>`;
-    let ni=[],nt=[];
-    if(cur.plan){let k=0;cur.plan.forEach((d,idx)=>{k=(idx>0&&cur.plan[idx-1].prop===d.prop)?k+1:1;ni[idx]=k;});
-      for(let idx=cur.plan.length-1;idx>=0;idx--){nt[idx]=(idx<cur.plan.length-1&&cur.plan[idx+1].prop===cur.plan[idx].prop)?nt[idx+1]:ni[idx];}}
-    const capBad=cur.plan?cur.plan.filter(d=>capOf(P(d.prop))<cur.heads).length:0;
-    const plan=cur.plan?`
-      <div class="plan">
-        ${cur.plan.map((d,i)=>{const opts=live.filter(q=>capOf(q)>=cur.heads&&(freeOn(q,d.date)||q.id===d.prop));
-          const tooSmall=capOf(P(d.prop))<cur.heads;
-          return `<div class="prow">
-          <span class="pd">${dowOf(d.date)} ${d.date}<small>Day ${i+1}${nt[i]>1?' · night '+ni[i]+' of '+nt[i]:''}</small></span>
-          <select onchange="CS.curSetProp(${i},this.value)">${opts.map(q=>`<option value="${q.id}" ${q.id===d.prop?'selected':''}>${esc(q.name)}${freeOn(q,d.date)?'':' (booked!)'}</option>`).join('')}</select>
-          <input value="${esc(d.note||'')}" placeholder="What's the plan this day?" onchange="CS.curNote(${i},this.value)">
-          <span class="pp">${inr(P(d.prop).ppWith*cur.heads)}${tooSmall?'<br><em style="color:var(--r1);font-style:normal;font-size:9px">sleeps '+capOf(P(d.prop))+'</em>':''}</span>
-        </div>`;}).join('')}
-        <div class="ptotal"><span>${trLabel()} · ${ds.length} night${ds.length>1?'s':''} · ${new Set(cur.plan.map(d=>d.prop)).size} stay${new Set(cur.plan.map(d=>d.prop)).size>1?'s':''} · ${cur.heads} guests · all meals</span><b>${inr(cur.plan.reduce((s,d)=>s+P(d.prop).ppWith*cur.heads,0))}</b></div>
-        <p class="pnote">Edit any day — the dropdowns only offer stays that are actually free that night and sleep your group. Finalise and each host is messaged <b>individually</b> on WhatsApp with their leg, while the full itinerary lands in your chat.</p>
-        <button class="wa-cta" onclick="CS.curFinalize()" ${cur.busy?'disabled':''}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6l-.4.6-.3.4c-.1.2-.2.3 0 .6.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.5 2.8 1.7.3.1.5.1.7-.1l1-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.2Z"/></svg>
-        ${cur.busy?'Holding your stays…':'Hold '+trLabel()+' &amp; pay by UPI'}</button>
-      </div>`:'';
-    const conflict=cur.conflict?`<div class="conflict">⚠ ${esc(cur.conflict)}</div>`:'';
-    const done=cur.done?`
-      <div class="cur-done">
-        <h4>✓ ${cur.done.legs.length} stay${cur.done.legs.length>1?'s':''} held for ${esc(cur.done.label)}</h4>
-        ${cur.done.legs.map(l=>`<div class="dleg"><div><b>${esc(P(l.prop).name)}</b><br><span>${esc(l.dates)} · ${l.n} night${l.n>1?'s':''} · host: ${esc(O(P(l.prop).owner).name)}</span></div><b>${inr(l.amt)}</b></div>`).join('')}
-        <div class="dtotal"><span>Trip total · each host confirms after payment</span><span>${inr(cur.done.total)}</span></div>
-        <div style="margin-top:16px">${csPayBlock(cur.done)}</div>
-        <p class="pnote" style="margin:12px 0 0"><button style="font-weight:900;text-decoration:underline" onclick="CS.curReset()">Plan another trip</button></p>
-      </div>`:'';
+    const today=new Date(Date.now()+19800000).toISOString().slice(0,10);
+    const ns=fsNights(),{rows,fest}=fsResults();
+    const list=!FS.from?'':fest?`<div class="fx-panel" style="gap:8px;margin-top:16px"><b>Those dates are during APPA Art Fest (12 Feb – 19 Mar 2027).</b><span class="fx-note">During the festival every stay is booked together with festival tickets.</span><div><button class="fx-btn small" onclick="CS.fx('openCurate')">Plan a festival stay</button> <button class="fx-btn ghost small" onclick="CS.go('fest')">See festival rooms</button></div></div>`
+      :rows.length?`<div class="fs-list">${rows.map(x=>`<button class="fs-row" onclick="CS.fsOpen('${esc(x.p.id)}','${esc(x.r?x.r.id:'')}')">
+          <span class="fs-ph">${photo(x.p)}</span>
+          <span class="fs-tx"><b>${esc(x.p.name)}</b><small>${x.r?esc(x.r.name)+(x.nr>1?' × '+x.nr:'')+(x.more.length?' · or '+x.more.length+' other room'+(x.more.length>1?'s':''):''):esc(x.p.cap)}</small></span>
+          <span class="fs-pr"><small>from</small><b>${inr(x.total)}</b><small>${ns.length} night${ns.length>1?'s':''} · ${FS.adults} ${FS.adults>1?'people':'person'}</small></span></button>`).join('')}</div>`
+      :`<p class="fx-note" style="margin-top:16px">Nothing is free for all of those nights for ${FS.adults}. Try other dates or fewer nights, or <a href="https://wa.me/918799938193?text=${encodeURIComponent('Hi! Looking for a stay from '+FS.from+' for '+FS.n+' nights, '+FS.adults+' people.')}" target="_blank" rel="noopener" style="font-weight:800">ask us on WhatsApp</a>.</p>`;
     return `
     <section class="curated rv">
       <div class="cur-head">
-        <span class="seclabel">Curated</span>
-        <h2>Can we help curate your travel?</h2>
-        <p>Pick your dates and the route you'd love to wander — the concierge stitches the collective's <b>available</b> homes into a day-by-day itinerary you can edit until it's yours.<br>This map grows with every host who joins: soon, whole journeys drawn dot to dot.</p>
-        <div class="fx-warn" style="margin-top:14px;max-width:72ch;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center"><span><b>Coming for APPA Art Fest 2027?</b> VIP and VVIP guests can curate six nights, a whole chapter or all 36 days across the festival venues, with every show included.</span><button class="fx-btn small" onclick="CS.fx('openCurate')">Curate your festival stay</button></div>
+        <span class="seclabel">Find a stay</span>
+        <h2>When are you coming?</h2>
+        <p>Pick your dates and how many of you. We show every room in the collective that's free, with the full price.</p>
       </div>
-      <div class="cur-grid">
-        <div class="cmap">${mapSVG()}
-          <div class="cnote"><b>${live.length} hotspots live.</b> ${ds.length?'Availability shown for '+trLabel()+' — dimmed stays are booked out or too small for '+cur.heads+'; dashed rings are partly free.':'Pick dates on the right and every hotspot shows its availability before you tap.'}</div>
+      <div class="fs-box">
+        <div class="cfields">
+          <div class="cf"><label for="fs-from">Check in</label><input id="fs-from" type="date" min="${today}" value="${esc(FS.from)}" onchange="CS.fsSet('from',this.value)"></div>
+          <div class="cf"><label for="fs-n">Nights</label><input id="fs-n" type="number" min="1" max="30" value="${FS.n}" onchange="CS.fsSet('n',this.value)"></div>
+          <div class="cf"><label for="fs-a">People</label><input id="fs-a" type="number" min="1" max="30" value="${FS.adults}" onchange="CS.fsSet('adults',this.value)"></div>
         </div>
-        <div class="cpanel">
-          <div class="cfields">
-            <div class="cf"><label>Guests</label><input type="number" min="1" max="20" value="${cur.heads}" onchange="CS.curHeads(this.value)"></div>
-            <div class="cf" style="flex:1.4; min-width:160px"><label>Your name</label><input value="${esc(cur.name||'')}" placeholder="Full name" oninput="CS.curName(this.value)"></div>
-            <div class="cf" style="flex:1.6; min-width:190px"><label>Your WhatsApp number</label><input type="tel" inputmode="tel" placeholder="98XXX XXXXX" value="${esc(cur.phone||guestPhone)}" onchange="CS.curPhone(this.value)"></div>
-          </div>
-          <div class="bplbl" style="margin-bottom:9px">${bmNav()} Travel dates ${cur.start?`<span style="color:var(--ink)">· ${trLabel()} · ${ds.length} night${ds.length>1?'s':''}</span>`:'<span style="font-weight:600;color:var(--faint)">· tap start, then end</span>'}</div>
-          ${tcalHTML()}
-          <div class="routebox" style="margin-top:14px">${routeChips}${rstops.length?`<button class="rclear" onclick="CS.curClear()">Clear</button>`:''}</div>
-          <button class="b-cur" onclick="CS.curGo()" ${cur.busy?'disabled':''}>${cur.busy?'The concierge is curating…':'Curate my trip'}</button>
-          ${conflict}${plan}${done}
-        </div>
+        ${FS.from?`<p class="fx-note" style="margin:10px 0 0">${fxFmt(ns[0])} → ${fxFmt(fxAdd(ns[ns.length-1],1))} · ${ns.length} night${ns.length>1?'s':''}${!fest&&rows.length?' · '+rows.length+' place'+(rows.length>1?'s':'')+' free':''}</p>`:''}
+        ${list}
+        <p class="fx-note" style="margin-top:14px">Coming for APPA Art Fest 2027? <button class="fx-x" onclick="CS.fx('openCurate')">Curate a VIP festival stay</button></p>
       </div>
     </section>`;
   }
@@ -1803,7 +1797,7 @@ ${kb()}`;}
       <div class="pan"><div class="ph2"><h3>Booking approvals</h3>${pend.length?`<span class="cnt">${pend.length}</span>`:''}</div><div class="pb">
         ${pend.length?pend.map(b=>`<div class="appr">
           <div class="th"><span class="pill ${b.utr?'ok':'pd'}">${b.utr?'paid?':'unpaid'}</span></div>
-          <div><b>${b.id} · ${esc(P(b.prop).name)}${b.leg?' · '+esc(b.leg):''}</b>
+          <div><b>${b.id} · ${esc(PB(b.prop).name)}${b.leg?' · '+esc(b.leg):''}</b>
             <span>${esc(b.guest)} · ${esc(b.dates)} · ${b.head} guests${b.meals?' · meals':''} · ${inr(b.amt)} via UPI${b.status==='expired'?' · <b>hold lapsed</b>':''}</span>
             ${b.utr?`<span>UPI reference: <b>${esc(b.utr)}</b></span>`:''}
             <span>You receive ${inr(b.amt-commOf(b))} after the 3% platform fee</span></div>
@@ -1871,7 +1865,7 @@ ${kb()}`;}
 
       <div class="pan"><div class="ph2"><h3>My bookings &amp; payouts</h3></div><div class="pb">
         <table class="tb"><thead><tr><th>ID</th><th>Listing</th><th>Guest</th><th>Dates</th><th>Amount</th><th>Fee 3%</th><th>Your payout</th><th>Status</th></tr></thead><tbody>
-        ${mine.slice().reverse().map(b=>`<tr><td>${b.id}</td><td>${esc(P(b.prop).name)}</td><td>${esc(b.guest)}</td><td>${esc(b.dates)}</td><td>${inr(b.amt)}</td><td>${inr(commOf(b))}</td><td><b>${inr(b.amt-commOf(b))}</b></td><td><span class="pill ${b.status==='confirmed'?'ok':b.status==='pending'?'pd':'rj'}">${b.status}</span></td></tr>`).join('')||'<tr><td colspan="8" class="empty">No bookings yet.</td></tr>'}
+        ${mine.slice().reverse().map(b=>`<tr><td>${b.id}</td><td>${esc(PB(b.prop).name)}</td><td>${esc(b.guest)}</td><td>${esc(b.dates)}</td><td>${inr(b.amt)}</td><td>${inr(commOf(b))}</td><td><b>${inr(b.amt-commOf(b))}</b></td><td><span class="pill ${b.status==='confirmed'?'ok':b.status==='pending'?'pd':'rj'}">${b.status}</span></td></tr>`).join('')||'<tr><td colspan="8" class="empty">No bookings yet.</td></tr>'}
         </tbody></table></div></div>`;
   }
 
@@ -1910,8 +1904,8 @@ ${kb()}`;}
 
       <div class="pan"><div class="ph2"><h3>Platform booking log</h3></div><div class="pb">
         <table class="tb"><thead><tr><th>ID</th><th>Listing</th><th>Host</th><th>Dates</th><th>Amount</th><th>Commission</th><th>Status</th></tr></thead><tbody>
-        ${BOOKINGS.slice().reverse().map(b=>{const o=O(P(b.prop).owner);
-          return `<tr><td>${b.id}</td><td>${esc(P(b.prop).name)}</td><td>${esc(o.name)}</td><td>${esc(b.dates)}</td><td>${inr(b.amt)}</td><td>${b.status==='confirmed'?'<b>'+inr(commOf(b))+'</b>':'—'}</td><td><span class="pill ${b.status==='confirmed'?'ok':b.status==='pending'?'pd':'rj'}">${b.status}</span></td></tr>`}).join('')}
+        ${BOOKINGS.slice().reverse().map(b=>{const o=(O(PB(b.prop).owner)||{name:'Host'});
+          return `<tr><td>${b.id}</td><td>${esc(PB(b.prop).name)}</td><td>${esc(o.name)}</td><td>${esc(b.dates)}</td><td>${inr(b.amt)}</td><td>${b.status==='confirmed'?'<b>'+inr(commOf(b))+'</b>':'—'}</td><td><span class="pill ${b.status==='confirmed'?'ok':b.status==='pending'?'pd':'rj'}">${b.status}</span></td></tr>`}).join('')}
         </tbody></table></div></div>
 
       <div class="pan"><div class="ph2"><h3>Global FAQ template — every new host starts here</h3></div><div class="pb">
@@ -2675,7 +2669,7 @@ ${kb()}`;}
     if(!FX.desk.key){CSB.adminErr='Enter the desk key.';if(!silent)render();return;}
     CSB.adminBusy=true;if(!silent)render();
     try{const j=await fxCall('cs_admin',null,true);CSB.admin=j.bookings;CSB.adminErr='';fxLS('desk',FX.desk.key);
-      BOOKINGS=[];j.bookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:b.items.length>1?'leg '+(i+1)+' of '+b.items.length:'',prop:it.prop,
+      BOOKINGS=[];j.bookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:(it.room?String(it.name).split(' · ').pop()+(it.rooms>1?' × '+it.rooms:'')+(b.items.length>1?' · ':''):'')+(b.items.length>1?'leg '+(i+1)+' of '+b.items.length:''),prop:listingOf(it),
         guest:((b.guest||{}).name||'Guest')+' · '+((b.guest||{}).phone||''),dates:csDates(it.nights),head:it.heads,amt:it.total,meals:it.meals,utr:b.utr,
         status:b.status==='cancelled'?'rejected':b.status})));
     }catch(e){CSB.admin=null;CSB.adminErr=e.message;}
@@ -3128,7 +3122,7 @@ ${kb()}`;}
     try{const j=await hsCall('host_me');HS.me=j;hsAddProp(j.prop,{id:j.host.id,name:j.host.name});
       const pp=P(j.prop.id);if(j.listing.data.yearRound===false){pp.live=false;pp.festivalOnly=true;}
       session={type:'owner',name:j.host.name||'Host',ownerId:j.host.id,remote:true};ownerCtx=j.host.id;ownerProp=j.prop.id;dashMode='host';
-      BOOKINGS=[];j.csBookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:b.items.length>1?'leg '+(i+1)+' of '+b.items.length:'',prop:it.prop,
+      BOOKINGS=[];j.csBookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:(it.room?String(it.name).split(' · ').pop()+(it.rooms>1?' × '+it.rooms:'')+(b.items.length>1?' · ':''):'')+(b.items.length>1?'leg '+(i+1)+' of '+b.items.length:''),prop:listingOf(it),
         guest:(b.guest.name||'Guest')+' · '+(b.guest.phone||''),dates:csDates(it.nights),head:it.heads,amt:it.total,meals:it.meals,utr:b.utr,onlyMine:b.onlyMine,
         status:b.status==='cancelled'?'rejected':b.status})));
       HS.fest=j.festBookings||[];csLoad();return true;}
@@ -3334,6 +3328,16 @@ ${kb()}`;}
     toggleLive(id){const p=P(id);if(p.remote){if(p.festivalOnly)return toast('Tick "On Calm Shade all year" in the editor first');hsCall('host_save',{listing:{paused:p.live}}).then(()=>{p.live=!p.live;toast(p.live?'Relisted':'Paused — hidden from guests');render();},e=>toast(e.message));return;}p.live=!p.live;csBuiltinSync(id,{bookable:p.live});toast(p.live?'Relisted':'Unlisted — hidden from guests');render();},
     del(id){PROPS=PROPS.filter(p=>p.id!==id);delete CAL[id];editing=null;edMedia=null;toast('Listing deleted');render();},
     /* auth */
+    fsSet(k,v){if(k==='from')FS.from=/^\d{4}-\d\d-\d\d$/.test(v)?v:'';else FS[k]=Math.max(1,Math.min(30,parseInt(v,10)||1));render();},
+    fsOpen(pid,rid){const p=P(pid);if(!p)return;const ns=fsNights();if(!ns.length)return;
+      const y=+ns[0].slice(0,4),m=+ns[0].slice(5,7)-1,i=y*12+m;
+      if(i>=BM_MIN&&i<=BM_MIN+12){BM=mkBM(y,m);TODAY=todayIn();csFill();}
+      CS.open(pid);
+      if(rid)bk.room=rid;const r=p.rooms&&bkRoom(p);
+      if(r){bk.rooms=Math.min(r.count,Math.ceil(FS.adults/Math.max(1,r.max)));bk.heads=Math.max(1,Math.min(r.max,Math.ceil(FS.adults/bk.rooms)));}
+      else bk.heads=Math.max(1,Math.min(capOf(p),FS.adults));
+      bk.days=ns.filter(d=>+d.slice(0,4)===BM.y&&+d.slice(5,7)-1===BM.m).map(d=>+d.slice(8,10));bkOpen=true;render();
+      if(bk.days.length<ns.length)toast('Your nights run into the next month: pick the rest on the calendar, or ask us on WhatsApp');},
     idT(v){login.id=v;},
     lgKeyOpen(){login.keyOpen=true;login.err='';render();const i=document.getElementById('lg-key');if(i)i.focus();},
     async lgKey(){const k=(document.getElementById('lg-key')||{}).value||'';if(!k)return;login.busy=true;login.err='';render();

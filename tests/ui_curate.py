@@ -74,7 +74,7 @@ async def main():
         await pg.click('.fx-band >> text=Curate a VIP stay'); await pg.wait_for_timeout(800)
         check('band → curate',(await pg.evaluate("document.querySelector('.fx-tab.on').textContent")).startswith('Curate'))
         await pg.goto(B+'?h=2'); await pg.wait_for_timeout(1500)
-        await pg.click('.curated >> text=Curate your festival stay'); await pg.wait_for_timeout(800)
+        await pg.click('.curated >> text=Curate a VIP festival stay'); await pg.wait_for_timeout(800)
         check('curated section → curate',(await pg.evaluate("location.hash"))=='#appa-curate' and (await pg.evaluate("document.querySelector('.fx-tab.on').textContent")).startswith('Curate'))
         # 8 included section
         await pg.evaluate("CS.fx('tab','stay')"); await pg.wait_for_timeout(200)
