@@ -391,14 +391,13 @@ function throttle($act, $max, $window, $msg) {
 }
 /* Best-effort email (Hostinger PHP mail). Never blocks a booking. */
 /* Email. Best: a real Hostinger mailbox over SMTP — in fest-config.php (Karthik types the password himself):
-     define('FEST_SMTP_USER','bookings@calmshade.in'); define('FEST_SMTP_PASS','…');
+     define('FEST_SMTP_USER','karthik@calmshade.in'); define('FEST_SMTP_PASS','…');
    (optional FEST_SMTP_HOST, default smtp.hostinger.com, port 465). Without it, PHP mail() with the mailbox as sender.
    Returns true when the mail server accepted the message. */
 function mail_from() {
   if (defined('FEST_SMTP_USER')) return FEST_SMTP_USER;
   if (defined('FEST_MAIL_FROM')) return FEST_MAIL_FROM;
-  $host = preg_replace('/[^a-z0-9.-]/i', '', $_SERVER['HTTP_HOST'] ?? 'calmshade.in');
-  return 'bookings@'.preg_replace('/^www\./', '', $host);
+  return 'karthik@calmshade.in'; /* the real Hostinger mailbox (Karthik, 25 Oct 2026) */
 }
 function smtp_send($to, $subject, $body, $from) {
   $host = defined('FEST_SMTP_HOST') ? FEST_SMTP_HOST : 'smtp.hostinger.com'; $port = defined('FEST_SMTP_PORT') ? (int)FEST_SMTP_PORT : 465;
