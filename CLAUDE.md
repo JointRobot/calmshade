@@ -118,7 +118,7 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
    editor field (only in `CS_PROPS`), and adding a *new* built-in listing from the dashboard is still local-only
    (only edits to the original p1–p9 persist) — Mira/Ravi/Anya are demo/narrative hosts for the Grove feature, not
    real listings, so this was scoped to Karthik's own stays.
-4. Login OTP for built-in hosts is still the preview (code shown on screen).
+4. ~~Login OTP preview~~ Done 25 Oct 2026: **Sign in = 6-digit code by email** (`login_start`/`login_verify`/`login_me`/`logout`, tables `cs_codes`, `cs_sessions`, 30-day sessions, 10-min codes, 5 tries, 3 codes/15 min/email). Owner panel ONLY for `OWNER_EMAILS` karthik@xtrathin.in / `OWNER_PHONES` 9619176007 (phone → code to that email); an owner session token works as the desk key (`is_admin_req`). Hosts (email/phone on `cs_hosts`) get their host page (session works as `X-Host-Key`). Everyone else = guest: their bookings (matched by email/phone) load into their trip. No SMS/WhatsApp codes (Karthik: email only; WhatsApp stays the normal app on 8799938193, no Meta API cost). Tests read codes from `FEST_MAIL_LOG`.
 5. Payment is manual UPI confirmation; a payment gateway would automate it.
 7. Audit 5 Oct 2026 (guest walkthrough) fixed: curate plan editing (add venue, ±night, reorder, remove), homestay
    month paging (`BM` is now `let`, `bmGo()`, `CSB.occ` + `csFill()`), offline UPI ref no longer faked, pass cap

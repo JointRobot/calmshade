@@ -15,9 +15,9 @@ def api(a,body=None,admin=False):
     except urllib.error.HTTPError as e: return e.code,json.load(e)
 async def desk(pg):
     await pg.goto(B); await pg.wait_for_timeout(1000); await pg.evaluate("CS.go('login')"); await pg.wait_for_timeout(300)
-    await pg.fill('#lg-id','karthik@xtrathin.in'); await pg.evaluate("CS.id()"); await pg.wait_for_timeout(300)
-    code=re.search(r'\d{6}',await pg.inner_text('.demo-otp')).group(0); await pg.click('.otp input'); await pg.keyboard.type(code,delay=40); await pg.wait_for_timeout(800)
-    await pg.evaluate("CS.mode('fest')"); await pg.fill('#fx-dk','test-desk-key-123456'); await pg.click('text=Open desk'); await pg.wait_for_timeout(1500)
+    await pg.fill('#lg-id','karthik@xtrathin.in'); await pg.evaluate("CS.id()"); await pg.wait_for_timeout(1000)
+    code=re.search(r'code: (\d{6})',open('../fest-data/mail.log').read().strip().splitlines()[-1]).group(1); await pg.click('.otp input'); await pg.keyboard.type(code,delay=40); await pg.wait_for_timeout(800)
+    await pg.evaluate("CS.mode('fest')"); await pg.wait_for_timeout(1500)
 async def main():
     # a small logo picture
     im=Image.new('RGBA',(120,60),(217,80,47,255)); buf=io.BytesIO(); im.save(buf,'PNG'); open('/tmp/appa-logo.png','wb').write(buf.getvalue())

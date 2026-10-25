@@ -395,6 +395,7 @@ function notify($to, $subject, $lines) {
   $host = preg_replace('/[^a-z0-9.-]/i', '', $_SERVER['HTTP_HOST'] ?? 'calmshade.in');
   $from = defined('FEST_MAIL_FROM') ? FEST_MAIL_FROM : 'bookings@'.preg_replace('/^www\./', '', $host);
   $headers = 'From: APPA Art Fest <'.$from.">\r\nReply-To: ".settings()['contact']."\r\nContent-Type: text/plain; charset=UTF-8";
+  if (defined('FEST_MAIL_LOG')) { @file_put_contents(FEST_MAIL_LOG, json_encode(['to'=>$to,'subject'=>$subject,'body'=>implode("\n", $lines)])."\n", FILE_APPEND); return; } /* tests only */
   @mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', implode("\n", $lines), $headers);
 }
 function inr($n) { return '₹'.number_format((float)$n); }
@@ -407,10 +408,72 @@ function trip_lines($items) {
   }
   return $out;
 }
+/* ---------- sign in with a code by email (Karthik, 25 Oct 2026) ----------
+   Owner panel: only these. Hosts: the email/phone on their host record. Everyone else: a guest (their own bookings). */
+const OWNER_EMAILS = ['karthik@xtrathin.in'];
+const OWNER_PHONES = ['9619176007'];
+const SESSION_DAYS = 30;
+function auth_init() {
+  static $d = false; if ($d) return; $d = true;
+  db()->exec('CREATE TABLE IF NOT EXISTS cs_codes (who VARCHAR(160) NOT NULL, code_hash VARCHAR(64) NOT NULL, expires BIGINT NOT NULL, tries INTEGER NOT NULL DEFAULT 0, created BIGINT NOT NULL)');
+  db()->exec('CREATE TABLE IF NOT EXISTS cs_sessions (token_hash VARCHAR(64) PRIMARY KEY, role VARCHAR(8) NOT NULL, email VARCHAR(160), phone VARCHAR(16), host_id VARCHAR(16), created BIGINT NOT NULL, seen BIGINT NOT NULL)');
+}
+function session_of($token) {
+  static $c = []; $token = (string)$token; if (strlen($token) !== 40 || !ctype_xdigit($token)) return null;
+  if (array_key_exists($token, $c)) return $c[$token];
+  auth_init(); $st = db()->prepare('SELECT * FROM cs_sessions WHERE token_hash=?'); $st->execute([hash('sha256', $token)]); $r = $st->fetch();
+  if ($r && (time() - (int)$r['seen']) > SESSION_DAYS * 86400) { db()->prepare('DELETE FROM cs_sessions WHERE token_hash=?')->execute([$r['token_hash']]); $r = null; }
+  if ($r && time() - (int)$r['seen'] > 3600) db()->prepare('UPDATE cs_sessions SET seen=? WHERE token_hash=?')->execute([time(), $r['token_hash']]);
+  return $c[$token] = $r ?: null;
+}
+/* the desk: the desk key, or Karthik signed in */
+function is_admin_req() {
+  $k = (string)($_SERVER['HTTP_X_FEST_KEY'] ?? '');
+  if ($k === '') return false;
+  if (defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12 && hash_equals(FEST_ADMIN_KEY, $k)) return true;
+  $s = session_of($k); return $s && $s['role'] === 'owner';
+}
 function need_admin() {
-  if (!defined('FEST_ADMIN_KEY') || strlen(FEST_ADMIN_KEY) < 12) fail('The festival desk is locked until FEST_ADMIN_KEY is set in fest-config.php.', 403);
-  $k = $_SERVER['HTTP_X_FEST_KEY'] ?? '';
-  if (!hash_equals(FEST_ADMIN_KEY, (string)$k)) { usleep(400000); fail('That desk key is not right.', 403); }
+  if (is_admin_req()) return;
+  if ((!defined('FEST_ADMIN_KEY') || strlen(FEST_ADMIN_KEY) < 12) && empty($_SERVER['HTTP_X_FEST_KEY'])) fail('The festival desk is locked until FEST_ADMIN_KEY is set in fest-config.php, or until you sign in.', 403);
+  usleep(400000); fail('That desk key is not right. Sign in again.', 403);
+}
+function mask_email($e) { [$u, $d] = array_pad(explode('@', $e, 2), 2, ''); return mb_substr($u, 0, 1).str_repeat('•', max(2, min(6, strlen($u) - 1))).'@'.$d; }
+/* who is signing in: [role, email to send the code to, phone, host row] */
+function who_is($id) {
+  $id = trim(mb_strtolower((string)$id)); $isMail = strpos($id, '@') !== false; $ph = $isMail ? '' : digits($id);
+  if ($isMail && !filter_var($id, FILTER_VALIDATE_EMAIL)) return null;
+  if (!$isMail && strlen($ph) !== 10) return null;
+  if (($isMail && in_array($id, OWNER_EMAILS, true)) || (!$isMail && in_array($ph, OWNER_PHONES, true))) return ['owner', OWNER_EMAILS[0], OWNER_PHONES[0], null];
+  hosts_init();
+  foreach (db()->query('SELECT * FROM cs_hosts') as $h) {
+    if (($isMail && mb_strtolower(trim((string)$h['email'])) === $id) || (!$isMail && digits($h['phone']) === $ph))
+      return filter_var($h['email'], FILTER_VALIDATE_EMAIL) ? ['host', mb_strtolower(trim($h['email'])), digits($h['phone']), $h] : null;
+  }
+  if ($isMail) return ['guest', $id, '', null];
+  /* a guest who typed a phone: send the code to the email on their latest booking with that phone */
+  foreach (['fest_bookings','cs_bookings'] as $t) foreach (db()->query("SELECT guest FROM $t ORDER BY created_at DESC") as $r) {
+    $g = json_decode($r['guest'], true) ?: [];
+    if (digits($g['phone'] ?? '') === $ph && filter_var($g['email'] ?? '', FILTER_VALIDATE_EMAIL)) return ['guest', mb_strtolower($g['email']), $ph, null];
+  }
+  return ['nomail', '', $ph, null];
+}
+/* a signed-in guest's bookings (matched on the email, or the phone they signed in with) */
+function guest_tickets($email, $phone) {
+  $out = ['fest'=>[], 'cs'=>[]];
+  foreach (['fest'=>'fest_bookings','cs'=>'cs_bookings'] as $k => $t) foreach (db()->query("SELECT ref, token, guest, status FROM $t ORDER BY created_at DESC") as $r) {
+    $g = json_decode($r['guest'], true) ?: [];
+    if (($email && mb_strtolower(trim($g['email'] ?? '')) === $email) || ($phone && digits($g['phone'] ?? '') === $phone)) $out[$k][] = ['ref'=>$r['ref'],'token'=>$r['token']];
+  }
+  return $out;
+}
+function session_out($s, $token = null) {
+  $o = ['ok'=>true,'role'=>$s['role'],'email'=>$s['email'],'name'=>''];
+  if ($token) $o['token'] = $token;
+  if ($s['role'] === 'owner') $o['name'] = 'Karthik';
+  if ($s['role'] === 'host') { hosts_init(); $st = db()->prepare('SELECT name FROM cs_hosts WHERE id=?'); $st->execute([$s['host_id']]); $o['name'] = (string)(($st->fetch() ?: [])['name'] ?? ''); }
+  if ($s['role'] === 'guest') $o['tickets'] = guest_tickets($s['email'], $s['phone']);
+  return $o;
 }
 function lock_start() { $p = db(); if (is_mysql()) { $p->query("SELECT GET_LOCK('appa_fest_book', 10)"); $p->beginTransaction(); } else { $p->exec('BEGIN IMMEDIATE'); } }
 function lock_end($ok) { $p = db(); if (is_mysql()) { $ok ? $p->commit() : $p->rollBack(); $p->query("SELECT RELEASE_LOCK('appa_fest_book')"); } else { $p->exec($ok ? 'COMMIT' : 'ROLLBACK'); } }
@@ -635,6 +698,7 @@ function need_host() {
   hosts_init(); $k = (string)($_SERVER['HTTP_X_HOST_KEY'] ?? '');
   if (strlen($k) < 20) fail('Sign in with your host link first.', 401);
   $st = db()->prepare('SELECT * FROM cs_hosts WHERE key_hash=?'); $st->execute([hash('sha256', $k)]); $h = $st->fetch();
+  if (!$h && ($ss = session_of($k)) && $ss['role'] === 'host') { $st = db()->prepare('SELECT * FROM cs_hosts WHERE id=?'); $st->execute([$ss['host_id']]); $h = $st->fetch(); }
   if (!$h) { usleep(300000); fail('That host link has expired. Ask the festival team for a new one, or request it from the host login page.', 401); }
   return $h;
 }
@@ -1152,7 +1216,7 @@ switch ($a) {
   /* ---- Photo uploads (applicants, hosts, admin) ---- */
   case 'upload': {
     if ($m !== 'POST') fail('Use POST');
-    $isAdmin = defined('FEST_ADMIN_KEY') && hash_equals((string)FEST_ADMIN_KEY, (string)($_SERVER['HTTP_X_FEST_KEY'] ?? ''));
+    $isAdmin = is_admin_req();
     $isHost = false; if (!$isAdmin && !empty($_SERVER['HTTP_X_HOST_KEY'])) { need_host(); $isHost = true; }
     if (!$isAdmin) throttle('upload', $isHost ? 60 : 16, 86400, 'Too many photos from this device today. Send the rest on WhatsApp.');
     $raw = file_get_contents('php://input', false, null, 0, 4 * 1024 * 1024 + 1) ?: '';
@@ -1260,6 +1324,46 @@ switch ($a) {
     notify($g['email'] ?? '', ($s === 'confirmed' ? 'Confirmed: ' : 'Cancelled: ').'Calm Shade booking '.$r['ref'], $s === 'confirmed' ? array_merge(['Hi '.($g['name'] ?? '').',', '', 'Your host has confirmed your stay.', ''], cs_lines($items), ['', '— Calm Shade']) : ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$r['ref'].' was cancelled by your host and its nights released. If you already paid, reply and we will arrange the refund.', '', '— Calm Shade']);
     out(['ok'=>true]);
   }
+  /* ---- sign in: a 6-digit code by email ---- */
+  case 'login_start': {
+    if ($m !== 'POST') fail('Use POST');
+    auth_init(); $b = body(); $w = who_is($b['id'] ?? '');
+    if (!$w) fail('Enter your email address, or a 10-digit phone number.');
+    if ($w[0] === 'nomail') fail('We don\'t have an email for that phone number yet. Sign in with your email address instead.', 404);
+    throttle('login', 8, 3600, 'Too many sign-in codes from this device. Try again in an hour.');
+    $st = db()->prepare('SELECT COUNT(*) c FROM cs_codes WHERE who=? AND created > ?'); $st->execute([$w[1], time() - 900]);
+    if ((int)$st->fetch()['c'] >= 3) fail('We have sent 3 codes in the last 15 minutes. Check your inbox (and spam), or try again a little later.', 429);
+    db()->prepare('DELETE FROM cs_codes WHERE expires < ?')->execute([time() - 86400]);
+    $code = (string)random_int(100000, 999999);
+    db()->prepare('INSERT INTO cs_codes (who,code_hash,expires,tries,created) VALUES (?,?,?,0,?)')->execute([$w[1], hash('sha256', $w[1].'|'.$code), time() + 600, time()]);
+    notify($w[1], 'Your Calm Shade sign-in code: '.$code, ['Your sign-in code is '.$code, '', 'It works for 10 minutes. If you didn\'t ask for it, ignore this email.', '', '— Calm Shade']);
+    out(['ok'=>true,'sentTo'=>mask_email($w[1])]);
+  }
+  case 'login_verify': {
+    if ($m !== 'POST') fail('Use POST');
+    auth_init(); $b = body(); $w = who_is($b['id'] ?? ''); $code = preg_replace('/\D/', '', (string)($b['code'] ?? ''));
+    if (!$w || $w[0] === 'nomail' || strlen($code) !== 6) fail('Enter the 6-digit code from the email.');
+    $st = db()->prepare('SELECT * FROM cs_codes WHERE who=? AND expires > ? ORDER BY created DESC LIMIT 1');
+    $st->execute([$w[1], time()]); $r = $st->fetch();
+    if (!$r || (int)$r['tries'] >= 5) fail('That code has expired. Ask for a new one.', 400);
+    if (!hash_equals($r['code_hash'], hash('sha256', $w[1].'|'.$code))) {
+      db()->prepare('UPDATE cs_codes SET tries=tries+1 WHERE who=? AND code_hash=?')->execute([$w[1], $r['code_hash']]); usleep(300000);
+      fail('That code doesn\'t match. Check the latest email and try again.', 400);
+    }
+    db()->prepare('DELETE FROM cs_codes WHERE who=?')->execute([$w[1]]);
+    $token = bin2hex(random_bytes(20)); $now = time();
+    db()->prepare('INSERT INTO cs_sessions (token_hash,role,email,phone,host_id,created,seen) VALUES (?,?,?,?,?,?,?)')->execute([hash('sha256', $token), $w[0], $w[1], $w[2], $w[3]['id'] ?? null, $now, $now]);
+    out(session_out(['role'=>$w[0],'email'=>$w[1],'phone'=>$w[2],'host_id'=>$w[3]['id'] ?? null], $token));
+  }
+  case 'login_me': {
+    $s = session_of($_SERVER['HTTP_X_SESSION'] ?? ''); if (!$s) fail('Signed out.', 401);
+    out(session_out($s));
+  }
+  case 'logout': {
+    $t = (string)($_SERVER['HTTP_X_SESSION'] ?? ''); if (strlen($t) === 40) { auth_init(); db()->prepare('DELETE FROM cs_sessions WHERE token_hash=?')->execute([hash('sha256', $t)]); }
+    out(['ok'=>true]);
+  }
+
   case 'host_link_request': {
     if ($m !== 'POST') fail('Use POST');
     throttle('hostlink', 5, 3600, 'Too many requests. Try again in an hour.');

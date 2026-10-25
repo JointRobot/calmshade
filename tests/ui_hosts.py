@@ -27,9 +27,9 @@ async def main():
         # 2 desk enroll
         d=await b.new_page(viewport={'width':1366,'height':900}); d.on('pageerror',lambda e: errs.append(str(e)))
         await d.goto(B); await d.wait_for_timeout(1000); await d.evaluate("CS.go('login')"); await d.wait_for_timeout(300)
-        await d.fill('#lg-id','karthik@xtrathin.in'); await d.evaluate("CS.id()"); await d.wait_for_timeout(300)
-        code=re.search(r'\d{6}',await d.inner_text('.demo-otp')).group(0); await d.click('.otp input'); await d.keyboard.type(code,delay=40); await d.wait_for_timeout(800)
-        await d.evaluate("CS.mode('fest')"); await d.fill('#fx-dk','test-desk-key-123456'); await d.click('text=Open desk'); await d.wait_for_timeout(1500)
+        await d.fill('#lg-id','karthik@xtrathin.in'); await d.evaluate("CS.id()"); await d.wait_for_timeout(1000)
+        code=re.search(r'code: (\d{6})',open('../fest-data/mail.log').read().strip().splitlines()[-1]).group(1); await d.click('.otp input'); await d.keyboard.type(code,delay=40); await d.wait_for_timeout(800)
+        await d.evaluate("CS.mode('fest')"); await d.wait_for_timeout(1500)
         t=await d.inner_text('.con'); check('application shows links+photos','Pawna Lakeside Camp' in t and 'Website' in t and 'Map' in t and await d.evaluate("document.querySelectorAll('.hf-mini img').length")==3,'')
         await d.click('text=Approve & enroll'); await d.wait_for_timeout(2000)
         link=await d.input_value('#hs-link'); check('host link shown',re.search(r'\?host=[a-f0-9]{40}$',link),link)

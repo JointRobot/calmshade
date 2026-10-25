@@ -61,9 +61,9 @@ async def main():
         await m.screenshot(path='/tmp/pp-phone.png',full_page=True)
         # desk posters
         await pg.goto(B); await pg.wait_for_timeout(1000); await pg.evaluate("CS.go('login')"); await pg.wait_for_timeout(300)
-        await pg.fill('#lg-id','karthik@xtrathin.in'); await pg.evaluate("CS.id()"); await pg.wait_for_timeout(300)
-        import re; code=re.search(r'\d{6}',await pg.inner_text('.demo-otp')).group(0); await pg.click('.otp input'); await pg.keyboard.type(code,delay=40); await pg.wait_for_timeout(800)
-        await pg.evaluate("CS.mode('fest')"); await pg.fill('#fx-dk','test-desk-key-123456'); await pg.click('text=Open desk'); await pg.wait_for_timeout(1500)
+        await pg.fill('#lg-id','karthik@xtrathin.in'); await pg.evaluate("CS.id()"); await pg.wait_for_timeout(1000)
+        import re; code=re.search(r'code: (\d{6})',open('../fest-data/mail.log').read().strip().splitlines()[-1]).group(1); await pg.click('.otp input'); await pg.keyboard.type(code,delay=40); await pg.wait_for_timeout(800)
+        await pg.evaluate("CS.mode('fest')"); await pg.wait_for_timeout(1500)
         await pg.click('text=Show posters'); await pg.wait_for_timeout(800)
         n=await pg.evaluate("document.querySelectorAll('.pp-poster [data-qr*=\"?stamp=\"]').length"); check('8 posters with stamp links',n==8,n)
         t=await pg.inner_text('.con'); check('poster counts','1 stamp so far' in t,'')

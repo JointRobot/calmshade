@@ -1233,23 +1233,44 @@ ${kb()}`;}
 
 
   /* ═════════ LOGIN ═════════ */
-  function tryId(){
-    const v=login.id.trim().toLowerCase();if(!v){login.err='Enter your email or phone.';return render();}
-    let target=null;
-    if(SUPER.emails.includes(v)||SUPER.phones.includes(normPhone(v))) target={type:'super',name:SUPER.name,ownerId:SUPER.ownerId};
-    else{const o=OWNERS.find(o=>o.email===v||normPhone(o.phone)===normPhone(v));if(o)target={type:'owner',name:o.name,ownerId:o.id};}
-    if(!target){login.err='This email or phone isn\'t registered yet. Hosting is invite-only for now — ask Karthik to add you.';return render();}
-    login.target=target;login.code=String(Math.floor(100000+Math.random()*900000));login.step='otp';login.err='';render();
+  /* sign in with a 6-digit code by email (fest.php login_*): Karthik → owner panel + desk, hosts → their host page,
+     everyone else → their own bookings. The session token is kept on this device for 30 days. */
+  const LG_KEY='cs-session';
+  const lgGet=()=>{try{return JSON.parse(localStorage.getItem(LG_KEY)||'null');}catch(e){return null;}};
+  const lgSet=v=>{try{v?localStorage.setItem(LG_KEY,JSON.stringify(v)):localStorage.removeItem(LG_KEY);}catch(e){}};
+  async function lgCall(a,body,token){const h={'Content-Type':'application/json'};if(token)h['X-Session']=token;
+    const r=await fetch(FX_API+'?a='+a,{method:'POST',headers:h,body:JSON.stringify(body||{})});let j=null;try{j=await r.json();}catch(e){}
+    if(!r.ok||!j){const e=new Error((j&&j.error)||'Could not reach Calm Shade. Check your connection and try again.');e.status=r.status;throw e;}return j;}
+  async function tryId(){
+    const v=login.id.trim();if(!v){login.err='Enter your email or phone.';return render();}
+    login.busy=true;login.err='';render();
+    try{const j=await lgCall('login_start',{id:v});login.sentTo=j.sentTo;login.step='otp';}catch(e){login.err=e.message;}
+    login.busy=false;render();const f=root.querySelector('.otp input');if(f)f.focus();
   }
-  function tryOtp(){
+  async function lgApply(j,token,fresh){
+    if(j.role==='owner'){FX.desk.key=token;fxLS('desk',token);session={type:'super',name:SUPER.name,ownerId:SUPER.ownerId,token:true};ownerCtx=SUPER.ownerId;ownerProp=(propsOf(ownerCtx)[0]||{}).id;
+      if(fresh){dashMode='creator';view='dash';}fxDeskLoad();csAdminLoad(true);return true;}
+    if(j.role==='host'){HS.key=token;try{localStorage.setItem('cs-host-key',token);}catch(e){}if(await hsSignIn(!fresh)){session.token=true;if(fresh)view='dash';return true;}return false;}
+    const t=j.tickets||{fest:[],cs:[]};
+    t.fest.forEach(x=>{if(!FX.tickets.some(y=>y.ref===x.ref))FX.tickets.push(x);});fxSave();
+    t.cs.forEach(x=>{if(!CSB.tickets.some(y=>y.ref===x.ref))CSB.tickets.push(x);});fxLS('cs-tickets',CSB.tickets);
+    GUEST.email=j.email;
+    if(fresh){view='fest';FX.tab='stay';FX.tripOpen=true;try{history.replaceState({},'','#appa');}catch(e){}
+      toast(t.fest.length+t.cs.length?'Signed in · '+(t.fest.length+t.cs.length)+' booking'+(t.fest.length+t.cs.length>1?'s':'')+' found':'Signed in · no bookings on this email yet');}
+    fxLoad();csLoad();return true;
+  }
+  const GUEST={email:''};
+  async function tryOtp(){
     const digs=[...root.querySelectorAll('.otp input')].map(i=>i.value).join('');
-    if(digs===login.code){
-      session=login.target;ownerCtx=session.ownerId;ownerProp=(propsOf(ownerCtx)[0]||{}).id;
-      dashMode=session.type==='super'?'creator':'host';
-      view='dash';login={step:'id',id:'',err:'',target:null,code:''};
-      render();toast('Welcome, '+session.name);
-    }else{login.err='That code doesn\'t match — try again.';render();}
+    if(digs.length!==6){login.err='Enter all 6 digits.';return render();}
+    login.busy=true;login.err='';render();
+    try{const j=await lgCall('login_verify',{id:login.id.trim(),code:digs});lgSet({token:j.token,role:j.role});
+      login={step:'id',id:'',err:'',target:null,code:''};
+      await lgApply(j,j.token,true);render();if(j.role!=='guest')toast('Welcome, '+(j.name||session&&session.name||''));
+    }catch(e){login.busy=false;login.err=e.message;render();}
   }
+  async function lgRestore(){const s=lgGet();if(!s||!s.token)return;
+    try{const j=await lgCall('login_me',{},s.token);await lgApply(j,s.token,false);render();}catch(e){if(e.status===401)lgSet(null);}}
 
   /* ═════════ CURATED TRIP — date & availability aware ═════════ */
   const MAPXY={p1:[140,118],p2:[186,152],p3:[214,104],p4:[112,176],p5:[318,214],p6:[362,182],p7:[432,118],p8:[292,132],p9:[336,96]};
@@ -1447,7 +1468,7 @@ ${kb()}`;}
         ? `<button class="lnk" onclick="CS.go('home')">View site</button><button class="host" onclick="CS.signOut()">Sign out</button>`
         : session
           ? `<button class="lnk" onclick="CS.go('login')" style="display:none"></button><button class="host" onclick="CS.go('dash')">☰ &nbsp;${esc(session.name)}</button>`
-          : `<button class="lnk fx-navm" onclick="CS.go('fest')">APPA Fest</button><button class="lnk" onclick="CS.invite()">Become a host</button><button class="host" onclick="CS.go('login')">☰ &nbsp;Host login</button>`}
+          : `<button class="lnk fx-navm" onclick="CS.go('fest')">APPA Fest</button><button class="lnk" onclick="CS.invite()">Become a host</button><button class="host" onclick="${GUEST.email?"CS.fx('myBookings')":"CS.go('login')"}">☰ &nbsp;${GUEST.email?'My bookings':'Sign in'}</button>`}
     </div><div class="rainbow-hair"></div></nav>`;
   }
 
@@ -1523,7 +1544,7 @@ ${kb()}`;}
     <div class="sep rv sep-dusk right" aria-hidden="true" data-name="night"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M8 30 Q90 8 158 22 T230 18"/><path class="fl" d="M206 10 a8 8 0 1 0 8 11 a6.5 6.5 0 1 1 -8 -11z"/><circle class="ffd" cx="60" cy="18" r="2"/><circle class="ffd" cx="118" cy="26" r="2"/><circle class="ffd" cx="160" cy="12" r="2"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <footer class="foot"><div class="foot-in">
       <span>© ${new Date().getFullYear()} Calm Shade · a homestay collective</span><span class="sp"></span>
-      <button onclick="CS.go('login')">Host login</button>
+      <button onclick="CS.go('login')">Sign in</button>
     </div></footer></div>`;
   }
 
@@ -1630,11 +1651,10 @@ ${kb()}`;}
       const via=login.id.includes('@')?'email':'SMS / WhatsApp';
       return `<div class="page login"><div class="lg">
         <h2>Enter your code</h2>
-        <p class="s">We've sent a 6-digit code to <b>${esc(login.id)}</b> via ${via}.</p>
-        <div class="demo-otp">Preview build — no SMS gateway connected yet, so your code is <b>${login.code}</b>. In production this arrives on your phone or email.</div>
+        <p class="s">We've emailed a 6-digit code to <b>${esc(login.sentTo||login.id)}</b>. It works for 10 minutes. Not there? Check spam.</p>
         <div class="otp">${[0,1,2,3,4,5].map(i=>`<input maxlength="1" inputmode="numeric" aria-label="Digit ${i+1}" oninput="CS.hop(this)">`).join('')}</div>
         ${login.err?`<div class="lg-err">${esc(login.err)}</div>`:''}
-        <button class="b-rb" onclick="CS.otp()">Verify &amp; sign in</button>
+        <button class="b-rb" onclick="CS.otp()" ${login.busy?'disabled':''}>${login.busy?'Checking…':'Verify &amp; sign in'}</button>
         <div class="lg-alt"><button onclick="CS.backId()">Use a different email or phone</button></div>
       </div></div>`;
     }
@@ -1652,14 +1672,14 @@ ${kb()}`;}
       </div></div>`;
     }
     return `<div class="page login"><div class="lg">
-      <h2>Host login</h2>
-      <p class="s">Sign in with the email or phone registered to your host account. Guests never need an account — just WhatsApp.</p>
+      <h2>Sign in</h2>
+      <p class="s">Enter your email, or the phone number you booked or host with. We'll email you a 6-digit code: no password needed. Hosts go to their host page; guests see their bookings and tickets.</p>
       <div class="fld"><label>Email or phone</label>
         <input id="lg-id" placeholder="you@example.com or 98XXXXXXXX" value="${esc(login.id)}"
           oninput="CS.idT(this.value)" onkeydown="if(event.key==='Enter')CS.id()"></div>
       ${login.err?`<div class="lg-err">${esc(login.err)}</div>`:''}
-      <button class="b-rb" onclick="CS.id()">Send code</button>
-      <div class="lg-alt">Demo hosts: mira@ · ravi@ · anya@calmshade.demo<br><button onclick="CS.invite()">Have an invite code? Join the collective</button></div>
+      <button class="b-rb" onclick="CS.id()" ${login.busy?'disabled':''}>${login.busy?'Sending…':'Email me a code'}</button>
+      <div class="lg-alt"><button onclick="CS.invite()">Have an invite code? Join the collective</button></div>
       <div class="lg-alt" style="text-align:left;border-top:1px solid var(--line);padding-top:14px;margin-top:16px"><b style="color:var(--ink)">Hosting through APPA Art Fest?</b> Sign in with the private link we sent you. Lost it? Get a new one by email:
         <div class="phrow"><input type="tel" placeholder="Your phone number" value="${esc(HS.linkReq.phone)}" oninput="CS.hsReqF(this.value)"><button onclick="CS.hsReq()" style="background:var(--ink)">Send link</button></div>
         ${HS.linkReq.msg?`<div class="nt2">${esc(HS.linkReq.msg)}</div>`:''}<button onclick="CS.fx('openHost')" style="margin-top:8px">Not listed yet? List your stay</button></div>
@@ -2344,7 +2364,7 @@ ${kb()}`;}
       ${count?`<div class="fx-lines">${t.sum.owner?`<div><span>Rooms · each place's own price</span><b>${inr(t.sum.owner)}</b></div>`:''}${t.sum.tickets?`<div><span>Festival tickets with your rooms</span><b>${inr(t.sum.tickets)}</b></div>`:''}${t.sum.surge?`<div><span>High-demand nights</span><b>${inr(t.sum.surge)}</b></div>`:''}${t.sum.fee?`<div><span>Calm Shade fee (${FX.feePct}% of partner rooms)</span><b>${inr(t.sum.fee)}</b></div>`:''}${t.passes?`<div><span>Day passes</span><b>${inr(t.passes)}</b></div>`:''}${t.advs?`<div><span>Adventure deposits</span><b>${inr(t.advs)}</b></div>`:''}${t.extras?`<div><span>Extras</span><b>${inr(t.extras)}</b></div>`:''}${t.discount?`<div><span>${t.tier.toUpperCase()} discount</span><b>−${inr(t.discount)}</b></div>`:''}</div>
         <div class="fx-tot"><span>Total</span><span>${inr(t.total)}</span></div>${t.balance?`<p class="fx-note" style="margin:0">Plus ${inr(t.balance)} for adventures, paid at the venue.</p>`:''}
         ${t.pay.hosts.length?`<div class="fx-panel" style="gap:6px;padding:12px"><b style="font-size:14px">You pay in two steps</b><div class="fx-lines" style="font-size:13px"><div><span>1 · Now, to Calm Shade: holds everything</span><b>${inr(t.pay.calm)}</b></div>${t.pay.hosts.map(h=>`<div><span>2 · Then straight to ${esc(h.name)}, for the room</span><b>${inr(h.amount)}</b></div>`).join('')}</div><span class="fx-note">Step 2 opens once we confirm step 1.</span></div>`:''}${checkout}`:''}
-      ${mine}${findHTML}`;}
+      ${mine}${findHTML}${GUEST.email?`<p class="fx-note">Signed in as ${esc(GUEST.email)} · <button class="fx-x" onclick="CS.signOut()">Sign out</button></p>`:''}`;}
 
   const upiURL=(pa,pn,am,tn)=>`upi://pay?pa=${encodeURIComponent(pa)}&pn=${encodeURIComponent(pn)}${am>100000?'':'&am='+Math.round(am)}&cu=INR&tn=${encodeURIComponent(tn)}`;
   /* two-step payments: step 1 (Calm Shade) is everything except room money paid straight to an owner's UPI */
@@ -2517,6 +2537,7 @@ ${kb()}`;}
       case 'add':{const s=FX.sel;if(!s)return;const n=fxDiff(s.a,s.b||s.a)+1;
         const su=fxU(s.u);FX.cart.stays.push(Object.assign({key:fxKey(),unit:s.u,from:s.a,n,rooms:FX.rooms,guests:FX.guests},su&&su.kind==='tent'?{spot:FX.spot}:{}));FX.sel=null;FX.last=null;fxSave();toast((su?su.name:'Stay')+' added to your trip');break;}
       case 'spot':FX.spot=x;return;
+      case 'myBookings':FX.tab='stay';FX.tripOpen=true;FX.last=null;FX.ticket=null;CS.go('fest');return;
       case 'extraQty':{const e=FX.cart.extras.find(z=>z.id===x);const q=Math.max(0,Math.min(50,(e?e.qty:0)+y));if(e){if(q)e.qty=q;else FX.cart.extras=FX.cart.extras.filter(z=>z.id!==x);}else if(q)FX.cart.extras.push({id:x,qty:q});FX.last=null;fxSave();break;}
       case 'rmExtra':FX.cart.extras=FX.cart.extras.filter(z=>z.id!==x);fxSave();break;
       case 'rmStay':FX.cart.stays=FX.cart.stays.filter(s=>s.key!==x);fxSave();break;
@@ -3439,7 +3460,8 @@ ${kb()}`;}
       o.rev.avg=((o.rev.avg*(n-1))+(good?5:2))/n;
       if(!good&&o.rev.bad%10===0)toast(o.name+' crossed '+o.rev.bad+' bad reviews — their referrer just lost 2 trust points');
       render();},
-    signOut(){if(session&&session.remote){try{localStorage.removeItem('cs-host-key');}catch(e){}HS.key='';HS.me=null;BOOKINGS=[];}session=null;view='home';dashMode='host';editing=null;render();toast('Signed out');},
+    signOut(){{const s=lgGet();if(s&&s.token){lgCall('logout',{},s.token).catch(()=>{});if(FX.desk.key===s.token){FX.desk.key='';FX.desk.data=null;fxLS('desk','');}if(HS.key===s.token){HS.key='';try{localStorage.removeItem('cs-host-key');}catch(e){}}}lgSet(null);GUEST.email='';}
+      if(session&&session.remote){try{localStorage.removeItem('cs-host-key');}catch(e){}HS.key='';HS.me=null;BOOKINGS=[];}session=null;view='home';dashMode='host';editing=null;render();toast('Signed out');},
   };
 
   (function deepLink(){try{
@@ -3454,6 +3476,7 @@ ${kb()}`;}
     const hk=new URLSearchParams(location.search).get('host');
     if(hk&&/^[a-f0-9]{40}$/.test(hk)){HS.key=hk;try{localStorage.setItem('cs-host-key',hk);history.replaceState({},'',location.pathname);}catch(e){}
       setTimeout(async()=>{if(await hsSignIn()){view='dash';render();toast('Welcome, '+session.name);}else{view='login';render();}},0);}
+    else if(lgGet())setTimeout(lgRestore,0);
     else if(HS.key)setTimeout(async()=>{if(await hsSignIn(true))render();},0);
   }catch(e){}})();
   fxLoad();csLoad();hsLoadProps();csBuiltinLoad();
