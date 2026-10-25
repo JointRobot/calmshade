@@ -17,7 +17,7 @@ async def main():
         ctx=await b.new_context(viewport={'width':1366,'height':860}); pg=await ctx.new_page(); pg.on('pageerror',lambda e: errs.append(str(e)))
         # book: Le Farm 3 nights + day pass 3 Mar, via UI
         await pg.goto(B+'#appa'); await pg.wait_for_timeout(1500)
-        await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-23"]'); await pg.click('[data-fxu="lefarm"][data-fxd="2027-02-25"]'); await pg.evaluate("CS.fx('add')")
+        await pg.click('[data-fxu="lefarm.bedroom"][data-fxd="2027-02-23"]'); await pg.click('[data-fxu="lefarm.bedroom"][data-fxd="2027-02-25"]'); await pg.evaluate("CS.fx('add')")
         await pg.evaluate("CS.fx('tab','pass')"); await pg.click('.fx-day[onclick*="2027-03-03"]'); await pg.evaluate("CS.fx('addPass');CS.fx('checkout')"); await pg.wait_for_timeout(300)
         await pg.fill('#fxg-name','Ravi Menon'); await pg.fill('#fxg-phone','9811122233'); await pg.click('text=Hold my rooms'); await pg.wait_for_timeout(1800)
         ref=await pg.inner_text('.fx-ref')

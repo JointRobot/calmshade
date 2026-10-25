@@ -39,7 +39,7 @@ async def main():
         check('ticket qr element',await pg.evaluate("!!document.querySelector('.fx-trip [data-qr^=\"APPA-\"]')"))
         await pg.screenshot(path='/tmp/ticket.png')
         # stays still use hold wording
-        await pg.click('text=Back'); await pg.evaluate("CS.fx('tab','stay')"); await pg.click('[data-fxu="calmshet"][data-fxd="2027-03-08"]'); await pg.evaluate("CS.fx('add');CS.fx('checkout')"); await pg.wait_for_timeout(300)
+        await pg.click('text=Back'); await pg.evaluate("CS.fx('tab','stay')"); await pg.click('[data-fxu="calmshet.cottage"][data-fxd="2027-03-08"]'); await pg.evaluate("CS.fx('add');CS.fx('checkout')"); await pg.wait_for_timeout(300)
         t=await pg.inner_text('.fx-trip'); check('stays keep hold','Hold my rooms' in t,t[-200:])
         print('ERR',errs); await b.close()
 asyncio.run(main())

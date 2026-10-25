@@ -65,6 +65,11 @@ function db() {
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_listings (id VARCHAR(20) PRIMARY KEY, created_at BIGINT NOT NULL, status VARCHAR(12) NOT NULL, data TEXT, contact TEXT)');
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_kv (k VARCHAR(40) PRIMARY KEY, v TEXT)');
   $pdo->exec('CREATE TABLE IF NOT EXISTS fest_hits (ip VARCHAR(64) NOT NULL, act VARCHAR(12) NOT NULL, at BIGINT NOT NULL)');
+  $pdo->exec('CREATE TABLE IF NOT EXISTS cs_bookings (ref VARCHAR(16) PRIMARY KEY, token VARCHAR(40) NOT NULL, status VARCHAR(12) NOT NULL, created_at BIGINT NOT NULL, total BIGINT, payout BIGINT, items TEXT, guest TEXT, utr VARCHAR(200))');
+  /* two-step payments (25 Oct 2026): who is paid what, and the owners' payment references */
+  foreach (['fest_bookings','cs_bookings'] as $t) {
+    try { $pdo->query("SELECT pay FROM $t LIMIT 1"); } catch (Throwable $e) { $pdo->exec("ALTER TABLE $t ADD COLUMN pay TEXT"); }
+  }
   return $pdo;
 }
 function is_mysql() { return defined('FEST_DB_DSN') && stripos(FEST_DB_DSN, 'mysql') === 0; }
@@ -94,14 +99,6 @@ const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partne
   'rate_theeya'=>8000,'rateWe_theeya'=>8000,'extra_theeya'=>4000,'extraWe_theeya'=>4000,
   'rate_ctheatre'=>8000,'rateWe_ctheatre'=>8000,'extra_ctheatre'=>0,'extraWe_ctheatre'=>0,
   'rate_purrom'=>4000,'rateWe_purrom'=>4000,'extra_purrom'=>0,'extraWe_purrom'=>0];
-const VIP = [
-  'calmshet' => ['name'=>'Calmshet','rooms'=>5,'cap'=>4,'kind'=>'room'],
-  'lefarm'   => ['name'=>'Le Farm','rooms'=>8,'cap'=>4,'kind'=>'room'],
-  'shambhala'=> ['name'=>'Shambhala by the Lake','rooms'=>6,'cap'=>4,'kind'=>'room'],
-  'theeya'   => ['name'=>'Theeya','rooms'=>4,'cap'=>4,'kind'=>'room'],
-  'ctheatre' => ['name'=>'The Company Theatre','rooms'=>8,'cap'=>4,'kind'=>'room'],
-  'purrom'   => ['name'=>'Purrom','rooms'=>4,'cap'=>1,'kind'=>'single'],
-];
 function settings() {
   static $s = null; if ($s) return $s;
   $row = db()->query("SELECT v FROM fest_kv WHERE k='settings'")->fetch();
@@ -110,26 +107,139 @@ function settings() {
   foreach ($saved as $k => $v) if (array_key_exists($k, DEF)) $s[$k] = is_int(DEF[$k]) ? (int)$v : (string)$v;
   return $s;
 }
+/* ---------- Places & rooms (Karthik, 25 Oct 2026) ----------
+   One catalogue for calmshade.in and APPA Art Fest. A place has rooms; each room type has a count, a max number of
+   adults, a price for up to two (weeknight / Fri-Sat night) and a price per extra adult. Rates marked 'S' are read from
+   the festival price settings (rate_<place>, rateWe_<place>, extra_<place>, extraWe_<place>), so the desk's price fields
+   keep working. own = Karthik's own place: one payment, no 3% fee. fest = false keeps a room off the festival board;
+   festBlock = closed for the whole festival (Appa Art House: the festival artist lives there). cs = the Calm Shade listing
+   that is this same room (one shared calendar). The desk can change counts, prices, owner UPI and photos (kv 'places'). */
+const PLACES = [
+  'calmshet' => ['name'=>'Calmshet','own'=>true,'cat'=>'lake','area'=>'Kamshet lake','web'=>'https://calmshet.com',
+    'blurb'=>'K. N. Ramachandran paintings, fashion, sunset sets',
+    'rooms'=>[
+      'cottage'     => ['name'=>'Lakeview Cottage','count'=>1,'max'=>4,'cs'=>'p1'],
+      'room1'       => ['name'=>'Room 1','count'=>1,'max'=>2,'cs'=>'p3'],
+      'room2'       => ['name'=>'Room 2','count'=>1,'max'=>2,'cs'=>'p2'],
+      'triangle'    => ['name'=>'Triangle','count'=>1,'max'=>6,'cs'=>'p4'],
+      'appacottage' => ['name'=>'Appa Art Cottage','count'=>1,'max'=>3,'cs'=>'p5'],
+      'appahouse'   => ['name'=>'Appa Art House','count'=>1,'max'=>12,'cs'=>'p6','fest'=>false,'festBlock'=>true]]],
+  'lefarm' => ['name'=>'Le Farm','cat'=>'group','area'=>'Village Bhajgaon, near Kamshet','web'=>'https://lefarm.in',
+    'blurb'=>'Big concerts, farm visits, sunrise yoga',
+    'desc'=>'A 15-acre farm at Village Bhajgaon near Kamshet, with six air-conditioned bedrooms that open onto balconies, wide lawns and farm views. During APPA Art Fest it hosts the big concerts, farm visits and sunrise yoga.',
+    'amen'=>'Air-conditioned bedrooms · Balconies · 15-acre farm · Lawns · Meals on request',
+    'rooms'=>['bedroom'=>['name'=>'Bedroom','count'=>6,'max'=>3]]],
+  'shambhala' => ['name'=>'Shambhala by the Lake','cat'=>'lake','area'=>'On the lake, near Kamshet','web'=>'https://shambhalabythelake.com',
+    'blurb'=>'Lakeside pavilion, carpentry workshop',
+    'desc'=>'A lakeside retreat near Kamshet with five private bedrooms and four dorms, sleeping up to 34. Meals are included. No pets, and no swimming in the lake. During APPA Art Fest: the lakeside pavilion and a carpentry workshop.',
+    'amen'=>'Lake front · Meals included · 5 bedrooms · 4 dorms · No pets',
+    'rooms'=>[
+      'bedroom' => ['name'=>'Bedroom','count'=>5,'max'=>3],
+      'dorm'    => ['name'=>'Dorm bed','count'=>24,'max'=>1,'rate'=>2310,'rateWe'=>2835,'extra'=>0,'extraWe'=>0]]],
+  'theeya' => ['name'=>'Theeya','cat'=>'creative','area'=>'Theeya Creation Village, Kamshet','web'=>'',
+    'blurb'=>'Singers, theatre, fine dining',
+    'desc'=>'Theeya Creation Village near Kamshet: a place for makers and performers. During APPA Art Fest it hosts singers, theatre and fine dining. Room details are being confirmed with the hosts.',
+    'amen'=>'Performances · Fine dining · Meals included',
+    'rooms'=>['room'=>['name'=>'Room','count'=>4,'max'=>4]]],
+  'ctheatre' => ['name'=>'The Company Theatre','cat'=>'creative','area'=>'Near Kamshet','web'=>'https://thecompanytheatre.net',
+    'blurb'=>'Theatre performances and workshops',
+    'desc'=>'The Company Theatre\'s space near Kamshet, home to theatre performances and workshops during APPA Art Fest. Room details are being confirmed with the hosts.',
+    'amen'=>'Theatre · Workshops',
+    'rooms'=>['room'=>['name'=>'Room','count'=>8,'max'=>4]]],
+  'purrom' => ['name'=>'Purrom','cat'=>'cabin','area'=>'Near Kamshet','web'=>'https://purrom.com',
+    'blurb'=>'Domes and glass houses by the film festival',
+    'desc'=>'A farmstay of domes and glass houses near Kamshet, with three vegetarian meals a day included: two solo domes (Mango and Labernum), the Peepal glass house and the Gulmohar room with its plunge pool for couples, and the Chickoo house for a family of four.',
+    'amen'=>'3 vegetarian meals included · Domes · Glass house · Plunge pool',
+    'rooms'=>[
+      'mango'    => ['name'=>'Mango dome (solo)','count'=>1,'max'=>1],
+      'labernum' => ['name'=>'Labernum dome (solo)','count'=>1,'max'=>1],
+      'peepal'   => ['name'=>'Peepal glass house','count'=>1,'max'=>2,'rate'=>8000,'rateWe'=>8000,'extra'=>0,'extraWe'=>0],
+      'gulmohar' => ['name'=>'Gulmohar, plunge pool','count'=>1,'max'=>2,'rate'=>8000,'rateWe'=>8000,'extra'=>0,'extraWe'=>0],
+      'chickoo'  => ['name'=>'Chickoo house','count'=>1,'max'=>4,'rate'=>8000,'rateWe'=>8000,'extra'=>4000,'extraWe'=>4000]]],
+];
+const TENT_SPOTS = ['lefarm'=>'Le Farm','theeya'=>'Theeya','ctheatre'=>'The Company Theatre'];
+const FEE_PCT = 3;
+function places_over() { static $o = null; if ($o !== null) return $o; $j = json_decode((string)kv_get('places'), true); return $o = is_array($j) ? $j : []; }
+/* The live catalogue: built-in places with the desk's changes laid over them. */
+function places() {
+  static $out = null; if ($out !== null) return $out;
+  $S = settings(); $O = places_over(); $out = [];
+  foreach (PLACES as $pid => $p) {
+    $o = $O[$pid] ?? [];
+    $pl = ['id'=>$pid,'name'=>$p['name'],'own'=>!empty($p['own']),'cat'=>$p['cat'],'area'=>$o['area'] ?? $p['area'],'web'=>$p['web'],'blurb'=>$p['blurb'],
+      'desc'=>$o['desc'] ?? ($p['desc'] ?? ''),'amen'=>$o['amen'] ?? ($p['amen'] ?? ''),'photos'=>$o['photos'] ?? [],'off'=>!empty($o['off']),
+      'owner'=>$o['owner'] ?? (!empty($p['own']) ? 'Karthik' : ''),'upi'=>!empty($p['own']) ? '' : (string)($o['upi'] ?? ''),'payee'=>(string)($o['payee'] ?? ''),'rooms'=>[]];
+    foreach ($p['rooms'] as $rid => $r) {
+      $ro = $o['rooms'][$rid] ?? [];
+      $v = fn($k, $sk) => (int)($ro[$k] ?? (array_key_exists($k, $r) ? $r[$k] : ($S[$sk.$pid] ?? 0)));
+      $max = max(1, (int)($ro['max'] ?? $r['max']));
+      $pl['rooms'][$rid] = ['id'=>$pid.'.'.$rid,'name'=>(string)($ro['name'] ?? $r['name']),'count'=>max(0, (int)($ro['count'] ?? $r['count'])),'max'=>$max,'base'=>min(2, $max),
+        'rate'=>$v('rate','rate_'),'rateWe'=>$v('rateWe','rateWe_'),'extra'=>$v('extra','extra_'),'extraWe'=>$v('extraWe','extraWe_'),
+        'fest'=>!array_key_exists('fest', $r) || $r['fest'],'festBlock'=>!empty($r['festBlock']),'cs'=>$r['cs'] ?? null];
+    }
+    $out[$pid] = $pl;
+  }
+  return $out;
+}
+function room_by_id($id) { if (!is_string($id) || strpos($id, '.') === false) return null; [$pid, $rid] = explode('.', $id, 2); $P = places(); return isset($P[$pid]['rooms'][$rid]) ? [$P[$pid], $P[$pid]['rooms'][$rid]] : null; }
+function room_by_cs($csid) { foreach (places() as $pl) foreach ($pl['rooms'] as $r) if ($r['cs'] === $csid) return [$pl, $r]; return null; }
+function in_festival($d, $S) { return $d >= $S['firstNight'] && $d <= $S['lastNight']; }
 function listings_all() { return db()->query('SELECT * FROM fest_listings ORDER BY created_at')->fetchAll(); }
+/* Everything sold on the festival board: one row per room type, the tent village, and approved partner stays. */
 function units() {
-  $S = settings(); $u = VIP;
-  $u['tents'] = ['name'=>'VIP Tent Village','rooms'=>max(0,(int)$S['tents']),'cap'=>2,'kind'=>'tent'];
+  static $u = null; if ($u !== null) return $u;
+  $S = settings(); $u = [];
+  foreach (places() as $pid => $pl) {
+    if ($pl['off']) continue;
+    foreach ($pl['rooms'] as $rid => $r) if ($r['fest'] && $r['count'] > 0)
+      $u[$r['id']] = ['name'=>$pl['name'].' · '.$r['name'],'place'=>$pid,'placeName'=>$pl['name'],'room'=>$r['name'],'rooms'=>$r['count'],'cap'=>$r['max'],'base'=>$r['base'],'kind'=>'room',
+        'rate'=>$r['rate'],'rateWe'=>$r['rateWe'],'extra'=>$r['extra'],'extraWe'=>$r['extraWe'],'own'=>$pl['own'],'upiReady'=>$pl['upi'] !== '','blurb'=>$pl['blurb']];
+  }
+  $u['tents'] = ['name'=>'VIP Tent Village','place'=>'tents','placeName'=>'VIP Tent Village','room'=>'Tent for two','rooms'=>max(0,(int)$S['tents']),'cap'=>2,'base'=>2,'kind'=>'tent',
+    'rate'=>(int)$S['tentNight'],'rateWe'=>(int)$S['tentNight'],'extra'=>(int)$S['extraGuest'],'extraWe'=>(int)$S['extraGuest'],'own'=>true,'upiReady'=>false,'blurb'=>'Tents inside the festival grounds · pick Le Farm, Theeya or The Company Theatre'];
   foreach (listings_all() as $l) {
     if ($l['status'] !== 'approved') continue;
     $d = json_decode($l['data'], true) ?: []; if (!empty($d['paused'])) continue;
-    $u['L-'.$l['id']] = ['name'=>(string)($d['name']??'Partner stay'),'rooms'=>max(1,(int)($d['rooms']??1)),'cap'=>max(1,(int)($d['maxGuests']??2)),'kind'=>'partner','rate'=>max(0,(int)($d['rate']??0))];
+    $rate = max(0,(int)($d['rate']??0)); $nm = (string)($d['name']??'Partner stay');
+    $u['L-'.$l['id']] = ['name'=>$nm,'place'=>'L-'.$l['id'],'placeName'=>$nm,'room'=>'Room','rooms'=>max(1,(int)($d['rooms']??1)),'cap'=>max(1,(int)($d['maxGuests']??2)),'base'=>min(2, max(1,(int)($d['maxGuests']??2))),'kind'=>'partner',
+      'rate'=>$rate,'rateWe'=>$rate,'extra'=>0,'extraWe'=>0,'own'=>false,'upiReady'=>!empty($d['upi']),'blurb'=>''];
   }
   return $u;
+}
+/* who gets paid for a place: [name, upi, payee, own] */
+function place_payee($pid) {
+  if ($pid === 'tents') return ['APPA Art Fest', '', '', true];
+  $P = places(); if (isset($P[$pid])) return [$P[$pid]['name'], $P[$pid]['upi'], $P[$pid]['payee'], $P[$pid]['own']];
+  if (strpos((string)$pid, 'L-') === 0) {
+    $st = db()->prepare('SELECT data FROM fest_listings WHERE id=?'); $st->execute([substr($pid, 2)]); $r = $st->fetch();
+    $d = $r ? (json_decode($r['data'], true) ?: []) : [];
+    return [(string)($d['name'] ?? 'Partner stay'), (string)($d['upi'] ?? ''), (string)($d['payee'] ?? ''), false];
+  }
+  return ['Calm Shade', '', '', true];
+}
+/* Two-step payment: step 1 to Calm Shade (fee, tickets, extras, deposits, own places, owners with no UPI yet);
+   step 2 straight to each owner's UPI for their room money. */
+function pay_split($ownerBy, $total) {
+  $hosts = []; $calm = $total;
+  foreach ($ownerBy as $pid => $amt) {
+    if ($amt <= 0) continue;
+    [$name, $upi, $payee, $own] = place_payee($pid);
+    if ($own || $upi === '') continue;
+    $hosts[] = ['place'=>$pid,'name'=>$name,'upi'=>$upi,'payee'=>$payee,'amount'=>(int)$amt,'paid'=>false,'utr'=>''];
+    $calm -= $amt;
+  }
+  return ['calm'=>max(0, $calm),'hosts'=>$hosts];
 }
 const ADV = [
   'kayak'     => ['name'=>'Kayaking','slots'=>['07:00','07:20','07:40','08:00','08:20','08:40','09:00','09:20','09:40','15:30','15:50','16:10','16:30','16:50','17:10','17:30','17:50','18:10']],
   'paraglide' => ['name'=>'Tandem paragliding','slots'=>['wind']],
   'jeep'      => ['name'=>'Night jeep ride','slots'=>['20:30','21:45','23:00','00:15']],
 ];
+const LIVE = "('pending','part','confirmed')";
 /* adventure seats taken per adventure|date|slot, by active bookings (unpaid holds release like rooms) */
 function adv_occ() {
   $S = settings(); $o = [];
-  foreach (db()->query("SELECT status, created_at, items FROM fest_bookings WHERE status IN ('pending','confirmed')") as $b) {
+  foreach (db()->query("SELECT status, created_at, items FROM fest_bookings WHERE status IN ".LIVE) as $b) {
     if (!active_booking($b, $S)) continue;
     foreach (json_decode($b['items'], true) ?: [] as $it) if (($it['kind'] ?? '') === 'adv') { $k = $it['adv'].'|'.$it['date'].'|'.$it['slot']; $o[$k] = ($o[$k] ?? 0) + (int)$it['qty']; }
   }
@@ -140,77 +250,87 @@ function has_hold($items) { foreach ((is_array($items) ? $items : (json_decode((
 function has_stay($items) { foreach ((is_array($items) ? $items : (json_decode((string)$items, true) ?: [])) as $it) if (($it['kind'] ?? '') === 'stay') return true; return false; }
 function show_status($r, $S) { return ($r['status'] === 'pending' && has_hold($r['items']) && !active_booking($r, $S)) ? 'expired' : $r['status']; }
 function active_booking($b, $S) {
-  if ($b['status'] === 'confirmed') return true;
+  if ($b['status'] === 'confirmed' || $b['status'] === 'part') return true;
   if ($b['status'] !== 'pending') return false;
   return (time() - (int)$b['created_at']) < $S['holdHours'] * 3600;
 }
-/* One calendar per place: a whole-place Calm Shade booking fills that partner's festival rooms, and any festival room booked blocks the Calm Shade whole-place night. */
+/* One calendar per room: festival rooms booked, Calm Shade nights of the same room (Calmshet), and whole-place partner nights. */
 function occupancy() {
-  $occ = fest_raw_occ(); $U = null;
+  $occ = fest_raw_occ(); $U = units();
   foreach (cs_raw_occ() as $pid => $nights) {
-    if (strpos($pid, 'L-') !== 0) continue;
-    $U = $U ?? units(); if (!isset($U[$pid])) continue;
-    foreach ($nights as $d => $st) $occ[$pid][$d] = max($occ[$pid][$d] ?? 0, $U[$pid]['rooms']);
+    if (strpos($pid, 'L-') === 0) { if (isset($U[$pid])) foreach ($nights as $d => $st) $occ[$pid][$d] = max($occ[$pid][$d] ?? 0, $U[$pid]['rooms']); continue; }
+    $m = room_by_cs($pid); if (!$m || !isset($U[$m[1]['id']])) continue;
+    foreach ($nights as $d => $st) $occ[$m[1]['id']][$d] = $U[$m[1]['id']]['rooms'];
   }
+  foreach (cs_room_occ() as $rid => $nights) foreach ($nights as $d => $n) $occ[$rid][$d] = ($occ[$rid][$d] ?? 0) + $n;
   return $occ;
 }
 function fest_raw_occ() {
-  $S = settings(); $occ = [];
-  foreach (db()->query("SELECT status, created_at, items FROM fest_bookings WHERE status IN ('pending','confirmed')") as $b) {
+  $S = settings(); $occ = []; $legacy = [];
+  foreach (db()->query("SELECT status, created_at, items FROM fest_bookings WHERE status IN ".LIVE) as $b) {
     if (!active_booking($b, $S)) continue;
     foreach (json_decode($b['items'], true) ?: [] as $it) {
       if (($it['kind'] ?? '') !== 'stay') continue;
+      if (isset(PLACES[$it['unit']])) { $legacy[] = $it; continue; }
       foreach ($it['nights'] as $d) $occ[$it['unit']][$d] = ($occ[$it['unit']][$d] ?? 0) + (int)$it['rooms'];
     }
   }
+  /* bookings made before rooms existed (unit = a whole venue): spread over that venue's rooms, first free first */
+  if ($legacy) { $U = units();
+    foreach ($legacy as $it) { $ids = array_keys(array_filter($U, fn($u)=>$u['place'] === $it['unit']));
+      foreach ($it['nights'] as $d) { $need = (int)$it['rooms'];
+        foreach ($ids as $id) { if ($need <= 0) break; $take = min($need, max(0, $U[$id]['rooms'] - ($occ[$id][$d] ?? 0))); $occ[$id][$d] = ($occ[$id][$d] ?? 0) + $take; $need -= $take; }
+        if ($need > 0 && $ids) $occ[$ids[0]][$d] = ($occ[$ids[0]][$d] ?? 0) + $need; } } }
   return $occ;
 }
 function addDays($d, $n) { return gmdate('Y-m-d', strtotime($d.' 00:00:00 UTC') + $n * 86400); }
 function r100($x) { return (int)(round($x / 100) * 100); }
-function surge($u, $id, $d, $occ, $S) {
-  if (!in_array($u['kind'], ['room','single','tent']) || $u['rooms'] <= 1) return 1;
-  return 1 + ($S['surgeMax'] / 100) * min(1, ($occ[$id][$d] ?? 0) / ($u['rooms'] - 1));
-}
 function is_weekend_night($d) { $w = (int)gmdate('w', strtotime($d.' 00:00:00 UTC')); return $w === 5 || $w === 6; }
-function venue_rate($id, $d, $S)  { $we = is_weekend_night($d); return (int)($S[($we ? 'rateWe_' : 'rate_').$id] ?? 0); }
-function venue_extra($id, $d, $S) { $we = is_weekend_night($d); return (int)($S[($we ? 'extraWe_' : 'extra_').$id] ?? 0); }
-/* What the venue is paid for one room-night: its own rate plus its own extra-adult charge — never the tickets or surge. */
-function venue_night($id, $d, $g, $S) { return venue_rate($id, $d, $S) + max(0, $g - 2) * venue_extra($id, $d, $S); }
-function night_price($u, $id, $d, $g, $occ, $S) {
-  switch ($u['kind']) {
-    case 'single': return r100(venue_rate($id,$d,$S) * surge($u,$id,$d,$occ,$S)) + $S['dayPass'];
-    case 'room':   return r100(venue_rate($id,$d,$S) * surge($u,$id,$d,$occ,$S)) + max(0,$g-2) * venue_extra($id,$d,$S) + $g * $S['dayPass'];
-    case 'tent':   return r100($S['tentNight'] * surge($u,$id,$d,$occ,$S)) + max(0,$g-2) * $S['extraGuest'];
-    default:       return $u['rate'] + $S['partnerMarkup'] * $g;
-  }
+/* how full a place is on a night (0..1): prices rise with it, up to surgeMax% */
+function place_fill($u, $d, $occ, $U) {
+  if (!in_array($u['kind'], ['room','tent'], true)) return 0;
+  $tot = 0; $used = 0; foreach ($U as $id => $x) if ($x['place'] === $u['place']) { $tot += $x['rooms']; $used += $occ[$id][$d] ?? 0; }
+  return $tot <= 1 ? 0 : min(1, $used / ($tot - 1));
 }
-function host_payout($u, $rooms, $n, $S) {
-  if ($u['kind'] === 'room') return $S['partnerShareCouple'] * $rooms * $n;
-  if ($u['kind'] === 'single') return $S['partnerShareSingle'] * $rooms * $n;
-  if ($u['kind'] === 'partner') return $u['rate'] * $rooms * $n;
-  return 0;
+/* One room-night on the festival board, split into who gets what:
+   owner = the place's own price (paid to the owner), surge = high-demand add (Calm Shade), tickets = festival entry per guest
+   (Calm Shade; tents include it), fee = 3% of the owner price for places that aren't Karthik's (Calm Shade). */
+function unit_night($u, $id, $d, $g, $occ, $S, $U) {
+  $we = is_weekend_night($d); $rate = $we ? $u['rateWe'] : $u['rate']; $x = $we ? $u['extraWe'] : $u['extra'];
+  $owner = $rate + max(0, $g - $u['base']) * $x;
+  $surge = $u['kind'] === 'partner' ? 0 : r100($rate * ($S['surgeMax'] / 100) * place_fill($u, $d, $occ, $U));
+  $tickets = $u['kind'] === 'tent' ? 0 : $g * ($u['kind'] === 'partner' ? $S['partnerMarkup'] : $S['dayPass']);
+  $fee = $u['own'] ? 0 : (int)round($owner * FEE_PCT / 100);
+  return ['price'=>$owner + $surge + $tickets + $fee,'owner'=>$owner,'surge'=>$surge,'tickets'=>$tickets,'fee'=>$fee];
 }
 function valid_date($d) { return is_string($d) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) && checkdate((int)substr($d,5,2),(int)substr($d,8,2),(int)substr($d,0,4)); }
+function extras_def() { $j = json_decode((string)kv_get('extras'), true); if (is_array($j)) return $j;
+  return [['id'=>'pickup','name'=>'Pickup from Lonavala station (per car, one way)','price'=>1000,'on'=>true]]; }
 
 /* Price and validate a trip against the live inventory. Returns [quote, errors]. */
-function quote($stays, $passes, $occ, $advs = []) {
-  $S = settings(); $U = units(); $err = []; $lines = []; $prem = []; $want = [];
-  if (!is_array($advs)) $advs = [];
-  if (!is_array($stays) || !is_array($passes) || count($stays) + count($passes) + count($advs) === 0) return [null, ['Your trip is empty.']];
-  if (count($stays) > 20 || count($passes) > 40 || count($advs) > 20) return [null, ['That trip has too many items.']];
+function quote($stays, $passes, $occ, $advs = [], $extras = []) {
+  $S = settings(); $U = units(); $err = []; $lines = []; $prem = []; $want = []; $ownerBy = [];
+  if (!is_array($advs)) $advs = []; if (!is_array($extras)) $extras = [];
+  if (!is_array($stays) || !is_array($passes) || count($stays) + count($passes) + count($advs) + count($extras) === 0) return [null, ['Your trip is empty.']];
+  if (count($stays) > 20 || count($passes) > 40 || count($advs) > 20 || count($extras) > 20) return [null, ['That trip has too many items.']];
+  if (!$stays && !$passes && !$advs) return [null, ['Add a stay, a day pass or an adventure to go with your extras.']];
+  $sum = ['owner'=>0,'surge'=>0,'tickets'=>0,'fee'=>0];
   foreach ($stays as $s) {
     $id = (string)($s['unit'] ?? ''); $u = $U[$id] ?? null;
-    if (!$u) { $err[] = 'One of the stays in your trip is no longer available.'; continue; }
+    if (!$u) { $err[] = 'One of the stays in your trip is no longer available. Remove it and pick again.'; continue; }
     $from = (string)($s['from'] ?? ''); $n = (int)($s['n'] ?? 0); $rooms = (int)($s['rooms'] ?? 0);
-    $g = $u['kind'] === 'single' ? 1 : (int)($s['guests'] ?? 2);
+    $g = (int)($s['guests'] ?? 2); if ($u['cap'] === 1) $g = 1;
     if (!valid_date($from) || $n < 1 || $n > 40 || $rooms < 1 || $rooms > $u['rooms'] || $g < 1 || $g > $u['cap']) { $err[] = 'Check the dates, rooms and guests for '.$u['name'].'.'; continue; }
     $nights = []; for ($i = 0; $i < $n; $i++) $nights[] = addDays($from, $i);
     if ($nights[0] < $S['firstNight'] || end($nights) > $S['lastNight']) { $err[] = $u['name'].': those nights are outside the festival.'; continue; }
-    $per = []; foreach ($nights as $d) { $per[] = night_price($u,$id,$d,$g,$occ,$S); $want[$id][$d] = ($want[$id][$d] ?? 0) + $rooms; }
+    $per = []; $part = ['owner'=>0,'surge'=>0,'tickets'=>0,'fee'=>0];
+    foreach ($nights as $d) { $x = unit_night($u,$id,$d,$g,$occ,$S,$U); $per[] = $x['price']; foreach ($part as $k => $_) $part[$k] += $x[$k] * $rooms; $want[$id][$d] = ($want[$id][$d] ?? 0) + $rooms; }
     if ($u['kind'] !== 'partner') foreach ($nights as $d) $prem[$d] = 1;
-    $total = array_sum($per) * $rooms;
-    $pay = in_array($u['kind'], ['room','single'], true) ? array_sum(array_map(fn($d)=>venue_night($id,$d,$g,$S), $nights)) * $rooms : host_payout($u,$rooms,$n,$S);
-    $lines[] = ['kind'=>'stay','unit'=>$id,'name'=>$u['name'],'unitKind'=>$u['kind'],'nights'=>$nights,'rooms'=>$rooms,'guests'=>$g,'per'=>$per,'total'=>$total,'payout'=>$pay];
+    foreach ($part as $k => $v) $sum[$k] += $v;
+    $ownerBy[$u['place']] = ($ownerBy[$u['place']] ?? 0) + ($u['own'] ? 0 : $part['owner']);
+    $spot = $u['kind'] === 'tent' && isset(TENT_SPOTS[$s['spot'] ?? '']) ? $s['spot'] : '';
+    $lines[] = ['kind'=>'stay','unit'=>$id,'place'=>$u['place'],'name'=>$u['name'],'unitKind'=>$u['kind'],'nights'=>$nights,'rooms'=>$rooms,'guests'=>$g,'per'=>$per,'total'=>array_sum($per) * $rooms,
+      'payout'=>$u['own'] ? 0 : $part['owner'],'owner'=>$part['owner'],'fee'=>$part['fee'],'tickets'=>$part['tickets'],'surge'=>$part['surge'],'own'=>$u['own'],'spot'=>$spot];
   }
   foreach ($want as $id => $byNight) foreach ($byNight as $d => $r) {
     $left = $U[$id]['rooms'] - ($occ[$id][$d] ?? 0);
@@ -232,13 +352,22 @@ function quote($stays, $passes, $occ, $advs = []) {
     $lines[] = ['kind'=>'adv','adv'=>$id,'name'=>$A['name'],'date'=>$d,'slot'=>$sl,'qty'=>$q,'price'=>$price,'deposit'=>$dep,'total'=>$dep * $q,'balance'=>($price - $dep) * $q];
     $at += $dep * $q;
   }
+  $xt = 0; $XD = []; foreach (extras_def() as $x) if (!empty($x['on'])) $XD[$x['id']] = $x;
+  foreach ($extras as $e) {
+    $id = (string)($e['id'] ?? ''); $q = (int)($e['qty'] ?? 0); $X = $XD[$id] ?? null;
+    if (!$X || $q < 1 || $q > 50) { $err[] = 'One of the extras in your trip is no longer offered. Remove it.'; continue; }
+    $lines[] = ['kind'=>'extra','extra'=>$id,'name'=>$X['name'],'qty'=>$q,'price'=>(int)$X['price'],'total'=>(int)$X['price'] * $q]; $xt += (int)$X['price'] * $q;
+  }
   $pn = count($prem);
   $tier = $pn >= $S['vvipNights'] ? 'vvip' : ($pn >= $S['vipNights'] ? 'vip' : '');
   $stayT = array_sum(array_map(fn($l)=>$l['kind']==='stay'?$l['total']:0, $lines));
-  $payout = array_sum(array_map(fn($l)=>$l['payout']??0, $lines));
+  $payout = array_sum($ownerBy);
   $pct = $tier === 'vvip' ? $S['vvipPct'] : ($tier === 'vip' ? $S['vipPct'] : 0);
-  $disc = (int)round(($stayT + $pt) * $pct / 100); /* adventure deposits are not discounted */
-  return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'advs'=>$at,'balance'=>array_sum(array_map(fn($l)=>$l['balance']??0, $lines)),'discount'=>$disc,'total'=>max(0,$stayT+$pt-$disc)+$at,'payout'=>$payout,'tier'=>$tier,'premiumNights'=>$pn], array_values(array_unique($err))];
+  /* the VIP discount comes out of Calm Shade's part; owners always get their full price */
+  $disc = min((int)round(($stayT + $pt) * $pct / 100), max(0, $stayT + $pt - $payout));
+  $total = max(0,$stayT+$pt-$disc)+$at+$xt;
+  return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'advs'=>$at,'extras'=>$xt,'balance'=>array_sum(array_map(fn($l)=>$l['balance']??0, $lines)),'discount'=>$disc,'total'=>$total,'payout'=>$payout,
+    'owner'=>$sum['owner'],'fee'=>$sum['fee'],'tickets'=>$sum['tickets'],'surge'=>$sum['surge'],'tier'=>$tier,'premiumNights'=>$pn,'pay'=>pay_split($ownerBy, $total)], array_values(array_unique($err))];
 }
 
 /* ---------- helpers ---------- */
@@ -334,26 +463,36 @@ function cs_builtin_clean($p, $old) {
   return $d;
 }
 function ist_today() { return gmdate('Y-m-d', time() + 19800); }
-function cs_init() {
-  static $done = false; if ($done) return; $done = true;
-  db()->exec('CREATE TABLE IF NOT EXISTS cs_bookings (ref VARCHAR(16) PRIMARY KEY, token VARCHAR(40) NOT NULL, status VARCHAR(12) NOT NULL, created_at BIGINT NOT NULL, total BIGINT, payout BIGINT, items TEXT, guest TEXT, utr VARCHAR(200))');
-}
-function cs_occ() {
-  $occ = cs_raw_occ();
-  foreach (fest_raw_occ() as $unit => $nights) {
-    if (strpos($unit, 'L-') !== 0) continue;
-    foreach ($nights as $d => $n) if ($n > 0) $occ[$unit][$d] = 'bk';
-  }
-  return $occ;
-}
-function cs_raw_occ() {
-  cs_init(); $S = settings(); $occ = [];
-  foreach (db()->query("SELECT status, created_at, items FROM cs_bookings WHERE status IN ('pending','confirmed')") as $b) {
+function cs_init() { db(); }
+/* one pass over Calm Shade bookings: [whole-listing nights 'bk'|'tn' per listing, rooms taken per room id per night] */
+function cs_scan() {
+  static $c = null; if ($c !== null) return $c;
+  $S = settings(); $raw = []; $rooms = [];
+  foreach (db()->query("SELECT status, created_at, items FROM cs_bookings WHERE status IN ".LIVE) as $b) {
     if (!active_booking($b, $S)) continue;
+    $firm = $b['status'] !== 'pending';
     foreach (json_decode($b['items'], true) ?: [] as $it) foreach ($it['nights'] as $d) {
-      $cur = $occ[$it['prop']][$d] ?? '';
-      $occ[$it['prop']][$d] = ($b['status'] === 'confirmed' || $cur === 'bk') ? 'bk' : 'tn';
+      if (!empty($it['room'])) { $rooms[$it['prop']][$d] = ($rooms[$it['prop']][$d] ?? 0) + (int)$it['rooms']; continue; }
+      $cur = $raw[$it['prop']][$d] ?? '';
+      $raw[$it['prop']][$d] = ($firm || $cur === 'bk') ? 'bk' : 'tn';
     }
+  }
+  return $c = [$raw, $rooms];
+}
+function cs_raw_occ() { return cs_scan()[0]; }
+function cs_room_occ() { return cs_scan()[1]; }
+function festival_nights($S) { $out = []; for ($d = $S['firstNight']; $d <= $S['lastNight']; $d = addDays($d, 1)) $out[] = $d; return $out; }
+/* Calendar states for calmshade.in: 'bk' booked, 'tn' held, 'fx' festival night (book it with festival tickets), 'ar' reserved for the festival artist */
+function cs_occ() {
+  $S = settings(); $occ = cs_raw_occ(); $fo = fest_raw_occ(); $ro = cs_room_occ(); $win = festival_nights($S);
+  foreach ($fo as $unit => $nights) if (strpos($unit, 'L-') === 0) foreach ($nights as $d => $n) if ($n > 0) $occ[$unit][$d] = 'bk';
+  foreach (places() as $pl) foreach ($pl['rooms'] as $r) {
+    $keys = $r['cs'] ? [$r['id'], $r['cs']] : [$r['id']]; $used = [];
+    foreach ([$fo[$r['id']] ?? [], $ro[$r['id']] ?? []] as $src) foreach ($src as $d => $n) $used[$d] = ($used[$d] ?? 0) + $n;
+    if ($r['cs']) foreach ($occ[$r['cs']] ?? [] as $d => $st) $occ[$r['id']][$d] = $st; /* the Calm Shade listing's own nights ('tn' held, 'bk' booked) */
+    foreach ($used as $d => $n) if ($n >= $r['count']) foreach ($keys as $k) $occ[$k][$d] = 'bk';
+    if ($r['festBlock']) { foreach ($win as $d) foreach ($keys as $k) $occ[$k][$d] = 'ar'; }
+    elseif ($r['fest']) foreach ($win as $d) foreach ($keys as $k) if (empty($occ[$k][$d])) $occ[$k][$d] = 'fx';
   }
   return $occ;
 }
@@ -371,20 +510,54 @@ function cs_prop($id) {
   $pw = max(100, (int)($d['ppWith'] ?? round(($d['rate'] ?? 2000) / 2))); $po = max(100, (int)($d['ppWithout'] ?? $pw));
   return [(string)($d['name'] ?? 'Partner stay'), $sleeps, $pw, $po, empty($d['paused'])];
 }
+function fest_night_msg($name, $d) { return $name.': '.gmdate('j M', strtotime($d)).' is an APPA Art Fest night. During the festival this stay is booked together with festival tickets, on the APPA Art Fest page.'; }
+/* A room-night on calmshade.in: the place's own price, plus 3% for places that aren't Karthik's. */
+function room_night($pl, $r, $d, $g) {
+  $we = is_weekend_night($d); $owner = ($we ? $r['rateWe'] : $r['rate']) + max(0, $g - $r['base']) * ($we ? $r['extraWe'] : $r['extra']);
+  $fee = $pl['own'] ? 0 : (int)round($owner * FEE_PCT / 100);
+  return [$owner + $fee, $owner, $fee];
+}
 function cs_quote($legs, $occ) {
-  $err = []; $items = []; $seen = []; $today = ist_today(); $max = addDays($today, 400);
+  $S = settings(); $err = []; $items = []; $seen = []; $today = ist_today(); $max = addDays($today, 400); $ownerBy = [];
   if (!is_array($legs) || !$legs) return [null, ['Pick at least one night.']];
   if (count($legs) > 14) return [null, ['That trip has too many stops.']];
+  $fo = null; $ro = null;
   foreach ($legs as $l) {
-    $id = (string)($l['prop'] ?? ''); $p = cs_prop($id);
-    if (!$p || !$p[4]) { $err[] = 'One of these stays is not taking bookings right now.'; continue; }
-    $heads = (int)($l['heads'] ?? 0); $meals = !empty($l['meals']);
+    $id = (string)($l['prop'] ?? '');
     $nights = array_values(array_unique(array_map('strval', (array)($l['nights'] ?? []))));
     sort($nights);
+    if ($m = room_by_id($id)) {
+      [$pl, $r] = $m; $nm = $pl['name'].' · '.$r['name'];
+      if ($pl['off'] || $r['count'] < 1) { $err[] = $nm.' is not taking bookings right now.'; continue; }
+      $rooms = max(1, (int)($l['rooms'] ?? 1)); $g = (int)($l['guests'] ?? 2);
+      if ($g < 1 || $g > $r['max']) { $err[] = $nm.' sleeps up to '.$r['max'].' per room.'; continue; }
+      if ($rooms > $r['count']) { $err[] = $pl['name'].' has '.$r['count'].' '.strtolower($r['name']).($r['count'] > 1 ? 's' : '').'.'; continue; }
+      if (!$nights || count($nights) > 60) { $err[] = 'Pick between 1 and 60 nights at '.$nm.'.'; continue; }
+      $fo = $fo ?? fest_raw_occ(); $ro = $ro ?? cs_room_occ(); $per = []; $own = 0; $fee = 0;
+      foreach ($nights as $d) {
+        if (!valid_date($d) || $d < $today || $d > $max) { $err[] = $nm.': '.$d.' can\'t be booked.'; continue 2; }
+        if (in_festival($d, $S) && $r['festBlock']) { $err[] = $nm.' is reserved for the festival artist from '.gmdate('j M', strtotime($S['firstNight'])).' to '.gmdate('j M Y', strtotime($S['lastNight'])).'.'; continue 2; }
+        if (in_festival($d, $S) && $r['fest']) { $err[] = fest_night_msg($nm, $d); continue 2; }
+        $used = ($fo[$id][$d] ?? 0) + ($ro[$id][$d] ?? 0) + ($seen[$id][$d] ?? 0);
+        if ($used + $rooms > $r['count']) { $err[] = $nm.' is booked on '.gmdate('j M', strtotime($d)).'.'; continue 2; }
+        $seen[$id][$d] = ($seen[$id][$d] ?? 0) + $rooms;
+        [$p, $o, $f] = room_night($pl, $r, $d, $g); $per[] = $p; $own += $o * $rooms; $fee += $f * $rooms;
+      }
+      $total = array_sum($per) * $rooms;
+      if (!$pl['own']) $ownerBy[$pl['id']] = ($ownerBy[$pl['id']] ?? 0) + $own;
+      $items[] = ['prop'=>$id,'room'=>true,'place'=>$pl['id'],'name'=>$nm,'nights'=>$nights,'rooms'=>$rooms,'guests'=>$g,'heads'=>$g * $rooms,'meals'=>false,'per'=>$per,'owner'=>$own,'fee'=>$fee,'own'=>$pl['own'],'total'=>$total];
+      continue;
+    }
+    $p = cs_prop($id);
+    if (!$p || !$p[4]) { $err[] = 'One of these stays is not taking bookings right now.'; continue; }
+    $heads = (int)($l['heads'] ?? 0); $meals = !empty($l['meals']);
     if ($heads < 1 || $heads > $p[1]) { $err[] = $p[0].' sleeps up to '.$p[1].'.'; continue; }
     if (!$nights || count($nights) > 60) { $err[] = 'Pick between 1 and 60 nights at '.$p[0].'.'; continue; }
+    $same = room_by_cs($id);
     foreach ($nights as $d) {
       if (!valid_date($d) || $d < $today || $d > $max) { $err[] = $p[0].': '.$d.' can\'t be booked.'; continue 2; }
+      if ($same && in_festival($d, $S) && $same[1]['festBlock']) { $err[] = $p[0].' is reserved for the festival artist from '.gmdate('j M', strtotime($S['firstNight'])).' to '.gmdate('j M Y', strtotime($S['lastNight'])).'.'; continue 2; }
+      if ($same && in_festival($d, $S) && $same[1]['fest']) { $err[] = fest_night_msg($p[0], $d); continue 2; }
       if (!empty($occ[$id][$d]) || isset($seen[$id][$d])) { $err[] = $p[0].' is already booked on '.gmdate('j M', strtotime($d)).'.'; continue 2; }
       $seen[$id][$d] = 1;
     }
@@ -392,10 +565,18 @@ function cs_quote($legs, $occ) {
     $items[] = ['prop'=>$id,'name'=>$p[0],'nights'=>$nights,'heads'=>$heads,'meals'=>$meals,'pp'=>$pp,'total'=>$total];
   }
   $total = array_sum(array_column($items, 'total'));
-  return [['items'=>$items,'total'=>$total,'payout'=>(int)round($total * (1 - CS_COMM))], array_values(array_unique($err))];
+  $payout = 0; foreach ($items as $it) $payout += !empty($it['room']) ? ($it['own'] ? 0 : $it['owner']) : (strpos($it['prop'], 'L-') === 0 ? (int)round($it['total'] * (1 - CS_COMM)) : 0);
+  return [['items'=>$items,'total'=>$total,'payout'=>$payout,'pay'=>pay_split($ownerBy, $total)], array_values(array_unique($err))];
 }
 function cs_lines($items) {
-  return array_map(fn($it)=>'- '.$it['name'].': '.implode(', ', array_map(fn($d)=>gmdate('j M', strtotime($d)), $it['nights'])).' · '.$it['heads'].' guest(s)'.($it['meals'] ? ' with meals' : '').' — '.inr($it['total']), $items);
+  return array_map(fn($it)=>'- '.$it['name'].': '.implode(', ', array_map(fn($d)=>gmdate('j M', strtotime($d)), $it['nights'])).' · '.(!empty($it['room']) ? $it['rooms'].' room(s), '.$it['guests'].' guest(s) each' : $it['heads'].' guest(s)'.($it['meals'] ? ' with meals' : '')).' — '.inr($it['total']), $items);
+}
+/* plain-words payment plan, for emails */
+function pay_lines($pay, $S, $ref) {
+  if (!$pay || empty($pay['hosts'])) return [];
+  $out = ['', 'How to pay (two steps):', 'Step 1 · '.inr($pay['calm']).' to Calm Shade, UPI '.$S['upi'].' ('.$S['payee'].'), note '.$ref.'. This holds your booking.'];
+  foreach ($pay['hosts'] as $h) $out[] = 'Step 2 · '.inr($h['amount']).' straight to '.$h['name'].', UPI '.$h['upi'].($h['payee'] ? ' ('.$h['payee'].')' : '').', note '.$ref.'. Pay this once step 1 is confirmed.';
+  return $out;
 }
 function find_booking($table, $ref) { $st = db()->prepare("SELECT * FROM $table WHERE ref=?"); $st->execute([(string)$ref]); return $st->fetch(); }
 
@@ -432,6 +613,8 @@ function listing_fields($p, $old = []) {
   $set('ppWith', max(100, min(50000, (int)($p['ppWith'] ?? 0)))); $set('ppWithout', max(100, min(50000, (int)($p['ppWithout'] ?? 0))));
   $set('pet', !empty($p['pet'])); $set('villa', !empty($p['villa'])); $set('yearRound', !empty($p['yearRound'])); $set('paused', !empty($p['paused']));
   $set('cat', in_array($p['cat'] ?? '', CS_CATS, true) ? $p['cat'] : 'room');
+  $set('upi', preg_match('/^[a-zA-Z0-9.\-_]{2,60}@[a-zA-Z0-9.\-]{2,40}$/', trim((string)($p['upi'] ?? ''))) ? trim((string)$p['upi']) : '');
+  $set('payee', clean($p['payee'] ?? '', 80));
   $set('maps', clean_url($p['maps'] ?? '')); $set('website', clean_url($p['website'] ?? '')); $set('link', clean_url($p['link'] ?? ''));
   if (array_key_exists('photos', $p)) {
     $ph = []; foreach (array_slice((array)$p['photos'], 0, 12) as $x) { $src = clean_photo(is_array($x) ? ($x['src'] ?? '') : $x); if ($src) $ph[] = ['src'=>$src, 'cap'=>clean(is_array($x) ? ($x['cap'] ?? '') : '', 120)]; }
@@ -516,7 +699,7 @@ function passport_data($tickets) {
     $st = db()->prepare('SELECT ref,token,status,tier,items,guest FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
     $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
     if ($r['status'] === 'pending') { $pending++; continue; }
-    if ($r['status'] !== 'confirmed') continue;
+    if ($r['status'] !== 'confirmed' && $r['status'] !== 'part') continue;
     $g = json_decode($r['guest'], true) ?: [];
     $bs[] = ['ref'=>$r['ref'],'tier'=>$r['tier'],'name'=>$g['name'] ?? '','items'=>json_decode($r['items'], true) ?: []];
   }
@@ -529,6 +712,27 @@ function passport_data($tickets) {
   return ['bookings'=>$bs,'pending'=>$pending,'stamps'=>(object)$stamps];
 }
 
+/* the public catalogue (no owner UPI: that is shown only on a booking that pays it) */
+function public_units() { $o = []; foreach (units() as $id => $u) $o[] = ['id'=>$id] + $u; return $o; }
+function public_places() {
+  $o = [];
+  foreach (places() as $pid => $pl) { if ($pl['off']) continue;
+    $o[] = ['id'=>$pid,'name'=>$pl['name'],'own'=>$pl['own'],'upiReady'=>$pl['upi'] !== '','cat'=>$pl['cat'],'area'=>$pl['area'],'web'=>$pl['web'],'blurb'=>$pl['blurb'],'desc'=>$pl['desc'],'amen'=>$pl['amen'],'photos'=>$pl['photos'],
+      'rooms'=>array_values(array_map(fn($r)=>['id'=>$r['id'],'name'=>$r['name'],'count'=>$r['count'],'max'=>$r['max'],'base'=>$r['base'],'rate'=>$r['rate'],'rateWe'=>$r['rateWe'],'extra'=>$r['extra'],'extraWe'=>$r['extraWe'],'fest'=>$r['fest'],'festBlock'=>$r['festBlock'],'cs'=>$r['cs']], $pl['rooms']))]; }
+  return $o;
+}
+function pay_of($r) { $p = json_decode((string)($r['pay'] ?? ''), true); return is_array($p) ? $p : null; }
+/* the guest sends the UPI reference of a payment made straight to an owner */
+function utr_host($t, $ref, $pay, $place, $utr) {
+  if (!$pay) fail('This booking is paid in one step.');
+  $hit = false; foreach ($pay['hosts'] as &$h) if ($h['place'] === $place) { $h['utr'] = $utr; $hit = true; } unset($h);
+  if (!$hit) fail('That owner is not part of this booking.');
+  db()->prepare("UPDATE $t SET pay=? WHERE ref=?")->execute([json_encode($pay), $ref]);
+  notify(settings()['contact'], 'Owner payment reference for '.$ref, ['Room money paid to '.$place.': UPI reference '.$utr, 'Check with the owner, then tick it as received in the desk.']);
+}
+/* after step 1 is confirmed: 'part' until every owner has been paid, then 'confirmed' */
+function after_step1($pay) { foreach ($pay['hosts'] ?? [] as $h) if (empty($h['paid'])) return 'part'; return 'confirmed'; }
+
 /* ---------- routes ---------- */
 $a = $_GET['a'] ?? 'state';
 $m = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -538,7 +742,8 @@ try {
 switch ($a) {
   case 'state':
     out(['ok'=>true,'settings'=>settings(),'listings'=>public_listings(),'occ'=>(object)occupancy(),'now'=>time(),
-         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule(),'logos'=>logos(),'adv'=>ADV,'advOcc'=>(object)adv_occ()]);
+         'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule(),'logos'=>logos(),'adv'=>ADV,'advOcc'=>(object)adv_occ(),
+         'units'=>public_units(),'places'=>public_places(),'tentSpots'=>TENT_SPOTS,'feePct'=>FEE_PCT,'extras'=>array_values(array_filter(extras_def(), fn($x)=>!empty($x['on'])))]);
 
   case 'book': {
     if ($m !== 'POST') fail('Use POST');
@@ -554,29 +759,29 @@ switch ($a) {
     if ($mineOpen >= 3) fail('You already have 3 unpaid bookings on hold. Pay or cancel one of them first.', 429);
     lock_start(); $ok = false;
     try {
-      [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? []);
+      [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? [], $b['extras'] ?? []);
       if ($err) { lock_end(false); out(['error'=>$err[0],'errors'=>$err], 409); }
       if (isset($b['expectTotal']) && (int)$b['expectTotal'] !== $q['total']) { lock_end(false); out(['error'=>'Prices changed while you were booking. Your trip now costs ₹'.number_format($q['total']).'. Review it and book again.','priceChanged'=>true], 409); }
       do { $ref = new_ref(); $st = db()->prepare('SELECT 1 FROM fest_bookings WHERE ref=?'); $st->execute([$ref]); } while ($st->fetch());
       $token = bin2hex(random_bytes(16)); $now = time();
-      db()->prepare('INSERT INTO fest_bookings (ref,token,status,created_at,tier,total,payout,items,guest) VALUES (?,?,?,?,?,?,?,?,?)')
-        ->execute([$ref,$token,'pending',$now,$q['tier'],$q['total'],$q['payout'],json_encode($q['items']),json_encode(['name'=>$name,'phone'=>$phone,'email'=>$email,'note'=>$note,'discount'=>$q['discount']])]);
+      db()->prepare('INSERT INTO fest_bookings (ref,token,status,created_at,tier,total,payout,items,guest,pay) VALUES (?,?,?,?,?,?,?,?,?,?)')
+        ->execute([$ref,$token,'pending',$now,$q['tier'],$q['total'],$q['payout'],json_encode($q['items']),json_encode(['name'=>$name,'phone'=>$phone,'email'=>$email,'note'=>$note,'discount'=>$q['discount']]),json_encode($q['pay'])]);
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
     $S = settings(); $until = gmdate('j M, H:i', $now + $S['holdHours']*3600 + 19800).' IST';
     $body = array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], trip_lines($q['items']),
-      [$q['discount'] ? strtoupper($q['tier']).' discount: −'.inr($q['discount']) : '', 'Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : '']);
+      [$q['discount'] ? strtoupper($q['tier']).' discount: −'.inr($q['discount']) : '', 'Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : ''], pay_lines($q['pay'], settings(), $ref));
     $passOnly = !has_hold($q['items']); $what = has_stay($q['items']) ? 'rooms are' : 'adventure slots are';
     if ($passOnly) $body = array_values(array_filter($body, fn($l)=>strpos($l, 'Held until') !== 0));
     notify($S['contact'], ($passOnly ? 'New day-pass order ' : 'New festival booking ').$ref.' · '.inr($q['total']), $body);
     if ($email) notify($email, ($passOnly ? 'Your APPA Art Fest day passes · ' : 'Your APPA Art Fest '.$what.' held · ').$ref, array_merge(['Hi '.$name.',', '', $passOnly
         ? 'Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page. Your ticket is confirmed as soon as the payment arrives.'
-        : 'Your '.$what.' held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.', ''], trip_lines($q['items']), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
-    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + $S['holdHours']*3600,'passOnly'=>$passOnly]);
+        : ($q['pay']['hosts'] ? 'Your '.$what.' held until '.$until.'. You pay in two steps, shown below. Send each UPI reference on the booking page.' : 'Your '.$what.' held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' ('.$S['payee'].') with '.$ref.' in the note, then send us the UPI reference on the booking page.'), ''], trip_lines($q['items']), pay_lines($q['pay'], $S, $ref), ['', 'Questions: '.$S['contact'].' or WhatsApp +91 87999 38193', '— APPA Art Fest 2027']));
+    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'tier'=>$q['tier'],'createdAt'=>$now,'holdUntil'=>$now + $S['holdHours']*3600,'passOnly'=>$passOnly,'pay'=>$q['pay']]);
   }
 
   case 'quote': {
-    $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? []);
+    $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? [], $b['extras'] ?? []);
     out(['ok'=>!$err,'quote'=>$q,'errors'=>$err]);
   }
 
@@ -592,21 +797,22 @@ switch ($a) {
   case 'mine': {
     $b = body(); $res = []; $S = settings();
     foreach (array_slice((array)($b['tickets'] ?? []), 0, 30) as $t) {
-      $st = db()->prepare('SELECT ref,token,status,created_at,tier,total,items,utr,guest FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
+      $st = db()->prepare('SELECT ref,token,status,created_at,tier,total,items,utr,guest,pay FROM fest_bookings WHERE ref=?'); $st->execute([(string)($t['ref'] ?? '')]);
       $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
       $status = show_status($r, $S);
-      $res[] = ['ref'=>$r['ref'],'status'=>$status,'name'=>(json_decode($r['guest'], true) ?: [])['name'] ?? '','passOnly'=>!has_hold($r['items']),'tier'=>$r['tier'],'total'=>(int)$r['total'],'createdAt'=>(int)$r['created_at'],'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'items'=>json_decode($r['items'], true),'utrSent'=>!empty($r['utr'])];
+      $res[] = ['ref'=>$r['ref'],'status'=>$status,'name'=>(json_decode($r['guest'], true) ?: [])['name'] ?? '','passOnly'=>!has_hold($r['items']),'tier'=>$r['tier'],'total'=>(int)$r['total'],'createdAt'=>(int)$r['created_at'],'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'items'=>json_decode($r['items'], true),'utrSent'=>!empty($r['utr']),'pay'=>pay_of($r)];
     }
     out(['ok'=>true,'bookings'=>$res]);
   }
 
   case 'utr': case 'cancel': {
     if ($m !== 'POST') fail('Use POST');
-    $b = body(); $st = db()->prepare('SELECT token,status FROM fest_bookings WHERE ref=?'); $st->execute([(string)($b['ref'] ?? '')]);
+    $b = body(); $st = db()->prepare('SELECT token,status,pay FROM fest_bookings WHERE ref=?'); $st->execute([(string)($b['ref'] ?? '')]);
     $r = $st->fetch(); if (!$r || !hash_equals($r['token'], (string)($b['token'] ?? ''))) fail('Booking not found.', 404);
     if ($a === 'utr') {
       $utr = clean($b['utr'] ?? '', 200); if (strlen(preg_replace('/\W/', '', $utr)) < 6) fail('That reference number looks short. UPI references are usually 12 digits.');
       if ($r['status'] === 'cancelled') fail('This booking was cancelled. Message us on WhatsApp if you have already paid.');
+      if (!empty($b['place'])) { utr_host('fest_bookings', (string)$b['ref'], pay_of($r), (string)$b['place'], $utr); out(['ok'=>true]); }
       db()->prepare('UPDATE fest_bookings SET utr=? WHERE ref=?')->execute([$utr, $b['ref']]);
       notify(settings()['contact'], 'Payment reference for '.$b['ref'], ['UPI reference: '.$utr, 'Check it and confirm the booking in the APPA Fest desk.']);
     } else {
@@ -642,7 +848,7 @@ switch ($a) {
     $bs = [];
     foreach (db()->query('SELECT * FROM fest_bookings ORDER BY created_at DESC') as $r) {
       $status = show_status($r, $S);
-      $bs[] = ['ref'=>$r['ref'],'status'=>$status,'passOnly'=>!has_hold($r['items']),'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
+      $bs[] = ['ref'=>$r['ref'],'status'=>$status,'passOnly'=>!has_hold($r['items']),'createdAt'=>(int)$r['created_at'],'tier'=>$r['tier'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr'],'pay'=>pay_of($r)];
     }
     $ls = array_map(fn($l)=>['id'=>$l['id'],'status'=>$l['status'],'createdAt'=>(int)$l['created_at'],'data'=>json_decode($l['data'], true),'contact'=>json_decode($l['contact'], true)], listings_all());
     out(['ok'=>true,'bookings'=>$bs,'listings'=>$ls,'store'=>is_mysql() ? 'mysql' : 'sqlite','sponsors'=>sponsors()]);
@@ -665,13 +871,55 @@ switch ($a) {
         if ($clash) { lock_end(false); fail('Those rooms were taken after this hold expired: '.implode(', ', array_slice(array_unique($clash), 0, 4)).'. Refund the guest or move them.', 409); }
       }
       $created = ($s === 'pending') ? time() : (int)$r['created_at'];
+      if ($s === 'confirmed' && ($pay = pay_of($r))) $s = after_step1($pay);
       db()->prepare('UPDATE fest_bookings SET status=?, created_at=? WHERE ref=?')->execute([$s, $created, $ref]);
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
     $g = json_decode($r['guest'], true) ?: [];
+    if ($s === 'part') notify($g['email'] ?? '', 'Step 1 received · APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'We have your first payment, so your booking is held for you. Now pay the room money straight to the owner(s), then send the UPI reference on the booking page (calmshade.in/#appa).'], pay_lines(pay_of($r), $S, $ref), ['', '— APPA Art Fest 2027']));
     if ($s === 'confirmed') notify($g['email'] ?? '', 'Confirmed: your APPA Art Fest booking '.$ref, array_merge(['Hi '.($g['name'] ?? '').',', '', 'Payment received — your booking is confirmed. Your ticket and your APPA Art Passport (map, itinerary and venue stamps) are ready at calmshade.in/#passport on the phone you booked with. Show the ticket, or just say '.$ref.', at the festival gate. See you at the lake.', ''], trip_lines(json_decode($r['items'], true) ?: []), ['', '— APPA Art Fest 2027']));
     if ($s === 'cancelled') notify($g['email'] ?? '', 'Cancelled: APPA Art Fest booking '.$ref, ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$ref.' has been cancelled and its rooms released. If you already paid, reply to this email and we will sort out the refund.', '', '— APPA Art Fest 2027']);
+    out(['ok'=>true,'status'=>$s]);
+  }
+  /* desk: an owner says the guest's room money arrived (step 2) */
+  case 'host_paid': {
+    need_admin(); $b = body(); $t = ($b['table'] ?? '') === 'cs' ? 'cs_bookings' : 'fest_bookings';
+    $r = find_booking($t, $b['ref'] ?? ''); if (!$r) fail('Booking not found.', 404);
+    $pay = pay_of($r); if (!$pay) fail('This booking is paid in one step.');
+    $hit = false; foreach ($pay['hosts'] as &$h) if ($h['place'] === ($b['place'] ?? '')) { $h['paid'] = !empty($b['paid']); $hit = true; } unset($h);
+    if (!$hit) fail('That owner is not part of this booking.');
+    $st = $r['status'];
+    if (in_array($st, ['part','confirmed'], true)) $st = after_step1($pay);
+    db()->prepare("UPDATE $t SET pay=?, status=? WHERE ref=?")->execute([json_encode($pay), $st, $r['ref']]);
+    $g = json_decode($r['guest'], true) ?: [];
+    if ($st === 'confirmed' && $r['status'] !== 'confirmed') notify($g['email'] ?? '', 'Confirmed: your booking '.$r['ref'], array_merge(['Hi '.($g['name'] ?? '').',', '', 'Both payments are in: your booking is confirmed.'.($t === 'fest_bookings' ? ' Your ticket and APPA Art Passport are at calmshade.in/#passport on the phone you booked with.' : ''), ''], $t === 'fest_bookings' ? trip_lines(json_decode($r['items'], true) ?: []) : cs_lines(json_decode($r['items'], true) ?: []), ['', '— Calm Shade × APPA Art Fest']));
+    out(['ok'=>true,'status'=>$st,'pay'=>$pay]);
+  }
+  /* desk: places & rooms — owner UPI, room counts and prices, photos, words */
+  case 'places_admin': {
+    need_admin(); $o = [];
+    foreach (places() as $pid => $pl) $o[] = $pl + ['rooms_list'=>array_values($pl['rooms'])];
+    out(['ok'=>true,'places'=>$o,'extras'=>extras_def()]);
+  }
+  case 'places_set': {
+    need_admin(); $b = body(); $pid = (string)($b['id'] ?? ''); if (!isset(PLACES[$pid])) fail('Unknown place.', 404);
+    $in = (array)($b['place'] ?? []); $all = places_over(); $o = $all[$pid] ?? [];
+    foreach (['area'=>120,'desc'=>1500,'amen'=>300,'owner'=>80,'payee'=>80] as $k => $n) if (array_key_exists($k, $in)) $o[$k] = clean($in[$k], $n);
+    if (array_key_exists('upi', $in)) { $u = trim((string)$in['upi']); if ($u !== '' && !preg_match('/^[a-zA-Z0-9.\-_]{2,60}@[a-zA-Z0-9.\-]{2,40}$/', $u)) fail('That UPI ID looks wrong. It looks like name@bank.'); $o['upi'] = $u; }
+    if (array_key_exists('off', $in)) $o['off'] = !empty($in['off']);
+    if (array_key_exists('photos', $in)) { $ph = []; foreach (array_slice((array)$in['photos'], 0, 12) as $x) { $src = clean_photo(is_array($x) ? ($x['src'] ?? '') : $x); if ($src) $ph[] = ['src'=>$src,'cap'=>clean(is_array($x) ? ($x['cap'] ?? '') : '', 120)]; } $o['photos'] = $ph; }
+    foreach ((array)($in['rooms'] ?? []) as $rid => $r) { if (!isset(PLACES[$pid]['rooms'][$rid])) continue; $ro = $o['rooms'][$rid] ?? [];
+      if (isset($r['name']) && clean($r['name'], 60) !== '') $ro['name'] = clean($r['name'], 60);
+      foreach (['count'=>[0,200],'max'=>[1,30],'rate'=>[0,500000],'rateWe'=>[0,500000],'extra'=>[0,100000],'extraWe'=>[0,100000]] as $k => [$lo, $hi]) if (isset($r[$k]) && $r[$k] !== '') $ro[$k] = max($lo, min($hi, (int)$r[$k]));
+      $o['rooms'][$rid] = $ro; }
+    $all[$pid] = $o; kv_set('places', json_encode($all));
     out(['ok'=>true]);
+  }
+  case 'extras_set': {
+    need_admin(); $items = [];
+    foreach (array_slice((array)(body()['items'] ?? []), 0, 30) as $x) { $nm = clean($x['name'] ?? '', 90); if ($nm === '') continue;
+      $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($x['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'price'=>max(0, min(200000, (int)($x['price'] ?? 0))),'on'=>!empty($x['on'])]; }
+    kv_set('extras', json_encode($items)); out(['ok'=>true,'extras'=>$items]);
   }
   case 'approve': {
     need_admin(); $b = body(); $s = (string)($b['status'] ?? '');
@@ -701,7 +949,7 @@ switch ($a) {
 
   /* ---- Calm Shade homestays ---- */
   case 'cs_state':
-    out(['ok'=>true,'occ'=>(object)cs_occ(),'today'=>ist_today(),'holdHours'=>settings()['holdHours'],'ai'=>ai_key()!=='']);
+    out(['ok'=>true,'occ'=>(object)cs_occ(),'today'=>ist_today(),'holdHours'=>settings()['holdHours'],'ai'=>ai_key()!=='','fest'=>['from'=>settings()['firstNight'],'to'=>settings()['lastNight']]]);
 
   case 'cs_book': {
     if ($m !== 'POST') fail('Use POST');
@@ -722,21 +970,21 @@ switch ($a) {
       if (isset($b['expectTotal']) && (int)$b['expectTotal'] !== $q['total']) { lock_end(false); out(['error'=>'The price for these nights is '.inr($q['total']).'. Tap hold again to book at that price.','priceChanged'=>true,'total'=>$q['total']], 409); }
       do { $ref = 'CS-'.substr(new_ref(), 5); } while (find_booking('cs_bookings', $ref));
       $token = bin2hex(random_bytes(16)); $now = time();
-      db()->prepare('INSERT INTO cs_bookings (ref,token,status,created_at,total,payout,items,guest) VALUES (?,?,?,?,?,?,?,?)')
-        ->execute([$ref,$token,'pending',$now,$q['total'],$q['payout'],json_encode($q['items']),json_encode(['name'=>$name,'phone'=>$phone,'email'=>$email,'note'=>$note,'via'=>clean($b['via'] ?? 'site', 20)])]);
+      db()->prepare('INSERT INTO cs_bookings (ref,token,status,created_at,total,payout,items,guest,pay) VALUES (?,?,?,?,?,?,?,?,?)')
+        ->execute([$ref,$token,'pending',$now,$q['total'],$q['payout'],json_encode($q['items']),json_encode(['name'=>$name,'phone'=>$phone,'email'=>$email,'note'=>$note,'via'=>clean($b['via'] ?? 'site', 20)]),json_encode($q['pay'])]);
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
     $until = gmdate('j M, H:i', $now + $S['holdHours']*3600 + 19800).' IST';
-    notify($S['contact'], 'New Calm Shade booking '.$ref.' · '.inr($q['total']), array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], cs_lines($q['items']), ['Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : '']));
-    if ($email) notify($email, 'Your Calm Shade nights are held · '.$ref, array_merge(['Hi '.$name.',', '', 'Your nights are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' with '.$ref.' in the note, then send us the UPI reference.', ''], cs_lines($q['items']), ['', 'WhatsApp: +91 87999 38193', '— Calm Shade']));
-    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'holdUntil'=>$now + $S['holdHours']*3600]);
+    notify($S['contact'], 'New Calm Shade booking '.$ref.' · '.inr($q['total']), array_merge(['Booking '.$ref.' — '.$name.', '.$phone.($email ? ', '.$email : ''), ''], cs_lines($q['items']), ['Total: '.inr($q['total']), 'Held until '.$until, $note ? 'Note: '.$note : ''], pay_lines($q['pay'], $S, $ref)));
+    if ($email) notify($email, 'Your Calm Shade nights are held · '.$ref, array_merge(['Hi '.$name.',', '', $q['pay']['hosts'] ? 'Your nights are held until '.$until.'. You pay in two steps, shown below.' : 'Your nights are held until '.$until.'. Pay '.inr($q['total']).' by UPI to '.$S['upi'].' with '.$ref.' in the note, then send us the UPI reference.', ''], cs_lines($q['items']), pay_lines($q['pay'], $S, $ref), ['', 'WhatsApp: +91 87999 38193', '— Calm Shade']));
+    out(['ok'=>true,'ref'=>$ref,'token'=>$token,'total'=>$q['total'],'holdUntil'=>$now + $S['holdHours']*3600,'pay'=>$q['pay']]);
   }
 
   case 'cs_mine': {
     cs_init(); $b = body(); $S = settings(); $res = [];
     foreach (array_slice((array)($b['tickets'] ?? []), 0, 30) as $t) {
       $r = find_booking('cs_bookings', $t['ref'] ?? ''); if (!$r || !hash_equals($r['token'], (string)($t['token'] ?? ''))) continue;
-      $res[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'total'=>(int)$r['total'],'items'=>json_decode($r['items'], true),'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'utrSent'=>!empty($r['utr'])];
+      $res[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'total'=>(int)$r['total'],'items'=>json_decode($r['items'], true),'holdUntil'=>(int)$r['created_at'] + $S['holdHours']*3600,'utrSent'=>!empty($r['utr']),'pay'=>pay_of($r)];
     }
     out(['ok'=>true,'bookings'=>$res]);
   }
@@ -748,6 +996,7 @@ switch ($a) {
     if ($a === 'cs_utr') {
       $utr = clean($b['utr'] ?? '', 200); if (strlen(preg_replace('/\W/', '', $utr)) < 6) fail('That reference number looks short. UPI references are usually 12 digits.');
       if ($r['status'] === 'cancelled') fail('This booking was cancelled. Message us on WhatsApp if you have already paid.');
+      if (!empty($b['place'])) { utr_host('cs_bookings', $r['ref'], pay_of($r), (string)$b['place'], $utr); out(['ok'=>true]); }
       db()->prepare('UPDATE cs_bookings SET utr=? WHERE ref=?')->execute([$utr, $r['ref']]);
       notify(settings()['contact'], 'Payment reference for '.$r['ref'], ['UPI reference: '.$utr]);
     } else {
@@ -761,7 +1010,7 @@ switch ($a) {
   case 'cs_admin': {
     need_admin(); cs_init(); $S = settings(); $bs = [];
     foreach (db()->query('SELECT * FROM cs_bookings ORDER BY created_at DESC') as $r)
-      $bs[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'createdAt'=>(int)$r['created_at'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr']];
+      $bs[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'createdAt'=>(int)$r['created_at'],'total'=>(int)$r['total'],'payout'=>(int)$r['payout'],'items'=>json_decode($r['items'], true),'guest'=>json_decode($r['guest'], true),'utr'=>$r['utr'],'pay'=>pay_of($r)];
     out(['ok'=>true,'bookings'=>$bs]);
   }
 
@@ -776,10 +1025,12 @@ switch ($a) {
         foreach (json_decode($r['items'], true) ?: [] as $it) foreach ($it['nights'] as $d) if (!empty($occ[$it['prop']][$d])) $clash[] = $it['name'].' on '.gmdate('j M', strtotime($d));
         if ($clash) { lock_end(false); fail('Those nights were taken after this hold lapsed: '.implode(', ', array_slice($clash, 0, 4)).'.', 409); }
       }
+      if ($s === 'confirmed' && ($pay = pay_of($r))) $s = after_step1($pay);
       db()->prepare('UPDATE cs_bookings SET status=? WHERE ref=?')->execute([$s, $r['ref']]);
       $ok = true; lock_end(true);
     } catch (Throwable $e) { if (!$ok) lock_end(false); throw $e; }
     $g = json_decode($r['guest'], true) ?: [];
+    if ($s === 'part') { notify($g['email'] ?? '', 'Step 1 received · Calm Shade booking '.$r['ref'], array_merge(['Hi '.($g['name'] ?? '').',', '', 'We have your first payment. Now pay the room money straight to the owner, then send the UPI reference on the booking page.'], pay_lines(pay_of($r), settings(), $r['ref']), ['', '— Calm Shade'])); out(['ok'=>true,'status'=>$s]); }
     notify($g['email'] ?? '', ($s === 'confirmed' ? 'Confirmed: ' : 'Cancelled: ').'Calm Shade booking '.$r['ref'],
       $s === 'confirmed' ? array_merge(['Hi '.($g['name'] ?? '').',', '', 'Your host has confirmed your stay.', ''], cs_lines(json_decode($r['items'], true) ?: []), ['', '— Calm Shade'])
                          : ['Hi '.($g['name'] ?? '').',', '', 'Booking '.$r['ref'].' was cancelled and its nights released. If you already paid, reply and we will arrange the refund.', '', '— Calm Shade']);
@@ -847,7 +1098,20 @@ switch ($a) {
       $h = host_for_listing($l['id']); if (!$h) continue;
       $props[] = cs_public_prop($l, $h); $hosts[] = ['id'=>'h'.$h['id'],'name'=>$h['name']];
     }
-    out(['ok'=>true,'props'=>$props,'hosts'=>$hosts]);
+    /* the APPA Art Fest venues, as Calm Shade listings with their rooms (Calmshet's rooms are listings of their own) */
+    foreach (public_places() as $pl) {
+      if ($pl['own']) continue;
+      $rooms = array_values(array_filter($pl['rooms'], fn($r)=>$r['count'] > 0));
+      if (!$rooms) continue;
+      $sleeps = array_sum(array_map(fn($r)=>$r['count'] * $r['max'], $rooms)); $from = min(array_map(fn($r)=>min($r['rate'], $r['rateWe']), $rooms));
+      $nr = array_sum(array_column($rooms, 'count'));
+      $kinds = count($rooms) > 2 ? $nr.' rooms' : implode(', ', array_map(fn($r)=>$r['count'].' '.strtolower($r['name']).($r['count'] > 1 ? 's' : ''), $rooms));
+      $props[] = ['id'=>'v-'.$pl['id'],'owner'=>'v-'.$pl['id'],'name'=>$pl['name'],'loc'=>$pl['area'],'cat'=>$pl['cat'],'cap'=>'Up to '.$sleeps.' guests · '.$kinds,'sleeps'=>$sleeps,
+        'ppWith'=>(int)ceil($from / 2),'ppWithout'=>(int)ceil($from / 2),'pet'=>false,'villa'=>false,'amen'=>$pl['amen'],'desc'=>$pl['desc'],'photos'=>$pl['photos'],'cover'=>0,'faq'=>[],'geo'=>null,
+        'maps'=>'','website'=>$pl['web'],'link'=>'','live'=>true,'festival'=>true,'place'=>$pl['id'],'rooms'=>$rooms,'from'=>$from,'feePct'=>FEE_PCT];
+      $hosts[] = ['id'=>'v-'.$pl['id'],'name'=>$pl['name']];
+    }
+    out(['ok'=>true,'props'=>$props,'hosts'=>$hosts,'fest'=>['from'=>settings()['firstNight'],'to'=>settings()['lastNight']]]);
   }
 
   /* ---- Built-in Calm Shade listings (Karthik's own stays) — dashboard edits persist here ---- */
@@ -881,7 +1145,7 @@ switch ($a) {
       $g = json_decode($r['guest'], true) ?: [];
       $cs[] = ['ref'=>$r['ref'],'status'=>($r['status']==='pending' && !active_booking($r,$S)) ? 'expired' : $r['status'],'items'=>$mine,'onlyMine'=>count($mine) === count($items),'guest'=>['name'=>$g['name'] ?? '','phone'=>$g['phone'] ?? ''],'utr'=>$r['utr']];
     }
-    foreach (db()->query("SELECT * FROM fest_bookings WHERE status IN ('pending','confirmed') ORDER BY created_at DESC") as $r) {
+    foreach (db()->query("SELECT * FROM fest_bookings WHERE status IN ".LIVE." ORDER BY created_at DESC") as $r) {
       $mine = array_values(array_filter(json_decode($r['items'], true) ?: [], fn($it)=>($it['unit'] ?? '') === $pid)); if (!$mine) continue;
       $g = json_decode($r['guest'], true) ?: [];
       $fest[] = ['ref'=>$r['ref'],'status'=>show_status($r, $S),'items'=>$mine,'guest'=>['name'=>$g['name'] ?? '','phone'=>$r['status']==='confirmed' ? ($g['phone'] ?? '') : '']];

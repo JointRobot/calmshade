@@ -39,7 +39,7 @@ async def main():
             await pg.evaluate("CS.fx('done')"); await pg.wait_for_timeout(300)
             # mixed trip: a stay + kayak, VIP discount excludes the deposit
             await pg.evaluate("CS.fx('tab','stay')"); await pg.wait_for_timeout(300)
-            await pg.click('[data-fxu="lefarm"][data-fxd="2027-03-01"]'); await pg.click('[data-fxu="lefarm"][data-fxd="2027-03-06"]'); await pg.evaluate("CS.fx('add')")
+            await pg.click('[data-fxu="lefarm.bedroom"][data-fxd="2027-03-01"]'); await pg.click('[data-fxu="lefarm.bedroom"][data-fxd="2027-03-06"]'); await pg.evaluate("CS.fx('add')")
             await pg.evaluate("CS.fx('tab','adv')"); await pg.wait_for_timeout(300); await pg.click('.fx-adv:has-text("Kayaking")'); await pg.select_option('#fxa-d','2027-03-02'); await pg.click('.fx-slot:has-text("7:20 am")'); await pg.click('text=Add to my trip'); await pg.wait_for_timeout(300)
             t=await pg.inner_text('.fx-trip'); check('vip + adventure','VIP' in t and 'Adventure deposits' in t and 'Kayaking' in t and 'Plus ₹1,200' in t,repr(t[:900]))
             await ctx.close()

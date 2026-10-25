@@ -134,17 +134,22 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters
    (desk → Passport stamps → Show posters).
 
-## 9. Agreed redesign — Places, Rooms, Events, Invites (Karthik, 25 Oct 2026) — NOT BUILT YET
-Audit 25 Oct found: APPA venues (FX_VIP) exist only in the festival tab, not as Calm Shade listings; festival
-"Calmshet" (5 rooms) and Calm Shade p1–p4 have separate calendars (double-sell risk); one room type per place only;
-three ways to join, and the Grove invite codes are browser-only (a code made on one phone works nowhere else);
-two price units (per room for festival, per head for homestays). Decisions:
-- **Place** (a property) has **Rooms** (name, sleeps, price, photos). One calendar per room, shared by Calm Shade and
-  every event. **Event** (APPA Art Fest = first) = places join for its dates; during it guests pay room price +
-  ₹2,000 ticket per guest per night.
-- **Pricing: per room per night for 2, plus a price per extra adult** — for every place (Calmshet included).
-- **Invites: any approved host, 3 invite links per place per year**, sent on WhatsApp; one join form (place + rooms);
-  server-stored. Replaces "Become a host / Have an invite?", the separate festival List-your-stay form, and the
-  browser-only Grove codes. Grove points/vouching parked until after launch.
-- **Karthik approves every new place before guests see it.**
-- **Calmshet festival rooms = the same rooms as the Calm Shade stays** → one Place "Calmshet" with its rooms.
+## 9. Places & rooms — BUILT 25 Oct 2026 (invites still to do)
+- `PLACES` in fest.php is the one catalogue: each place has room types (count, max adults, price for 2 weeknight / Fri-Sat,
+  extra adult). Rates marked from settings read `rate_<place>` etc.; the desk → **Places & rooms** panel overrides any room
+  (kv `places`), plus owner UPI/payee, words, photos, hide. `units()` = one festival-board row per room type (`calmshet.cottage`,
+  `lefarm.bedroom`, `shambhala.dorm`, `purrom.chickoo` …) + `tents` + partners `L-<id>`. `index.html` keeps a fallback copy
+  `FX_UNITS0` (api_festival checks it matches; regenerate from `?a=state` units if the catalogue changes).
+- Calmshet rooms: cottage 2–4, room1 2, room2 2, triangle 2–6, appacottage up to 3 (all ₹8,000 for 2 + ₹4,000 extra adult,
+  min 2 paid). Appa Art House (p6) is off the board and closed on calmshade.in for the whole festival (artist).
+  p1–p5 = the same rooms (field `cs`): one calendar. Old bookings whose unit is a whole venue (`calmshet`) are spread over its rooms.
+- Festival night = owner price + high-demand add (place-level fill) + ₹2,000 ticket per guest (tents include it) + 3% fee
+  for places that aren't Karthik's (`FEE_PCT`). VIP discount comes out of Calm Shade's part only.
+- **Festival-only rule**: on calmshade.in, festival nights (firstNight–lastNight) of festival rooms can't be booked; calendar
+  state `fx` (and `ar` for Appa Art House). Venue places show as listings `v-<place>` with a room picker (per room + 3%).
+- **Two-step payment**: `pay` column = `{calm, hosts:[{place,name,upi,payee,amount,paid,utr}]}`. Step 1 to Karthik's UPI
+  (fees, tickets, extras, deposits, own places, owners without UPI); desk "Step 1 received" → status `part`; guest pays
+  each owner directly and sends `utr` with `place`; desk "mark received" (`host_paid`) → `confirmed`. `part` holds rooms.
+- Extras (kv `extras`, desk editor) are bookable with any festival booking; tent spot preference (Le Farm/Theeya/The Company Theatre).
+- Still to build: server-stored invite links (any approved host, 3 per place per year) + one join form with rooms;
+  replace browser-only Grove codes. Open: homepage still says "Hosts keep 97%" (old per-head partner model).
