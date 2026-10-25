@@ -1133,7 +1133,7 @@ body{background:var(--bg);}
   const joinURL=code=>{const base=(location.origin&&location.origin!=='null')?location.origin+location.pathname:'https://calmshet.com/calmshade';
     return base+'?invite='+encodeURIComponent(code);};
   const inviteText=code=>{const info=codeLookup(code)||{};
-    return `Hi! I'd love for you to bring your homestay into Calm Shade — our invite-only collective of calm, handpicked stays with an always-awake WhatsApp concierge. Hosts keep 97% of every booking.\n\nYour invite from ${info.prop||'my property'}: ${code}\nJoin here: ${joinURL(code)}\n\n— ${info.host||'a Calm Shade host'}`;};
+    return `Hi! I'd love for you to bring your homestay into Calm Shade — our invite-only collective of calm, handpicked stays with an always-awake WhatsApp concierge. Hosts keep their full price: guests pay a small 3% fee on top.\n\nYour invite from ${info.prop||'my property'}: ${code}\nJoin here: ${joinURL(code)}\n\n— ${info.host||'a Calm Shade host'}`;};
 
   /* ═════════ SEASONS & WEATHER ═════════ */
   const SEPART={
@@ -1470,7 +1470,7 @@ ${kb()}`;}
       <div class="banner rv in">
         <div class="btxt">
           <h1>Where even crows,<br>look like <span class="rb">birds</span>.</h1>
-          <p>A homestay collective for the cool &amp; calm crowd — independent hosts, stays chosen by taste, and one always-awake WhatsApp concierge that answers at any hour. <b>Hosts keep 97% of every booking.</b></p>
+          <p>A homestay collective for the cool &amp; calm crowd — independent hosts, stays chosen by taste, and one always-awake WhatsApp concierge that answers at any hour. <b>Hosts keep their full price; guests pay a 3% fee on top.</b></p>
           <div class="bact"><button class="barrow" onclick="CS.jump('.grid')" aria-label="Browse the stays">›</button><span>Browse the stays</span></div>
         </div>
         <div class="bshot">${heroSlides().map((s,i)=>`<img class="slide${i===heroIdx?' on':''}" src="${s.src}" alt="${esc(s.cap)}" loading="${i?'lazy':'eager'}">`).join('')}
@@ -1514,8 +1514,8 @@ ${kb()}`;}
     <div class="sep rv sep-sky" aria-hidden="true" data-name="dusk"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M6 36 Q60 20 110 32 T230 28"/><g class="birdg" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M20 14 q4 -4 8 0 q4 -4 8 0"/><path d="M48 9 q3 -3 6 0 q3 -3 6 0"/><path d="M38 20 q3 -3 6 0 q3 -3 6 0"/></g></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <section class="becomehost rv">
       <div class="bh-in">
-        <div><h2>Host with us. Keep 97%.</h2>
-        <p>If you run a stay with soul — and you'd rather your guests met a concierge than a call-you-back — join the collective. List everything yourself, approve every booking yourself, and pay only 3% when a stay actually confirms. Nothing before that. Entry is by invitation — every host is vouched for by another, three invites per property a year.</p></div>
+        <div><h2>Host with us. Keep your full price.</h2>
+        <p>If you run a stay with soul — and you'd rather your guests met a concierge than a call-you-back — join the collective. List everything yourself, approve every booking yourself, and keep your full price. Guests pay a 3% Calm Shade fee on top, only when a stay confirms. Nothing for you to pay. Entry is by invitation — every host is vouched for by another, three invites per property a year.</p></div>
         <span class="sp"></span>
         <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><button class="cta" onclick="CS.fx('openHost')">Near Kamshet? List for APPA Art Fest</button><button class="cta" style="background:transparent;color:#F3EADB;border:1px solid rgba(243,234,219,.4)" onclick="CS.invite()">Have an invite? Join us</button></div>
       </div>
@@ -1601,7 +1601,7 @@ ${kb()}`;}
             <div class="bplbl" style="margin-bottom:9px">${bmNav()} Tap any nights you like <span style="font-weight:600;color:var(--faint)">· forecast shown where available</span></div>
             ${gcalHTML(p)}${festCalNote(p)}
             ${bk.days.length
-              ?`<div class="bksum"><span>${bkLabel()} · ${bkNights()} night${bkNights()>1?'s':''} · ${p.rooms?(bk.rooms||1)+' room'+((bk.rooms||1)>1?'s':'')+' × '+bk.heads+' adult'+(bk.heads>1?'s':''):bk.heads+' guest'+(bk.heads>1?'s':'')+' '+(CSB.hold.meals?'with meals':'breakfast only')}</span><b>${inr(p.rooms?roomTotal(p):(CSB.hold.meals?p.ppWith:p.ppWithout)*bk.heads*bkNights())}</b><button class="rclear" onclick="CS.bkClear()">Clear</button></div>`
+              ?`<div class="bksum"><span>${bkLabel()} · ${bkNights()} night${bkNights()>1?'s':''} · ${p.rooms?(bk.rooms||1)+' room'+((bk.rooms||1)>1?'s':'')+' × '+bk.heads+' adult'+(bk.heads>1?'s':''):bk.heads+' guest'+(bk.heads>1?'s':'')+' '+(CSB.hold.meals?'with meals':'breakfast only')}</span><b>${inr(p.rooms?roomTotal(p):(b=>b+csFee(p,b))((CSB.hold.meals?p.ppWith:p.ppWithout)*bk.heads*bkNights()))}</b><button class="rclear" onclick="CS.bkClear()">Clear</button></div>`
               :`<div class="nt2" style="margin-top:9px">Optional — pick dates here, or just chat and sort everything in conversation.</div>`}
           </div>
           ${csHoldHTML(p)}
@@ -2604,6 +2604,7 @@ ${kb()}`;}
   /* ═════════ CALM SHADE BOOKINGS — live calendars and holds (fest.php cs_*) ═════════ */
   /* Places & rooms on calmshade.in: venue listings carry their rooms; each room has its own calendar (key = room id) */
   const FEST_CS={p1:'fx',p2:'fx',p3:'fx',p4:'fx',p5:'fx',p6:'ar'}; /* Calmshet listings that are festival rooms (p6 Appa Art House: the artist's, all festival) */
+  const csFee=(p,base)=>String(p.id).startsWith('L-')?Math.round(base*3/100):0; /* partner hosts: 3% on top, they keep their full price */
   const bkRoom=p=>(p.rooms||[]).find(r=>r.id===bk.room)||(p.rooms||[])[0];
   const calKey=p=>p.rooms?bkRoom(p).id:p.id;
   const festRoomOf=p=>FEST_CS[p.id]?{festBlock:FEST_CS[p.id]==='ar'}:null;
@@ -2691,13 +2692,13 @@ ${kb()}`;}
         <div class="fx-row"><button class="fx-btn" type="submit" ${h.busy||CSB.offline?'disabled':''}>${h.busy?'Holding…':'Hold my nights'}</button><button class="fx-x" type="button" onclick="CS.csClose()">Back</button></div>
         <p class="fx-note">Held ${FX.S.holdHours} hours while you pay by UPI.</p></form>`;}
     if(mealsIn(p))h.meals=true;
-    const pp=h.meals?p.ppWith:p.ppWithout,total=pp*bk.heads*bk.days.length;
+    const pp=h.meals?p.ppWith:p.ppWithout,base=pp*bk.heads*bk.days.length,fee=csFee(p,base),total=base+fee;
     if(!h.open)return `<button class="fx-btn" style="width:100%;justify-content:center;margin:12px 0 10px" onclick="CS.csOpen()">Hold ${esc(bkLabel())} · ${inr(total)}</button>`;
     const F=(k,l,t,ex)=>`<div class="fx-field"><label for="csh-${k}">${l}</label><input id="csh-${k}" type="${t}" value="${esc(h[k])}" oninput="CS.csF('${k}',this.value)" ${ex||''}></div>`;
     return `<form class="fx-panel" style="margin:12px 0 10px;gap:10px" onsubmit="event.preventDefault();CS.csHold()">
       <b class="fx-h2" style="font-size:17px">Hold ${esc(bkLabel())}</b>
       ${mealsIn(p)?`<div class="fx-note">${inr(p.ppWith)} per head per night · breakfast, lunch, evening tea and dinner included</div>`:`<div class="fx-chips"><button type="button" class="fx-chip ${h.meals?'on':''}" onclick="CS.csMeals(true)">With all meals · ${inr(p.ppWith)}</button><button type="button" class="fx-chip ${h.meals?'':'on'}" onclick="CS.csMeals(false)">Breakfast only · ${inr(p.ppWithout)}</button></div>`}
-      <div class="fx-lines"><div><span>${bk.days.length} night${bk.days.length>1?'s':''} × ${bk.heads} guest${bk.heads>1?'s':''} × ${inr(pp)}</span><b>${inr(total)}</b></div></div>
+      <div class="fx-lines"><div><span>${bk.days.length} night${bk.days.length>1?'s':''} × ${bk.heads} guest${bk.heads>1?'s':''} × ${inr(pp)}</span><b>${inr(base)}</b></div>${fee?`<div><span>Calm Shade fee (3%)</span><b>${inr(fee)}</b></div><div><span>Total</span><b>${inr(total)}</b></div>`:''}</div>
       ${F('name','Full name','text','required maxlength="80" autocomplete="name"')}${F('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${F('email','Email (optional)','email','maxlength="120" autocomplete="email"')}
       ${h.err?`<div class="fx-err">${esc(h.err)}</div>`:''}
       <div class="fx-row"><button class="fx-btn" type="submit" ${h.busy||CSB.offline?'disabled':''}>${h.busy?'Holding…':'Hold my nights'}</button><button class="fx-x" type="button" onclick="CS.csClose()">Back</button></div>
@@ -2708,7 +2709,7 @@ ${kb()}`;}
     if(!bk.days.length){h.err='Pick your nights on the calendar first.';return render();}
     if(!h.name.trim()){h.err='Add your name.';return render();}
     if(h.phone.replace(/\D/g,'').length<10){h.err='Add a 10-digit phone number.';return render();}
-    const total=p.rooms?roomTotal(p):(h.meals?p.ppWith:p.ppWithout)*bk.heads*bk.days.length;
+    const b0=(h.meals?p.ppWith:p.ppWithout)*bk.heads*bk.days.length;const total=p.rooms?roomTotal(p):b0+csFee(p,b0);
     const leg=p.rooms?{prop:bkRoom(p).id,nights:bk.days.map(bmISO),rooms:bk.rooms||1,guests:bk.heads}:{prop:p.id,nights:bk.days.map(bmISO),heads:bk.heads,meals:h.meals};
     h.busy=true;render();
     try{const r=await fxCall('cs_book',{legs:[leg],guest:{name:h.name,phone:h.phone,email:h.email},expectTotal:h.expect!=null?h.expect:total,via:chat&&chat.propId===p.id?'chat':'property'});
@@ -3100,7 +3101,7 @@ ${kb()}`;}
     if(!(session&&session.remote&&HS.me))return '';const d=HS.me.listing.data,p=P(HS.me.prop.id);
     const fr=HS.fest.map(b=>`<tr><td>${esc(b.ref)}</td><td>${esc(b.guest.name||'')}${b.guest.phone?`<br><a href="https://wa.me/${esc(String(b.guest.phone).replace(/\D/g,'').replace(/^(\d{10})$/,'91$1'))}" target="_blank" rel="noopener">${esc(b.guest.phone)}</a>`:''}</td><td>${b.items.map(it=>`${fxShort(it.nights[0])}–${fxShort(fxAdd(it.nights[it.nights.length-1],1))} · ${it.rooms} room${it.rooms>1?'s':''} × ${it.guests}`).join('<br>')}</td><td class="num">${inr(b.items.reduce((a,it)=>a+(it.payout||0),0))}</td><td><span class="pill ${b.status==='confirmed'?'ok':'pd'}">${b.status==='confirmed'?'paid':'awaiting payment'}</span></td></tr>`).join('');
     return `<div class="pan"><div class="ph2"><h3>Welcome, ${esc(session.name)}</h3><span class="sp"></span><span class="pill ${p&&p.live?'ok':'pd'}">${p&&p.live?'live on Calm Shade':d.yearRound===false?'festival only':'paused'}</span></div><div class="pb">
-      <p class="nt2" style="margin:0 0 12px">You're part of the Calm Shade collective through APPA Art Fest 2027. ${d.yearRound===false?'Your place is listed for the festival only. Tick "all year" in the editor to stay on Calm Shade after it.':'Your place is on Calm Shade all year: hosts keep 97% of every booking. During the festival, APPA guests book your rooms at your full nightly rate.'} One calendar covers both, so a night booked anywhere is blocked everywhere.</p>
+      <p class="nt2" style="margin:0 0 12px">You're part of the Calm Shade collective through APPA Art Fest 2027. ${d.yearRound===false?'Your place is listed for the festival only. Tick "all year" in the editor to stay on Calm Shade after it.':'Your place is on Calm Shade all year: you keep your full price, and guests pay a 3% Calm Shade fee on top. During the festival, APPA guests book your rooms at your full nightly rate.'} One calendar covers both, so a night booked anywhere is blocked everywhere.</p>
       <div class="eacts" style="margin-top:0"><button class="b-save" onclick="CS.editL('${HS.me.prop.id}')">Edit listing &amp; photos</button>${p&&!p.festivalOnly?`<button class="b-lt" onclick="CS.open('${HS.me.prop.id}')">See it as guests do</button>`:''}<button class="b-lt" onclick="CS.hsRefresh()">Refresh bookings</button></div></div></div>
       <div class="pan"><div class="ph2"><h3>APPA Art Fest bookings · your rooms</h3></div><div class="pb">
       ${fr?`<div class="fx-tbl"><table><thead><tr><th>Ref</th><th>Guest</th><th>Nights</th><th>Your payout</th><th>Status</th></tr></thead><tbody>${fr}</tbody></table></div><p class="nt2" style="margin-top:10px">The festival team collects these payments and settles your full nightly rate. Guest phone numbers show once paid.</p>`:'<div class="empty">No festival bookings yet. They appear here the moment a guest holds your rooms.</div>'}

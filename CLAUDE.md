@@ -73,7 +73,7 @@ this file is the current state and the rules. Read both before changing anything
 - Holds: unpaid room bookings hold 48 h then release; day-pass-only orders never expire. Max 3 unpaid room holds per
   phone, 10 bookings per device per day. Payment = UPI to xtrathindesign@okicici (Karthikeyan Ramachandran), then the
   guest submits the UPI reference; staff confirm in the desk. UPI QR omits the amount above ₹1 lakh (pay in parts).
-- Calm Shade homestays: per head per night with/without meals, whole place, 3% platform fee (hosts keep 97%).
+- Calm Shade homestays: per head per night with/without meals, whole place; partner hosts keep their full price, guests pay a 3% Calm Shade fee on top (25 Oct 2026).
   Built-in property defaults still exist in TWO places (`CS_PROPS` in `fest.php`, `PROPS` in `index.html`), but editing
   a built-in listing in the dashboard (Save, or Pause/Relist) now persists name/location/category/price/pet/villa/
   amenities/description/bookable to a `cs_builtin` DB table (`cs_builtin_state`/`cs_builtin_save` routes, admin-key
@@ -152,4 +152,4 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
   each owner directly and sends `utr` with `place`; desk "mark received" (`host_paid`) → `confirmed`. `part` holds rooms.
 - Extras (kv `extras`, desk editor) are bookable with any festival booking; tent spot preference (Le Farm/Theeya/The Company Theatre).
 - Still to build: server-stored invite links (any approved host, 3 per place per year) + one join form with rooms;
-  replace browser-only Grove codes. Open: homepage still says "Hosts keep 97%" (old per-head partner model).
+  replace browser-only Grove codes. Homepage and emails now say hosts keep their full price, guests pay 3% on top; per-head partner listings (L-) also charge 3% on top (25 Oct).

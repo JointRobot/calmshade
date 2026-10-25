@@ -561,11 +561,13 @@ function cs_quote($legs, $occ) {
       if (!empty($occ[$id][$d]) || isset($seen[$id][$d])) { $err[] = $p[0].' is already booked on '.gmdate('j M', strtotime($d)).'.'; continue 2; }
       $seen[$id][$d] = 1;
     }
-    $pp = $meals ? $p[2] : $p[3]; $total = $pp * $heads * count($nights);
-    $items[] = ['prop'=>$id,'name'=>$p[0],'nights'=>$nights,'heads'=>$heads,'meals'=>$meals,'pp'=>$pp,'total'=>$total];
+    $pp = $meals ? $p[2] : $p[3]; $base = $pp * $heads * count($nights);
+    /* partner hosts keep their full price; guests pay the 3% Calm Shade fee on top (Karthik, 25 Oct 2026) */
+    $fee = strpos($id, 'L-') === 0 ? (int)round($base * FEE_PCT / 100) : 0;
+    $items[] = ['prop'=>$id,'name'=>$p[0],'nights'=>$nights,'heads'=>$heads,'meals'=>$meals,'pp'=>$pp,'owner'=>$base,'fee'=>$fee,'total'=>$base + $fee];
   }
   $total = array_sum(array_column($items, 'total'));
-  $payout = 0; foreach ($items as $it) $payout += !empty($it['room']) ? ($it['own'] ? 0 : $it['owner']) : (strpos($it['prop'], 'L-') === 0 ? (int)round($it['total'] * (1 - CS_COMM)) : 0);
+  $payout = 0; foreach ($items as $it) $payout += !empty($it['room']) ? ($it['own'] ? 0 : $it['owner']) : (strpos($it['prop'], 'L-') === 0 ? $it['owner'] : 0);
   return [['items'=>$items,'total'=>$total,'payout'=>$payout,'pay'=>pay_split($ownerBy, $total)], array_values(array_unique($err))];
 }
 function cs_lines($items) {
@@ -934,7 +936,7 @@ switch ($a) {
       $h = host_for_listing($lid); }
     $key = ($fresh || !empty($b['newLink'])) ? host_new_key($h['id']) : null;
     $d = json_decode($l['data'], true) ?: [];
-    if ($key && !empty($c['email'])) notify($c['email'], 'Welcome to Calm Shade · '.($d['name'] ?? ''), ['Hi '.($c['name'] ?? '').',', '', ($d['name'] ?? 'Your stay').' is now live for APPA Art Fest 2027'.(!empty($d['yearRound']) ? ' and on Calm Shade all year' : '').'.', '', 'Your private host link (keep it to yourself; it signs you straight in):', site_base().'?host='.$key, '', 'From there you can edit your listing and photos, and confirm bookings as they come in. Hosts keep 97% of every Calm Shade booking; festival bookings pay your full nightly rate.', '', '— Calm Shade × APPA Art Fest']);
+    if ($key && !empty($c['email'])) notify($c['email'], 'Welcome to Calm Shade · '.($d['name'] ?? ''), ['Hi '.($c['name'] ?? '').',', '', ($d['name'] ?? 'Your stay').' is now live for APPA Art Fest 2027'.(!empty($d['yearRound']) ? ' and on Calm Shade all year' : '').'.', '', 'Your private host link (keep it to yourself; it signs you straight in):', site_base().'?host='.$key, '', 'From there you can edit your listing and photos, and confirm bookings as they come in. You keep your full price on every booking: guests pay a 3% Calm Shade fee on top.', '', '— Calm Shade × APPA Art Fest']);
     out(['ok'=>true,'enrolled'=>$fresh,'hostKey'=>$key,'hostPhone'=>$c['phone'] ?? '','hostName'=>$c['name'] ?? '','link'=>$key ? site_base().'?host='.$key : null]);
   }
   case 'settings': {
