@@ -1069,7 +1069,10 @@ body{background:var(--bg);}
   let bk={heads:2,days:[],sent:false}, bkOpen=false;
   let heroIdx=0;
   function heroSlides(){const s=[];if(MEDIA.hero)s.push({src:MEDIA.hero,cap:'Painted with one torch on the lawn · long exposure'});
-    PROPS.filter(p=>p.live&&p.gallery&&p.gallery[p.cover||0]).slice(0,6).forEach(p=>s.push({src:p.gallery[p.cover||0].src,cap:p.name+' — '+p.loc}));
+    /* every listing with a photo takes a turn (APPA venues and Calmshet alike); the same picture only once */
+    const seen=new Set(s.map(x=>x.src));const ls=PROPS.filter(p=>p.live&&p.gallery&&p.gallery[p.cover||0]);
+    const venues=ls.filter(p=>p.rooms),own=ls.filter(p=>!p.rooms);
+    for(let i=0;i<Math.max(venues.length,own.length);i++)[venues[i],own[i]].forEach(p=>{if(!p)return;const src=p.gallery[p.cover||0].src;if(seen.has(src))return;seen.add(src);s.push({src,cap:p.name+' — '+p.loc});});
     if(heroIdx>=s.length)heroIdx=0;
     return s;}
   const bkNights=()=>bk.days.length;
