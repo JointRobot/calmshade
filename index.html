@@ -3165,6 +3165,19 @@ ${kb()}`;}
       await hsCall('host_save',{listing:L});editing=null;edMedia=null;await hsSignIn();await hsLoadProps();toast('Saved · live on Calm Shade');render();
     }catch(e){toast(e.message);}
   }
+  /* an APPA venue listing edited from the owner's dashboard: words + photos go to the server (desk → places_set) */
+  async function venueSave(){
+    const p=P(editing);const g=i=>{const el=document.getElementById(i);return el?el.value.trim():'';};
+    if(!FX.desk.key)return toast('Sign in as the owner first, then save again');
+    try{toast('Saving…');
+      for(const gi of edMedia.gallery){if(gi.file){gi.src=await hsUpload(gi.file,'admin');delete gi.file;}}
+      const photos=edMedia.gallery.filter(x=>/^uploads\//.test(x.src)).map(x=>({src:x.src,cap:x.cap||''}));
+      const cv=Math.min(edMedia.cover||0,Math.max(0,photos.length-1));if(cv>0)photos.unshift(photos.splice(cv,1)[0]);
+      const place={photos};if(g('e-desc'))place.desc=g('e-desc');if(g('e-amen'))place.amen=g('e-amen');if(g('e-loc'))place.area=g('e-loc');
+      await fxCall('places_set',{id:p.place||String(editing).slice(2),place},true);
+      editing=null;edMedia=null;await hsLoadProps();if(PL.data)await plLoad();toast('Saved · live on Calm Shade');render();
+    }catch(e){toast(e.message);}
+  }
   /* the List-your-stay form */
   const HF={photos:[],uploading:0};
   function hfHTML(){const h=FX.host;
@@ -3291,7 +3304,8 @@ ${kb()}`;}
     editL(id){editing=id;const p=P(id);edMedia={gallery:(p.gallery||[]).map(g=>({src:g.src,cap:g.cap||''})),cover:p.cover||0,video:p.video?{src:p.video.src,cap:p.video.cap||''}:null,logo:p.logo||null,faq:(p.faq||[]).map(f=>({q:f.q,a:f.a}))};render();},
     newListing(){editing='new';edMedia={gallery:[],cover:0,video:null,logo:null,faq:[]};render();},
     closeEd(){editing=null;edMedia=null;render();},
-    save(){if(editing&&editing!=='new'&&P(editing)&&P(editing).remote)return hsSave();
+    save(){if(editing&&String(editing).startsWith('v-')&&P(editing))return venueSave();
+      if(editing&&editing!=='new'&&P(editing)&&P(editing).remote)return hsSave();
       const g=i=>{const el=document.getElementById(i);return el?el.value.trim():'';};
       const chk=i=>{const el=document.getElementById(i);return el?el.checked:false;};
       const name=g('e-name');if(!name){toast('Give your listing a title');return;}
