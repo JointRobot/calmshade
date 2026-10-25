@@ -1165,7 +1165,7 @@ body{background:var(--bg);}
     return null;}
 
   /* ═════════ AI CONCIERGE ═════════ */
-  function kb(){return PROPS.filter(p=>p.live).map(p=>p.rooms?`### ${p.name} (APPA Art Fest venue)\nLocation: ${p.loc}. Rooms (price per room per night for ${'2'} adults, weeknight / Fri-Sat, plus a ${p.feePct||3}% Calm Shade fee): ${p.rooms.map(r=>r.count+' x '+r.name+' (up to '+r.max+', '+inr(r.rate)+' / '+inr(r.rateWe)+(r.extra?', extra adult '+inr(r.extra):'')+')').join('; ')}. Amenities: ${p.amen}. About: ${p.desc}\nDuring APPA Art Fest (12 Feb - 19 Mar 2027) these rooms are only booked together with festival tickets, on the APPA page.`:`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${mealsIn(p)?inr(p.ppWith)+' with all three meals included (no without-meals option)':inr(p.ppWith)+' with all meals, '+inr(p.ppWithout)+' without (breakfast only)'}. Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked ${BM.name} ${BM.y} dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' '+BM.name:'none — '+BM.name+' open'}.`).join('\n\n');}
+  function kb(){return PROPS.filter(p=>p.live).map(p=>p.rooms?`### ${p.name} (APPA Art Fest venue)\nLocation: ${p.loc}. Rooms (price per room per night for ${'2'} adults, weeknight / Fri-Sat${p.own?', 3 meals included':', plus a '+(p.feePct||3)+'% Calm Shade fee'}): ${p.rooms.map(r=>r.count+' x '+r.name+' (up to '+r.max+', '+inr(r.rate)+' / '+inr(r.rateWe)+(r.extra?', extra adult '+inr(r.extra):'')+')').join('; ')}. Amenities: ${p.amen}. About: ${p.desc}\nDuring APPA Art Fest (12 Feb - 19 Mar 2027) these rooms are only booked together with festival tickets, on the APPA page.`:`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${mealsIn(p)?inr(p.ppWith)+' with all three meals included (no without-meals option)':inr(p.ppWith)+' with all meals, '+inr(p.ppWithout)+' without (breakfast only)'}. Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked ${BM.name} ${BM.y} dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' '+BM.name:'none — '+BM.name+' open'}.`).join('\n\n');}
   function sysPrompt(n){return `You are the Calm Shade concierge — the always-awake WhatsApp host for a collective of independent homestays. Today is ${new Date().toDateString()}; bookings are open for ${BM.name} ${BM.y}. The guest opened this chat from "${n}", so start in that stay's context; if they ask about another Calm Shade stay, switch naturally and keep the thread coherent.
 
 STRICT RULES:
@@ -1483,8 +1483,10 @@ ${kb()}`;}
     </div>`;
   }
 
+  /* listings shown as cards: Calmshet's rooms live inside its one listing once that has loaded */
+  const cardProps=()=>PROPS.filter(p=>p.live&&!(FEST_CS[p.id]&&P('v-calmshet')));
   function home(){
-    let list=PROPS.filter(p=>p.live);
+    let list=cardProps();
     if(filterCat==='pet')list=list.filter(p=>p.pet);
     else if(filterCat!=='all')list=list.filter(p=>p.cat===filterCat);
     if(query)list=list.filter(p=>(p.name+' '+p.loc+' '+p.amen).toLowerCase().includes(query.toLowerCase()));
@@ -1506,7 +1508,7 @@ ${kb()}`;}
     ${festBand()}
 
     <div class="sep rv sep-warm" aria-hidden="true" data-name="dawn"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M6 34 H74 M162 34 H230"/><path class="dr" d="M92 34 a26 26 0 0 1 52 0"/><path class="dr" d="M118 12 v-7 M98 18 l-5-5 M138 18 l5-5"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="dirhead"><span class="seclabel">The collective</span><h2>Stays</h2><span>${list.length} of ${PROPS.filter(x=>x.live).length} showing · live availability</span></div>
+    <div class="dirhead"><span class="seclabel">The collective</span><h2>Stays</h2><span>${list.length} of ${cardProps().length} showing · live availability</span></div>
     <div class="grid">
       ${list.length?list.map((p,i)=>`<article class="pcard rv d${(i%3)+1}" onclick="CS.open('${p.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')CS.open('${p.id}')">
         <div class="ph">${photo(p)}
@@ -1579,7 +1581,7 @@ ${kb()}`;}
             <span class="seclabel">Details</span>
             <div class="drows">
               <div class="drow"><span class="dk">Sleeps</span><span class="dv">${esc(p.cap)}</span></div>
-              ${p.rooms?p.rooms.map(r=>`<div class="drow"><span class="dk">${esc(r.name)}${r.count>1?' × '+r.count:''} · up to ${r.max}</span><span class="dv">${inr(roomPrice(p,r,'2027-01-04',r.base))} / night${r.rateWe!==r.rate?' · Fri/Sat '+inr(roomPrice(p,r,'2027-01-08',r.base)):''}${r.extra?' · extra adult '+inr(r.extra):''}</span></div>`).join('')+`<div class="drow"><span class="dk">Prices</span><span class="dv">Per room per night for ${'2'} (1 for single rooms and dorm beds), including the ${p.feePct||3}% Calm Shade fee</span></div>`:`
+              ${p.rooms?p.rooms.map(r=>`<div class="drow"><span class="dk">${esc(r.name)}${r.count>1?' × '+r.count:''} · up to ${r.max}</span><span class="dv">${inr(roomPrice(p,r,'2027-01-04',r.base))} / night${r.rateWe!==r.rate?' · Fri/Sat '+inr(roomPrice(p,r,'2027-01-08',r.base)):''}${r.extra?' · extra adult '+inr(r.extra):''}</span></div>`).join('')+`<div class="drow"><span class="dk">Prices</span><span class="dv">Per room per night for ${'2'} (1 for single rooms and dorm beds)${p.own?', 3 meals a day included':', including the '+(p.feePct||3)+'% Calm Shade fee'}</span></div>`:`
               <div class="drow"><span class="dk">Per head${mealsIn(p)?' · 3 meals included':' · with all meals'}</span><span class="dv">${inr(p.ppWith)} / night</span></div>
               ${mealsIn(p)?'':`<div class="drow"><span class="dk">Per head · without meals</span><span class="dv">${inr(p.ppWithout)} / night</span></div>`}
               <div class="drow"><span class="dk">Pets</span><span class="dv">${p.pet?'Welcome':'Not allowed'}</span></div>
@@ -2719,7 +2721,7 @@ ${kb()}`;}
       return `<form class="fx-panel" style="margin:12px 0 10px;gap:10px" onsubmit="event.preventDefault();CS.csHold()">
         <b class="fx-h2" style="font-size:17px">Hold ${esc(r.name)} · ${esc(bkLabel())}</b>
         <div class="fx-lines"><div><span>${bk.days.length} night${bk.days.length>1?'s':''} × ${nr} room${nr>1?'s':''} · ${bk.heads} adult${bk.heads>1?'s':''} each</span><b>${inr(tot)}</b></div></div>
-        <p class="fx-note" style="margin:0">Includes the ${p.feePct||3}% Calm Shade fee. If the owner's UPI is set up, you pay in two steps: the fee to Calm Shade first, then the room money straight to ${esc(p.name)}.</p>
+        <p class="fx-note" style="margin:0">${p.own?'One payment by UPI. Three meals a day are included.':`Includes the ${p.feePct||3}% Calm Shade fee. If the owner's UPI is set up, you pay in two steps: the fee to Calm Shade first, then the room money straight to ${esc(p.name)}.`}</p>
         ${F0('name','Full name','text','required maxlength="80" autocomplete="name"')}${F0('phone','Phone / WhatsApp','tel','required maxlength="20" autocomplete="tel"')}${F0('email','Email (optional)','email','maxlength="120" autocomplete="email"')}
         ${h.err?`<div class="fx-err">${esc(h.err)}</div>`:''}
         <div class="fx-row"><button class="fx-btn" type="submit" ${h.busy||CSB.offline?'disabled':''}>${h.busy?'Holding…':'Hold my nights'}</button><button class="fx-x" type="button" onclick="CS.csClose()">Back</button></div>
@@ -3105,7 +3107,9 @@ ${kb()}`;}
   function hsAddProp(x,host){
     const gallery=(x.photos||[]).map(g=>({src:g.src,cap:g.cap||''}));
     const p={id:x.id,geo:x.geo||null,owner:x.owner,name:x.name,link:x.website||x.link||'',maps:x.maps||'',website:x.website||'',loc:x.loc,cat:x.cat||'room',cap:x.cap,ppWith:x.ppWith,ppWithout:x.ppWithout,
-      pet:!!x.pet,villa:!!x.villa,rate:null,sky:['#C9B79A','#F3EADB'],land:'#7A6A4A',live:x.live!==false,desc:x.desc||'',amen:x.amen||'',gallery,cover:Math.min(x.cover||0,Math.max(0,gallery.length-1)),video:null,logo:null,faq:x.faq||[],remote:true,festival:true,sleeps:x.sleeps,rooms:x.rooms||null,place:x.place||null,feePct:x.feePct||3,own:false};
+      pet:!!x.pet,villa:!!x.villa,rate:null,sky:['#C9B79A','#F3EADB'],land:'#7A6A4A',live:x.live!==false,desc:x.desc||'',amen:x.amen||'',gallery,cover:Math.min(x.cover||0,Math.max(0,gallery.length-1)),video:null,logo:null,faq:x.faq||[],remote:true,festival:true,sleeps:x.sleeps,rooms:x.rooms||null,place:x.place||null,feePct:x.own?0:(x.feePct||3),own:!!x.own};
+    /* Calmshet's one listing: until it has photos of its own, show each room's photo from its old listing */
+    if(p.own&&p.rooms&&!p.gallery.length){const seen=new Set();p.rooms.forEach(r=>{const q=r.cs&&P(r.cs);const g=q&&q.gallery&&q.gallery[q.cover||0];if(g&&!seen.has(g.src)){seen.add(g.src);p.gallery.push({src:g.src,cap:r.name});}});}
     const i=PROPS.findIndex(q=>q.id===p.id);if(i>=0)PROPS[i]=p;else PROPS.push(p);if(!CAL[p.id])CAL[p.id]={};
     if(host&&!OWNERS.some(o=>o.id===host.id))OWNERS.push({id:host.id,name:host.name||'Host',venue:!!x.rooms,email:'',phone:'',hue:'var(--r5)',invitedBy:'o1',rev:{good:0,bad:0,avg:0},probation:null,festival:true});
   }

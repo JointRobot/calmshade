@@ -627,6 +627,7 @@ function cs_quote($legs, $occ) {
         if (in_festival($d, $S) && $r['festBlock']) { $err[] = $nm.' is reserved for the festival artist from '.gmdate('j M', strtotime($S['firstNight'])).' to '.gmdate('j M Y', strtotime($S['lastNight'])).'.'; continue 2; }
         if (in_festival($d, $S) && $r['fest']) { $err[] = fest_night_msg($nm, $d); continue 2; }
         $used = ($fo[$id][$d] ?? 0) + ($ro[$id][$d] ?? 0) + ($seen[$id][$d] ?? 0);
+        if ($r['cs'] && in_array($occ[$r['cs']][$d] ?? '', ['bk','tn'], true)) $used = $r['count'];
         if ($used + $rooms > $r['count']) { $err[] = $nm.' is booked on '.gmdate('j M', strtotime($d)).'.'; continue 2; }
         $seen[$id][$d] = ($seen[$id][$d] ?? 0) + $rooms;
         [$p, $o, $f] = room_night($pl, $r, $d, $g); $per[] = $p; $own += $o * $rooms; $fee += $f * $rooms;
@@ -1270,18 +1271,21 @@ switch ($a) {
       $h = host_for_listing($l['id']); if (!$h) continue;
       $props[] = cs_public_prop($l, $h); $hosts[] = ['id'=>'h'.$h['id'],'name'=>$h['name']];
     }
-    /* the APPA Art Fest venues, as Calm Shade listings with their rooms (Calmshet's rooms are listings of their own) */
+    /* every place as one Calm Shade listing with its rooms inside (Calmshet too, since 25 Oct 2026: its rooms are the
+       same rooms as the old p1–p6 listings, sharing their calendars) */
     foreach (public_places() as $pl) {
-      if ($pl['own']) continue;
       $rooms = array_values(array_filter($pl['rooms'], fn($r)=>$r['count'] > 0));
       if (!$rooms) continue;
       $sleeps = array_sum(array_map(fn($r)=>$r['count'] * $r['max'], $rooms)); $from = min(array_map(fn($r)=>min($r['rate'], $r['rateWe']), $rooms));
       $nr = array_sum(array_column($rooms, 'count'));
       $kinds = count($rooms) > 2 ? $nr.' rooms' : implode(', ', array_map(fn($r)=>$r['count'].' '.strtolower($r['name']).($r['count'] > 1 ? 's' : ''), $rooms));
-      $props[] = ['id'=>'v-'.$pl['id'],'owner'=>'v-'.$pl['id'],'name'=>$pl['name'],'loc'=>$pl['area'],'cat'=>$pl['cat'],'cap'=>'Up to '.$sleeps.' guests · '.$kinds,'sleeps'=>$sleeps,
+      if ($pl['own']) { $pl['area'] = $pl['area'] === 'Kamshet lake' ? 'Kamshet · Maharashtra' : $pl['area'];
+        if ($pl['desc'] === '') $pl['desc'] = 'Calmshet, Karthik\'s lakeside forest property near Kamshet, and Appa, an artist\'s home nearby: pick a room, from a couple\'s room to the whole Appa Art House for twelve. Three home-cooked meals a day are included, the pool is a few steps away, and the lake is there for sunsets. There is no mobile network out here; the forest is the point.';
+        if ($pl['amen'] === '') $pl['amen'] = 'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Bonfire on request'; }
+      $props[] = ['id'=>'v-'.$pl['id'],'owner'=>$pl['own'] ? 'o1' : 'v-'.$pl['id'],'own'=>$pl['own'],'name'=>$pl['name'],'loc'=>$pl['area'],'cat'=>$pl['cat'],'cap'=>'Up to '.$sleeps.' guests · '.$kinds,'sleeps'=>$sleeps,
         'ppWith'=>(int)ceil($from / 2),'ppWithout'=>(int)ceil($from / 2),'pet'=>false,'villa'=>false,'amen'=>$pl['amen'],'desc'=>$pl['desc'],'photos'=>$pl['photos'],'cover'=>0,'faq'=>[],'geo'=>null,
-        'maps'=>'','website'=>$pl['web'],'link'=>'','live'=>true,'festival'=>true,'place'=>$pl['id'],'rooms'=>$rooms,'from'=>$from,'feePct'=>FEE_PCT];
-      $hosts[] = ['id'=>'v-'.$pl['id'],'name'=>$pl['name']];
+        'maps'=>'','website'=>$pl['web'],'link'=>'','live'=>true,'festival'=>true,'place'=>$pl['id'],'rooms'=>$rooms,'from'=>$from,'feePct'=>$pl['own'] ? 0 : FEE_PCT];
+      if (!$pl['own']) $hosts[] = ['id'=>'v-'.$pl['id'],'name'=>$pl['name']];
     }
     out(['ok'=>true,'props'=>$props,'hosts'=>$hosts,'fest'=>['from'=>settings()['firstNight'],'to'=>settings()['lastNight']]]);
   }

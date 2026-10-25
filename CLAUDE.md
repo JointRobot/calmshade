@@ -146,7 +146,7 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 - Festival night = owner price + high-demand add (place-level fill) + ₹2,000 ticket per guest (tents include it) + 3% fee
   for places that aren't Karthik's (`FEE_PCT`). VIP discount comes out of Calm Shade's part only.
 - **Festival-only rule**: on calmshade.in, festival nights (firstNight–lastNight) of festival rooms can't be booked; calendar
-  state `fx` (and `ar` for Appa Art House). Venue places show as listings `v-<place>` with a room picker (per room + 3%).
+  state `fx` (and `ar` for Appa Art House). Every place incl. Calmshet shows as ONE listing `v-<place>` with a room picker (per room; +3% only for partner places). Calmshet p1–p6 cards are hidden from the grid once v-calmshet loads (`cardProps`), but stay as objects; room and old-listing bookings block each other.
 - **Two-step payment**: `pay` column = `{calm, hosts:[{place,name,upi,payee,amount,paid,utr}]}`. Step 1 to Karthik's UPI
   (fees, tickets, extras, deposits, own places, owners without UPI); desk "Step 1 received" → status `part`; guest pays
   each owner directly and sends `utr` with `place`; desk "mark received" (`host_paid`) → `confirmed`. `part` holds rooms.
