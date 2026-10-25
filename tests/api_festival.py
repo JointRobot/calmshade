@@ -163,4 +163,7 @@ check('venue room off-festival: per room + 3%, two steps',c==200 and x['total']=
 c,j=call('cs_book',{'legs':[{'prop':'lefarm.bedroom','nights':['2027-04-05'],'rooms':1,'guests':2}],'guest':g('9820000002')}); check('all 6 rooms taken',c==409,(c,j))
 c,j=call('cs_state'); check('calendar: full room, festival nights',j['occ']['lefarm.bedroom']['2027-04-05']=='bk' and j['occ']['p4']['2027-02-20']=='fx' and j['occ']['p6']['2027-03-01']=='ar',{k:j['occ'].get(k,{}).get('2027-04-05') for k in ['lefarm.bedroom']})
 c,j=call('cs_props'); v=[p for p in j['props'] if p['id']=='v-shambhala']; check('venues are Calm Shade listings',len(v)==1 and len(v[0]['rooms'])==2 and v[0]['place']=='shambhala',[p['id'] for p in j['props']])
+c,j=call('places_import',{'id':'theeya'},True); check('photo import: no website, clear message',c==400 and 'no website' in j['error'],(c,j))
+c,j=call('places_import',{'id':'lefarm','links':['http://127.0.0.1:8099/index.html']},True); check('photo import refuses local addresses',c==404,(c,j))
+c,j=call('places_import',{'id':'lefarm'}); check('photo import needs desk',c==403,(c,j))
 print(f'PASS {ok}  FAIL {len(bad)}'); [print(' -',b) for b in bad]

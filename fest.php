@@ -735,6 +735,65 @@ function utr_host($t, $ref, $pay, $place, $utr) {
 /* after step 1 is confirmed: 'part' until every owner has been paid, then 'confirmed' */
 function after_step1($pay) { foreach ($pay['hosts'] ?? [] as $h) if (empty($h['paid'])) return 'part'; return 'confirmed'; }
 
+/* ---------- photos from a place's own website (desk only) ----------
+   The server fetches the venue's own web page, finds its photos and keeps copies in uploads/, so listings don't
+   depend on the venue's site staying up. Public http(s) addresses only; size and count are capped. */
+function public_host($host) {
+  if (!preg_match('/^[a-z0-9.-]{1,253}$/i', $host)) return false;
+  $ips = @gethostbynamel($host); if (!$ips) return false;
+  foreach ($ips as $ip) if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return false;
+  return true;
+}
+function web_get($url, $max) {
+  for ($hop = 0; $hop < 4; $hop++) {
+    $u = parse_url($url);
+    if (!$u || !in_array(strtolower($u['scheme'] ?? ''), ['http','https'], true) || empty($u['host']) || !public_host($u['host'])) return [null, ''];
+    $ch = curl_init($url); $buf = '';
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>false, CURLOPT_FOLLOWLOCATION=>false, CURLOPT_TIMEOUT=>20, CURLOPT_CONNECTTIMEOUT=>8,
+      CURLOPT_USERAGENT=>'Mozilla/5.0 (compatible; CalmShadeBot/1.0; +https://calmshade.in)', CURLOPT_HEADER=>false,
+      CURLOPT_PROTOCOLS=>CURLPROTO_HTTP|CURLPROTO_HTTPS,
+      CURLOPT_WRITEFUNCTION=>function ($c, $d) use (&$buf, $max) { $buf .= $d; return strlen($buf) > $max ? 0 : strlen($d); }]);
+    curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $loc = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL); $type = (string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE); curl_close($ch);
+    if ($code >= 300 && $code < 400 && $loc) { $url = $loc; continue; }
+    return [$code === 200 && strlen($buf) <= $max ? $buf : null, $type];
+  }
+  return [null, ''];
+}
+function abs_url($base, $rel) {
+  $rel = trim(html_entity_decode($rel, ENT_QUOTES)); if ($rel === '' || strpos($rel, 'data:') === 0) return '';
+  if (preg_match('#^https?://#i', $rel)) return $rel;
+  $b = parse_url($base); if (!$b || empty($b['host'])) return '';
+  $root = ($b['scheme'] ?? 'https').'://'.$b['host'].(isset($b['port']) ? ':'.$b['port'] : '');
+  if (strpos($rel, '//') === 0) return ($b['scheme'] ?? 'https').':'.$rel;
+  if ($rel[0] === '/') return $root.$rel;
+  $dir = preg_replace('#/[^/]*$#', '/', $b['path'] ?? '/'); return $root.$dir.$rel;
+}
+/* image addresses on a page, best first: the share image, then large photos in the page (logos and icons skipped) */
+function page_images($url) {
+  [$html] = web_get($url, 3 * 1024 * 1024); if (!$html) return [];
+  $found = [];
+  if (preg_match_all('#<meta[^>]+(?:property|name)=["\'](?:og:image|og:image:url|twitter:image)["\'][^>]*content=["\']([^"\']+)#i', $html, $m)) foreach ($m[1] as $x) $found[] = $x;
+  if (preg_match_all('#<meta[^>]+content=["\']([^"\']+)["\'][^>]*(?:property|name)=["\'](?:og:image|twitter:image)["\']#i', $html, $m)) foreach ($m[1] as $x) $found[] = $x;
+  if (preg_match_all('#<img[^>]+>#i', $html, $m)) foreach ($m[0] as $tag) {
+    if (preg_match('#\s(?:data-src|data-lazy-src|src)=["\']([^"\']+)#i', $tag, $a)) $found[] = $a[1];
+    if (preg_match('#\ssrcset=["\']([^"\']+)#i', $tag, $a)) { $parts = array_map('trim', explode(',', $a[1])); $last = end($parts); if ($last) $found[] = preg_split('/\s+/', $last)[0]; }
+  }
+  if (preg_match_all('#url\(["\']?([^"\')]+\.(?:jpe?g|png|webp)[^"\')]*)#i', $html, $m)) foreach ($m[1] as $x) $found[] = $x;
+  $out = [];
+  foreach ($found as $x) { $a = abs_url($url, $x); if (!$a || preg_match('#(logo|icon|favicon|sprite|avatar|placeholder|blank|pixel|\.svg|\.gif)#i', $a)) continue; $out[$a] = 1; }
+  return array_slice(array_keys($out), 0, 40);
+}
+function save_image($bin, $minW = 500, $minH = 300) {
+  $info = $bin ? @getimagesizefromstring($bin) : false;
+  $ext = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'][$info['mime'] ?? ''] ?? null;
+  if (!$info || !$ext || $info[0] < $minW || $info[1] < $minH || $info[0] > 8000 || $info[1] > 8000) return null;
+  $dir = __DIR__.'/uploads/'.gmdate('Ym'); if (!is_dir($dir)) @mkdir($dir, 0755, true);
+  $root = __DIR__.'/uploads/.htaccess';
+  if (!is_file($root)) @file_put_contents($root, "Options -Indexes -ExecCGI\nRemoveHandler .php .phtml .phar .php5 .php7 .cgi .pl\nRemoveType .php .phtml .phar\n<FilesMatch \"\\.(php|phtml|phar|php5|php7|cgi|pl|htaccess)$\">\n  Require all denied\n</FilesMatch>\n<IfModule mod_php.c>\n  php_flag engine off\n</IfModule>\n");
+  $name = bin2hex(random_bytes(12)).'.'.$ext;
+  return @file_put_contents($dir.'/'.$name, $bin) === false ? null : 'uploads/'.gmdate('Ym').'/'.$name;
+}
+
 /* ---------- routes ---------- */
 $a = $_GET['a'] ?? 'state';
 $m = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -909,13 +968,35 @@ switch ($a) {
     foreach (['area'=>120,'desc'=>1500,'amen'=>300,'owner'=>80,'payee'=>80] as $k => $n) if (array_key_exists($k, $in)) $o[$k] = clean($in[$k], $n);
     if (array_key_exists('upi', $in)) { $u = trim((string)$in['upi']); if ($u !== '' && !preg_match('/^[a-zA-Z0-9.\-_]{2,60}@[a-zA-Z0-9.\-]{2,40}$/', $u)) fail('That UPI ID looks wrong. It looks like name@bank.'); $o['upi'] = $u; }
     if (array_key_exists('off', $in)) $o['off'] = !empty($in['off']);
-    if (array_key_exists('photos', $in)) { $ph = []; foreach (array_slice((array)$in['photos'], 0, 12) as $x) { $src = clean_photo(is_array($x) ? ($x['src'] ?? '') : $x); if ($src) $ph[] = ['src'=>$src,'cap'=>clean(is_array($x) ? ($x['cap'] ?? '') : '', 120)]; } $o['photos'] = $ph; }
+    if (array_key_exists('photos', $in)) { $ph = []; foreach (array_slice((array)$in['photos'], 0, 12) as $x) { $src = clean_photo(is_array($x) ? ($x['src'] ?? '') : $x); if ($src) $ph[] = ['src'=>$src,'cap'=>clean(is_array($x) ? ($x['cap'] ?? '') : '', 120),'from'=>clean_url(is_array($x) ? ($x['from'] ?? '') : '')]; } $o['photos'] = $ph; }
     foreach ((array)($in['rooms'] ?? []) as $rid => $r) { if (!isset(PLACES[$pid]['rooms'][$rid])) continue; $ro = $o['rooms'][$rid] ?? [];
       if (isset($r['name']) && clean($r['name'], 60) !== '') $ro['name'] = clean($r['name'], 60);
       foreach (['count'=>[0,200],'max'=>[1,30],'rate'=>[0,500000],'rateWe'=>[0,500000],'extra'=>[0,100000],'extraWe'=>[0,100000]] as $k => [$lo, $hi]) if (isset($r[$k]) && $r[$k] !== '') $ro[$k] = max($lo, min($hi, (int)$r[$k]));
       $o['rooms'][$rid] = $ro; }
     $all[$pid] = $o; kv_set('places', json_encode($all));
     out(['ok'=>true]);
+  }
+  /* desk: fetch photos for a place from its own website, or from photo links pasted in the desk */
+  case 'places_import': {
+    need_admin(); @set_time_limit(120); $b = body(); $pid = (string)($b['id'] ?? ''); if (!isset(PLACES[$pid])) fail('Unknown place.', 404);
+    $pl = places()[$pid]; $links = array_values(array_filter(array_map('trim', (array)($b['links'] ?? [])), fn($x)=>preg_match('#^https?://#i', $x)));
+    $page = clean_url($b['url'] ?? '') ?: $pl['web'];
+    $cands = []; $direct = [];
+    foreach (array_slice($links, 0, 12) as $l) { if (preg_match('#\.(jpe?g|png|webp)(\?|$)#i', $l)) $direct[] = $l; else $cands = array_merge($cands, page_images($l)); }
+    if (!$links) { if (!$page) fail('This place has no website yet. Paste photo links, or add photos from your phone.'); $cands = page_images($page); }
+    $cands = array_values(array_unique(array_merge($direct, $cands)));
+    if (!$cands) fail('No photos found on '.($links ? 'those links' : $page).'. The site may build its photos with code we can\'t read; paste direct photo links instead, or add photos from your phone.', 404);
+    $o = places_over(); $cur = $o[$pid]['photos'] ?? []; $seen = []; $added = 0; $want = max(1, min(8, (int)($b['max'] ?? 6)));
+    foreach ($cands as $c) {
+      if ($added >= $want || count($cur) >= 12) break;
+      [$bin, $type] = web_get($c, 8 * 1024 * 1024); if (!$bin) continue;
+      $h = md5($bin); if (isset($seen[$h])) continue; $seen[$h] = 1;
+      $src = save_image($bin); if (!$src) continue;
+      $cur[] = ['src'=>$src, 'cap'=>'', 'from'=>substr($c, 0, 300)]; $added++;
+    }
+    if (!$added) fail('Found '.count($cands).' pictures but none were usable photos (too small, or the site blocked us). Paste direct photo links, or add photos from your phone.', 404);
+    $o[$pid]['photos'] = $cur; kv_set('places', json_encode($o));
+    out(['ok'=>true,'added'=>$added,'photos'=>$cur]);
   }
   case 'extras_set': {
     need_admin(); $items = [];

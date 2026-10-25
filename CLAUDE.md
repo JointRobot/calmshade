@@ -150,6 +150,7 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 - **Two-step payment**: `pay` column = `{calm, hosts:[{place,name,upi,payee,amount,paid,utr}]}`. Step 1 to Karthik's UPI
   (fees, tickets, extras, deposits, own places, owners without UPI); desk "Step 1 received" → status `part`; guest pays
   each owner directly and sends `utr` with `place`; desk "mark received" (`host_paid`) → `confirmed`. `part` holds rooms.
+- Venue photos: desk → Places & rooms → "Get photos for every venue from its website" (`places_import`): the server fetches the venue's own page (or pasted links), finds og:image/img photos, saves copies to uploads/ (public addresses only, ≥500×300, max 8 per run). Theeya has no website: paste links or upload.
 - Extras (kv `extras`, desk editor) are bookable with any festival booking; tent spot preference (Le Farm/Theeya/The Company Theatre).
 - Still to build: server-stored invite links (any approved host, 3 per place per year) + one join form with rooms;
   replace browser-only Grove codes. Homepage and emails now say hosts keep their full price, guests pay 3% on top; per-head partner listings (L-) also charge 3% on top (25 Oct).
