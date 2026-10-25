@@ -133,3 +133,18 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
    real photos per room (every card uses the same night shot), and real venue rates for CTheatre/Purrom/Le Farm.
 6. Confirm VIP tent count/price with Karthik; add show times via desk → Timetable; print venue stamp posters
    (desk → Passport stamps → Show posters).
+
+## 9. Agreed redesign — Places, Rooms, Events, Invites (Karthik, 25 Oct 2026) — NOT BUILT YET
+Audit 25 Oct found: APPA venues (FX_VIP) exist only in the festival tab, not as Calm Shade listings; festival
+"Calmshet" (5 rooms) and Calm Shade p1–p4 have separate calendars (double-sell risk); one room type per place only;
+three ways to join, and the Grove invite codes are browser-only (a code made on one phone works nowhere else);
+two price units (per room for festival, per head for homestays). Decisions:
+- **Place** (a property) has **Rooms** (name, sleeps, price, photos). One calendar per room, shared by Calm Shade and
+  every event. **Event** (APPA Art Fest = first) = places join for its dates; during it guests pay room price +
+  ₹2,000 ticket per guest per night.
+- **Pricing: per room per night for 2, plus a price per extra adult** — for every place (Calmshet included).
+- **Invites: any approved host, 3 invite links per place per year**, sent on WhatsApp; one join form (place + rooms);
+  server-stored. Replaces "Become a host / Have an invite?", the separate festival List-your-stay form, and the
+  browser-only Grove codes. Grove points/vouching parked until after launch.
+- **Karthik approves every new place before guests see it.**
+- **Calmshet festival rooms = the same rooms as the Calm Shade stays** → one Place "Calmshet" with its rooms.
