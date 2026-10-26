@@ -776,13 +776,24 @@ function default_logos() {
   foreach (['KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
   foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com']] as [$nm,$u])
     $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
+  foreach (LOGO_PARTNERS_2610 as $k => $nm) $l[] = ['id'=>'p'.($k + 1),'name'=>$nm,'group'=>'partner','img'=>'','url'=>''];
   return $l;
 }
+/* partners added by Karthik on 26 Oct 2026; merged once into a logo list the desk had already saved */
+const LOGO_PARTNERS_2610 = ['Sangoma Records','Chabb','Wobble Creative'];
 /* Private sponsor pipeline: desk only, never in the public state. */
 const SPONSOR_TIERS = ['Title','Chapter','Venue','Big night','Event or stage','Artist','In-kind / barter','Other'];
 const SPONSOR_STATUS = ['Lead','In talks','Proposal sent','Confirmed','Paid','Not now'];
 function sponsors() { $j = json_decode((string)kv_get('sponsors'), true); return is_array($j) ? $j : []; }
-function logos() { $v = kv_get('logos'); if ($v === null) return default_logos(); $j = json_decode((string)$v, true); return is_array($j) ? $j : []; }
+function logos() {
+  $v = kv_get('logos'); if ($v === null) return default_logos(); $j = json_decode((string)$v, true); $j = is_array($j) ? $j : [];
+  if (kv_get('logos_m2610') === null) {
+    $have = array_map(fn($l)=>strtolower((string)($l['name'] ?? '')), $j);
+    foreach (LOGO_PARTNERS_2610 as $k => $nm) if (!in_array(strtolower($nm), $have, true)) $j[] = ['id'=>'p2610'.($k + 1),'name'=>$nm,'group'=>'partner','img'=>'','url'=>''];
+    kv_set('logos', json_encode($j)); kv_set('logos_m2610', '1');
+  }
+  return $j;
+}
 /* Confirmed festival bookings this device holds tickets for, plus their venue stamps */
 function passport_data($tickets) {
   db()->exec('CREATE TABLE IF NOT EXISTS fest_stamps (ref VARCHAR(16) NOT NULL, spot VARCHAR(20) NOT NULL, at BIGINT NOT NULL)');
@@ -1475,7 +1486,7 @@ switch ($a) {
       $url = (string)($it['url'] ?? ''); if ($url !== '' && !preg_match('#^https?://[^\s"<>]{3,300}$#', $url)) $url = '';
       $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'group'=>$g,'img'=>$img,'url'=>$url];
     }
-    kv_set('logos', json_encode($items));
+    kv_set('logos', json_encode($items)); kv_set('logos_m2610', '1');
     out(['ok'=>true,'logos'=>$items]);
   }
 
