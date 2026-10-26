@@ -775,7 +775,7 @@ function default_schedule() {
 const LOGO_GROUPS = ['curator','venue','partner','sponsor'];
 function default_logos() {
   $l = []; $i = 0;
-  foreach (['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative','Marvel','Maval Comics'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
+  foreach (['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative','Maval Comics'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
   foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com'],['Cloud Base','']] as [$nm,$u])
     $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
   $l[] = ['id'=>'p'.(++$i),'name'=>'Calm Shade','group'=>'partner','img'=>'','url'=>'https://calmshade.in'];
@@ -783,8 +783,8 @@ function default_logos() {
 }
 /* added by Karthik on 26 Oct 2026 to "the people behind APPA" (curators), Sangoma Records first; merged once into a logo list the desk had already saved */
 const LOGO_PARTNERS_2610 = ['Sangoma Records','Chabb','Wobble Creative'];
-/* added by Karthik on 26 Oct 2026 (evening): Cloud Base (venue), Marvel, Maval Comics (curators), Calm Shade (partner) */
-const LOGO_ADD_2610C = [['Marvel','curator'],['Maval Comics','curator'],['Cloud Base','venue'],['Calm Shade','partner']];
+/* added by Karthik on 26 Oct 2026 (evening): Cloud Base (venue), Maval Comics (curator), Calm Shade (partner); "Marvel" was a mistake and is taken out once (m2610d) */
+const LOGO_ADD_2610C = [['Maval Comics','curator'],['Cloud Base','venue'],['Calm Shade','partner']];
 /* Private sponsor pipeline: desk only, never in the public state. */
 const SPONSOR_TIERS = ['Title','Chapter','Venue','Big night','Event or stage','Artist','In-kind / barter','Other'];
 const SPONSOR_STATUS = ['Lead','In talks','Proposal sent','Confirmed','Paid','Not now'];
@@ -808,6 +808,10 @@ function logos() {
       array_splice($j, $at, 0, [['id'=>'q2610'.($k + 1),'name'=>$nm,'group'=>$g,'img'=>'','url'=>$nm === 'Calm Shade' ? 'https://calmshade.in' : '']]);
     }
     kv_set('logos', json_encode($j)); kv_set('logos_m2610c', '1');
+  }
+  if (kv_get('logos_m2610d') === null) {
+    $j = array_values(array_filter($j, fn($l)=>strtolower(trim((string)($l['name'] ?? ''))) !== 'marvel'));
+    kv_set('logos', json_encode($j)); kv_set('logos_m2610d', '1');
   }
   return $j;
 }
@@ -1503,7 +1507,7 @@ switch ($a) {
       $url = (string)($it['url'] ?? ''); if ($url !== '' && !preg_match('#^https?://[^\s"<>]{3,300}$#', $url)) $url = '';
       $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'group'=>$g,'img'=>$img,'url'=>$url];
     }
-    kv_set('logos', json_encode($items)); kv_set('logos_m2610b', '1'); kv_set('logos_m2610c', '1');
+    kv_set('logos', json_encode($items)); kv_set('logos_m2610b', '1'); kv_set('logos_m2610c', '1'); kv_set('logos_m2610d', '1');
     out(['ok'=>true,'logos'=>$items]);
   }
 

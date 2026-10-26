@@ -19,7 +19,7 @@ export const tsc = a => (a <= V0 ? a * TS : a <= V1 ? T0 + (a - V0) * TS_V : T1 
 export const untsc = t => (t <= T0 ? t / TS : t <= T1 ? V0 + (t - T0) / TS_V : V1 + (t - T1) / TS);
 export const TOUR_LENGTH = tsc(99);
 // the order venues rise in during the opening, and when the tour's camera visits each one (seconds)
-const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'theeya', 'lefarm', 'shambhala', 'hidden'];
+const ORDER = ['checkin', 'island', 'calmshet', 'camp', 'purrom', 'company', 'cloudbase', 'theeya', 'lefarm', 'shambhala', 'hidden'];
 // the tour goes round the lake clockwise on screen from Calmshet (Venue 1): Purrom, The Company Theatre, Theeya, Le Farm,
 // Shambhala last (Venue 6), then Hidden APPA, then the lake lights up at the island cinema.
 // The light turns as the camera leaves Shambhala (dusk from 60.5, twilight by Hidden APPA at ~64); the installation lights and

@@ -12,14 +12,14 @@ const A = (x, y, o) => ({ x, y, ...o });   // absolute plan position
 // venue centres
 const C = {
   shambhala: [20, 64], lefarm: [60, 108], calmshet: [24, 40], purrom: [48, 18], company: [73, 17],
-  theeya: [111, 68], checkin: [89, 91], island: [75, 59], camp: [34, 86], hidden: [118, 114]
+  theeya: [111, 68], cloudbase: [117, 37], checkin: [89, 91], island: [75, 59], camp: [34, 86], hidden: [118, 114]
 };
 
 export const SITE = {
   name: 'APPA Art Fest 2027',
   bounds: [0, 0, 130, 130],
   ground: { color: '#A3B56C', edge: '#7A5A3A', depth: 2.2, ppm: 12,
-    fields: [ { x: 124, y: 40, w: 10, d: 12, rot: 0.1, color: '#C8B56A' }, { x: 84, y: 118, w: 10, d: 8, rot: -0.1, color: '#B9C36E' },
+    fields: [ { x: 84, y: 118, w: 10, d: 8, rot: -0.1, color: '#B9C36E' },
       { x: 39, y: 112, w: 8, d: 12, rot: 0.05, color: '#D2BF72' }, { x: 8, y: 90, w: 9, d: 10, rot: 0.1, color: '#BFCB74' }, { x: 96, y: 14, w: 10, d: 8, rot: 0.15, color: '#C8B56A' } ] },
   sky: { day: ['#F6ECDA', '#EAD9BE'], dusk: ['#F7C88C', '#E48F6C'], night: ['#1E2A55', '#3D4A80'] },
   water: [ { id: 'lake', color: '#4FA6D2', dusk: '#86A9D8', night: '#1D2A55', shallow: '#8FD0DE', shore: '#DCCB9C', shoreWidth: 2.6,
@@ -37,7 +37,7 @@ export const SITE = {
     { id: 's-lefarm', width: 1.8, pts: [[62, 81.5], [61, 96]] }, { id: 's-camp2', width: 1.8, pts: [[40, 75], [36, 78]] },
     { id: 's-shambhala', width: 1.8, pts: [[36, 62], [28, 64]] }, { id: 's-calmshet', width: 2.2, pts: [[39, 46], [34, 44]] },
     { id: 's-purrom', width: 1.8, pts: [[55, 34], [50, 31]] }, { id: 's-company', width: 1.8, pts: [[74, 28.5], [73, 26]] },
-    { id: 's-theeya', width: 1.8, pts: [[102, 59], [108, 57.5]] },
+    { id: 's-theeya', width: 1.8, pts: [[102, 59], [108, 57.5]] }, { id: 's-cloudbase', width: 1.8, pts: [[104.6, 40], [110, 39]] },
     { id: 's-camp', width: 1.6, pts: [[52, 81], [46, 85], [40, 87]] },
     { id: 'trail-hidden', width: 1.2, color: '#CDB889', pts: [[104, 100], [110, 106], [115, 110]] }
   ],
@@ -108,6 +108,19 @@ export const SITE = {
       A(64.5, 14, { type: 'bush', r: 0.9, color: '#E0457B' }),
       A(66.5, 11.6, { type: 'easels', count: 2, gap: 1.4, seed: 2 }), A(66.5, 8.5, { type: 'house', w: 4.4, d: 3, h: 2.4, color: '#F2E6D0', roof: '#C0452E' }), A(86.5, 18, { type: 'sculpture', kind: 'crystal', h: 2.6, glow: '#E8C8FF' }),
       A(73, 18.6, { type: 'sign', w: 3.4, text: 'THE COMPANY THEATRE\nFESTIVAL', size: 56 }), A(79.6, 19.7, { type: 'mats', count: 5, r: 1.5, seed: 3 }), A(64, 19.8, { type: 'sculpture', kind: 'totem', h: 2.4 }), A(83, 25.9, { type: 'sign', w: 2.4, text: 'THEATRE\nWORKSHOPS' }) ] },
+    // CLOUD BASE (26 Oct 2026): a show venue on the east shore with a café, restaurants and a bar. A stone cottage under a
+    // tiled roof with a teal fascia and a long verandah (the café), a giant tiered concrete wall behind the stage area, and a
+    // view over the lake from the benches. No stays.
+    { id: 'cloudbase', n: 7, name: 'Cloud Base', center: C.cloudbase, rect: [106, 20, 129, 52], floor: '#C8AE86', structures: [
+      A(0, 0, { type: 'wall', id: 'cb', pts: [[107, 25.5], [113, 24], [118.5, 22.5], [127.5, 23.5], [128, 34]], hs: [3, 5, 7, 7], glow: '#FFCFA0' }),
+      A(118, 28, { type: 'stage', w: 9, d: 4.5, h: 0.9, truss: 5, glow: '#9ADFFF', beam: '#C8EEFF' }),
+      A(118, 31, { type: 'audience', area: 'cloudbase', face: Math.PI / 2, r0: 2, r1: 7, count: 40 }),
+      A(112, 45, { type: 'house', w: 6.5, d: 4.2, h: 3, pitch: 1.9, color: '#5F5B57', roof: '#6E4A3C' }),
+      A(118.5, 45.5, { type: 'pergola', w: 6, d: 3.6, h: 2.4, raised: 0.3, tables: 3, roof: '#8D8C86', post: '#4F4B47' }),
+      A(124.5, 41, { type: 'stall', rot: -Math.PI / 2, color: '#2F7F7A', seed: 4 }), A(124.5, 44, { type: 'stall', rot: -Math.PI / 2, color: '#B5523B', seed: 5 }),
+      A(109.5, 50.5, { type: 'bench', rot: 0.3 }), A(113, 51, { type: 'bench' }), A(108, 47.5, { type: 'bush', r: 1.2, color: '#3F7A3A' }),
+      A(112.5, 40.2, { type: 'sign', w: 2.8, text: 'CLOUD BASE', neon: '#9ADFFF', size: 70 }),
+      A(0, 0, { type: 'fairy', pts: [[107.5, 36], [111, 42], [121.5, 42.5]] }) ] },
     // 7 · THEEYA CREATION VILLAGE: a red-walled house under a low dark roof, a timber pergola deck for long meals,
     // bougainvillea. Run by a singer, so a vocal stage under the trees.
     { id: 'theeya', n: 4, name: 'Theeya Creation Village', center: C.theeya, rect: [100, 56, 126, 80], floor: '#CFB98C', structures: [
@@ -160,6 +173,6 @@ export const SITE = {
   // named standing spots the cast can walk between (area centres are added automatically)
   spots: {},
   // where each area's pin floats, and the camera framing for areas (size in metres across)
-  view: { overview: { x: 65, y: 65, size: 150, fit: ['shambhala', 'lefarm', 'calmshet', 'purrom', 'company', 'theeya', 'checkin'] }, area: { size: 30 } }
+  view: { overview: { x: 65, y: 65, size: 150, fit: ['cloudbase', 'shambhala', 'lefarm', 'calmshet', 'purrom', 'company', 'theeya', 'checkin'] }, area: { size: 30 } }
 };
 export const VENUE_CENTRES = C;
