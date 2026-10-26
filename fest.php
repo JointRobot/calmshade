@@ -195,7 +195,7 @@ function units() {
       $u[$r['id']] = ['name'=>$pl['name'].' · '.$r['name'],'place'=>$pid,'placeName'=>$pl['name'],'room'=>$r['name'],'rooms'=>$r['count'],'cap'=>$r['max'],'base'=>$r['base'],'kind'=>'room',
         'rate'=>$r['rate'],'rateWe'=>$r['rateWe'],'extra'=>$r['extra'],'extraWe'=>$r['extraWe'],'own'=>$pl['own'],'upiReady'=>$pl['upi'] !== '','blurb'=>$pl['blurb']];
   }
-  $u['tents'] = ['name'=>'VIP Tent Village','place'=>'tents','placeName'=>'VIP Tent Village','room'=>'Tent for two','rooms'=>max(0,(int)$S['tents']),'cap'=>2,'base'=>2,'kind'=>'tent',
+  $u['tents'] = ['name'=>'VIP Tent Village','place'=>'tents','placeName'=>'VIP Tent Village','room'=>'Tent for two','rooms'=>TENTS_OPEN,'open'=>true,'cap'=>2,'base'=>2,'kind'=>'tent',
     'rate'=>(int)$S['tentNight'],'rateWe'=>(int)$S['tentNight'],'extra'=>(int)$S['extraGuest'],'extraWe'=>(int)$S['extraGuest'],'own'=>true,'upiReady'=>false,'blurb'=>'Tents inside the festival grounds · pick Le Farm, Theeya or The Company Theatre'];
   foreach (listings_all() as $l) {
     if ($l['status'] !== 'approved') continue;
@@ -230,6 +230,8 @@ function pay_split($ownerBy, $total) {
   }
   return ['calm'=>max(0, $calm),'hosts'=>$hosts];
 }
+/* tents are open-ended (Karthik, 26 Oct 2026): as many are set up as are booked */
+const TENTS_OPEN = 999;
 const ADV = [
   'kayak'     => ['name'=>'Kayaking','slots'=>['07:00','07:20','07:40','08:00','08:20','08:40','09:00','09:20','09:40','15:30','15:50','16:10','16:30','16:50','17:10','17:30','17:50','18:10']],
   'paraglide' => ['name'=>'Tandem paragliding','slots'=>['wind']],
@@ -745,7 +747,7 @@ function cs_public_prop($l, $host) {
 }
 
 /* ---------- APPA Art Passport: venue stamps + timetable ---------- */
-const STAMP_SPOTS = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala','square','island'];
+const STAMP_SPOTS = ['calmshet','purrom','ctheatre','theeya','lefarm','shambhala','cloudbase','square','island']; /* Cloud Base: show venue with restaurants and a bar, no stays (26 Oct 2026) */
 function kv_get($k) { $st = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $st->execute([$k]); $r = $st->fetch(); return $r ? $r['v'] : null; }
 function kv_set($k, $v) { db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$k]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$k, $v]); }
 function stamp_secret() { $s = kv_get('stamp_secret'); if (!$s) { $s = bin2hex(random_bytes(24)); kv_set('stamp_secret', $s); } return $s; }
@@ -773,13 +775,16 @@ function default_schedule() {
 const LOGO_GROUPS = ['curator','venue','partner','sponsor'];
 function default_logos() {
   $l = []; $i = 0;
-  foreach (['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
-  foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com']] as [$nm,$u])
+  foreach (['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative','Marvel','Maval Comics'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
+  foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com'],['Cloud Base','']] as [$nm,$u])
     $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
+  $l[] = ['id'=>'p'.(++$i),'name'=>'Calm Shade','group'=>'partner','img'=>'','url'=>'https://calmshade.in'];
   return $l;
 }
 /* added by Karthik on 26 Oct 2026 to "the people behind APPA" (curators), Sangoma Records first; merged once into a logo list the desk had already saved */
 const LOGO_PARTNERS_2610 = ['Sangoma Records','Chabb','Wobble Creative'];
+/* added by Karthik on 26 Oct 2026 (evening): Cloud Base (venue), Marvel, Maval Comics (curators), Calm Shade (partner) */
+const LOGO_ADD_2610C = [['Marvel','curator'],['Maval Comics','curator'],['Cloud Base','venue'],['Calm Shade','partner']];
 /* Private sponsor pipeline: desk only, never in the public state. */
 const SPONSOR_TIERS = ['Title','Chapter','Venue','Big night','Event or stage','Artist','In-kind / barter','Other'];
 const SPONSOR_STATUS = ['Lead','In talks','Proposal sent','Confirmed','Paid','Not now'];
@@ -795,6 +800,14 @@ function logos() {
     $rest = $lastCur < 0 ? array_merge($tail, $rest) : array_merge(array_slice($rest, 0, $lastCur + 1), $tail, array_slice($rest, $lastCur + 1));
     $j = array_merge([$get('Sangoma Records', 0)], $rest);
     kv_set('logos', json_encode($j)); kv_set('logos_m2610b', '1');
+  }
+  if (kv_get('logos_m2610c') === null) {
+    foreach (LOGO_ADD_2610C as $k => [$nm, $g]) {
+      if (in_array(strtolower($nm), array_map(fn($l)=>strtolower((string)($l['name'] ?? '')), $j), true)) continue;
+      $at = count($j); foreach ($j as $x => $l) if (($l['group'] ?? '') === $g) $at = $x + 1;
+      array_splice($j, $at, 0, [['id'=>'q2610'.($k + 1),'name'=>$nm,'group'=>$g,'img'=>'','url'=>$nm === 'Calm Shade' ? 'https://calmshade.in' : '']]);
+    }
+    kv_set('logos', json_encode($j)); kv_set('logos_m2610c', '1');
   }
   return $j;
 }
@@ -1490,7 +1503,7 @@ switch ($a) {
       $url = (string)($it['url'] ?? ''); if ($url !== '' && !preg_match('#^https?://[^\s"<>]{3,300}$#', $url)) $url = '';
       $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'group'=>$g,'img'=>$img,'url'=>$url];
     }
-    kv_set('logos', json_encode($items)); kv_set('logos_m2610b', '1');
+    kv_set('logos', json_encode($items)); kv_set('logos_m2610b', '1'); kv_set('logos_m2610c', '1');
     out(['ok'=>true,'logos'=>$items]);
   }
 

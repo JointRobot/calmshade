@@ -123,10 +123,10 @@ c,j=call('admin',None,True); b=[x for x in j['bookings'] if x['ref']==jeep['ref'
 c,j=call('state'); sc=j['schedule']
 check('default programme',len(sc)==27 and sum(1 for i in sc if i['kind']=='dhol')==13 and all(i['date']>='2027-02-12' for i in sc),len(sc))
 check('exhibits run all festival',sum(1 for i in sc if i['kind']=='exhibit' and i['to']=='2027-03-19')==10,[i['title'] for i in sc if i['kind']=='exhibit'])
-check('default logos',len(j['logos'])==15 and {l['group'] for l in j['logos']}=={'curator','venue'} and [l['name'] for l in j['logos'] if l['group']=='curator']==['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative'],j['logos'][:3])
+check('default logos',len(j['logos'])==19 and [l['name'] for l in j['logos'] if l['group']=='curator']==['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative','Marvel','Maval Comics'] and [l['name'] for l in j['logos'] if l['group']=='venue'][-1]=='Cloud Base' and [l['name'] for l in j['logos'] if l['group']=='partner']==['Calm Shade'],j['logos'])
 # a list the desk saved before 26 Oct gets the three partners merged in once
 import sqlite3; _c=sqlite3.connect('fest-data/fest.sqlite'); _c.execute('INSERT INTO fest_kv (k,v) VALUES (?,?)',('logos',json.dumps([{'id':'c1','name':'KRUNK','group':'curator','img':'','url':''}]))); _c.commit(); _c.close()
-c,j=call('state'); check('old saved list: Sangoma first, all curators',[l['name'] for l in j['logos']]==['Sangoma Records','KRUNK','Chabb','Wobble Creative'] and {l['group'] for l in j['logos']}=={'curator'},j['logos'])
+c,j=call('state'); check('old saved list: Sangoma first, then the 26 Oct additions',[l['name'] for l in j['logos']]==['Sangoma Records','KRUNK','Chabb','Wobble Creative','Marvel','Maval Comics','Cloud Base','Calm Shade'],j['logos'])
 c,j=call('schedule_set',{'items':[{'date':'2027-02-14','to':'2027-02-16','time':'19:00','spot':'calmshet','title':'Run','kind':'workshop'},{'date':'2027-02-14','to':'2027-02-10','spot':'','title':'Bad range','kind':'zzz'}]},True)
 T={i['title']:i for i in j.get('schedule',[])}; check('schedule ranges',c==200 and T['Run']['to']=='2027-02-16' and T['Run']['kind']=='workshop' and T['Bad range']['to']=='' and T['Bad range']['kind']=='show' and T['Run']['access']=='all',j)
 c,j=call('schedule_set',{'items':[]}); check('schedule needs desk',c in (401,403),c)
@@ -153,6 +153,7 @@ c,j=call('state'); check('part booking holds its room',j['occ']['lefarm.bedroom'
 c,j=call('host_paid',{'ref':two['ref'],'place':'lefarm','paid':True},True); check('owner paid -> confirmed',c==200 and j['status']=='confirmed' and j['pay']['hosts'][0]['utr']=='556677889900',(c,j))
 c,j=call('quote',{'stays':[],'passes':[],'extras':[{'id':'pickup','qty':1}]}); check('extras need a booking',not j['ok'],j)
 c,j=call('quote',{'stays':[{**st('tents','2027-02-20',1),'spot':'theeya'}],'passes':[]}); x=j['quote']; check('tent: tickets included, spot kept',x['total']==9000 and x['items'][0]['spot']=='theeya',x)
+c,j=call('state'); tu=[u for u in j['units'] if u['id']=='tents'] if isinstance(j.get('units'),list) else [j['units'].get('tents')]; check('tents are open-ended',tu and tu[0]['rooms']==999 and tu[0].get('open') is True,tu)
 c,j=call('quote',{'stays':[st('purrom.chickoo','2027-02-16',1,1,5)],'passes':[]}); check('chickoo max 4',not j['ok'],j)
 # a booking made before rooms existed (unit = the whole venue) still blocks rooms
 import sqlite3; _d=sqlite3.connect('fest-data/fest.sqlite'); _d.execute("INSERT INTO fest_bookings (ref,token,status,created_at,tier,total,payout,items,guest) VALUES ('APPA-OLD01','t','confirmed',?,'',1,1,?,'{}')",(int(time.time()),json.dumps([{'kind':'stay','unit':'calmshet','nights':['2027-03-09'],'rooms':2,'guests':2}]))); _d.commit(); _d.close()
