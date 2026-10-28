@@ -775,7 +775,7 @@ function default_schedule() {
 const LOGO_GROUPS = ['curator','venue','partner','sponsor'];
 function default_logos() {
   $l = []; $i = 0;
-  foreach (['Sangoma Records','KRUNK','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative','Maval Comics'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
+  foreach (['Sangoma Records','Bandish Project','Vani','National Permit','Animela','Wench Film Festival','Chabb','Wobble Creative','Maval Comics'] as $nm) $l[] = ['id'=>'c'.(++$i),'name'=>$nm,'group'=>'curator','img'=>'','url'=>''];
   foreach ([['Calmshet','https://calmshet.com'],['Purrom','https://purrom.com'],['The Company Theatre','https://thecompanytheatre.net'],['Theeya Creation Village',''],['Le Farm','https://lefarm.in'],['Shambhala by the Lake','https://shambalabythelake.com'],['Cloud Base','']] as [$nm,$u])
     $l[] = ['id'=>'v'.(++$i),'name'=>$nm,'group'=>'venue','img'=>'','url'=>$u];
   $l[] = ['id'=>'p'.(++$i),'name'=>'Calm Shade','group'=>'partner','img'=>'','url'=>'https://calmshade.in'];
@@ -812,6 +812,11 @@ function logos() {
   if (kv_get('logos_m2610d') === null) {
     $j = array_values(array_filter($j, fn($l)=>strtolower(trim((string)($l['name'] ?? ''))) !== 'marvel'));
     kv_set('logos', json_encode($j)); kv_set('logos_m2610d', '1');
+  }
+  /* KRUNK taken off the logo panel by Karthik on 28 Oct 2026 (once; the desk can add it back) */
+  if (kv_get('logos_m2610e') === null) {
+    $j = array_values(array_filter($j, fn($l)=>strtolower(trim((string)($l['name'] ?? ''))) !== 'krunk'));
+    kv_set('logos', json_encode($j)); kv_set('logos_m2610e', '1');
   }
   return $j;
 }
@@ -1507,7 +1512,7 @@ switch ($a) {
       $url = (string)($it['url'] ?? ''); if ($url !== '' && !preg_match('#^https?://[^\s"<>]{3,300}$#', $url)) $url = '';
       $items[] = ['id'=>preg_replace('/[^a-z0-9]/i', '', (string)($it['id'] ?? '')) ?: bin2hex(random_bytes(4)),'name'=>$nm,'group'=>$g,'img'=>$img,'url'=>$url];
     }
-    kv_set('logos', json_encode($items)); kv_set('logos_m2610b', '1'); kv_set('logos_m2610c', '1'); kv_set('logos_m2610d', '1');
+    kv_set('logos', json_encode($items)); kv_set('logos_m2610b', '1'); kv_set('logos_m2610c', '1'); kv_set('logos_m2610d', '1'); kv_set('logos_m2610e', '1');
     out(['ok'=>true,'logos'=>$items]);
   }
 

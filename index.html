@@ -2901,7 +2901,7 @@ ${kb()}`;}
     return `<div class="pan"><div class="ph2"><h3>Logos · the people behind APPA</h3></div><div class="pb">
       <p class="nt2" style="margin:0 0 12px">These appear under the public timetable. Sponsors appear beside the APPA logo at the top. A logo without a picture shows its name.</p>
       <form class="fx-grid2" onsubmit="event.preventDefault();CS.pp('lgSave')" style="align-items:end">
-        <div class="fx-field"><label for="lg-n">Name</label><input id="lg-n" value="${esc(f.name)}" maxlength="60" oninput="CS.pp('lgF','name',this.value)" placeholder="KRUNK" required></div>
+        <div class="fx-field"><label for="lg-n">Name</label><input id="lg-n" value="${esc(f.name)}" maxlength="60" oninput="CS.pp('lgF','name',this.value)" placeholder="Sangoma Records" required></div>
         <div class="fx-field"><label for="lg-g">Shown as</label><select id="lg-g" onchange="CS.pp('lgF','group',this.value)">${LG_GROUPS.map(([k,l])=>`<option value="${k}" ${f.group===k?'selected':''}>${l}</option>`).join('')}</select></div>
         <div class="fx-field"><label for="lg-u">Website (optional)</label><input id="lg-u" type="text" inputmode="url" autocapitalize="off" value="${esc(f.url)}" maxlength="300" oninput="CS.pp('lgF','url',this.value)" placeholder="https://"></div>
         <div class="fx-field"><label for="lg-i">Logo picture (PNG works best)</label><input id="lg-i" type="file" accept="image/png,image/jpeg,image/webp" onchange="CS.pp('lgImg',this.files[0])">${f.img?`<span class="fx-note">Picture added ✓ <button class="fx-x" type="button" onclick="CS.pp('lgF','img','')">remove</button></span>`:''}${LG.busy?'<span class="fx-note">Uploading…</span>':''}</div>
