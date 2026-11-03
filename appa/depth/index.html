@@ -82,8 +82,6 @@ body.vid .vt{position:absolute;left:7%;right:7%;bottom:15%;font:700 56px/1.08 va
 body.vid .vs{position:absolute;left:7%;right:7%;bottom:9.5%;font:400 28px/1.3 var(--body);color:var(--gold);text-shadow:0 2px 16px #000}
 body.vid .vk{position:absolute;left:7%;top:7%;font:600 22px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--ver);text-shadow:0 2px 14px #000}
 </style>
-</head>
-<body>
 
 <div id="app">
   <div id="stage" role="img" aria-label="Interactive 3D point-cloud scene. Drag to look around."></div>
@@ -563,7 +561,20 @@ function showMarket() {
 }
 
 /* ---- scene 2: your own photo, video or camera ---- */
-function viewFor(cl) { goal.target.set(0, cl && cl.G.H > 3.2 ? -0.5 : -0.35, 0); goal.r = (cl && cl.G.H > 3.2 ? 7.6 : 6.4) * NR(); goal.th = 0.12; goal.ph = 1.52; }
+var fillFrame = true;
+/* On a tall phone screen a wide picture leaves black bars above and below; "fill" moves in until the picture covers the whole frame (the sides are cropped), which is also what Record 8 s films. */
+function viewFor(cl) {
+  var st = $('stage'), asp = st.clientWidth / (st.clientHeight || 1), G = cl ? cl.G : { W: 4, H: 3 }, rh = G.H * 1.05 / 0.828, rw = G.W * 1.05 / (0.828 * asp), fill = fillFrame && asp < 1;
+  goal.r = Math.max(1.6, fill ? Math.min(rh, rw) : Math.max(rh, rw) * 1.08); goal.target.set(0, fill ? 0 : -0.3, 0); goal.th = 0.12; goal.ph = 1.52;
+}
+function stallSrc(c) {
+  var asp = c.width / c.height; if (asp >= 0.85) return c;
+  var W = 1200, H = 900, o = document.createElement('canvas'); o.width = W; o.height = H; var g = o.getContext('2d'), pw = Math.round(H * asp), sx = Math.round((W - pw) / 2);
+  g.fillStyle = '#0c0a09'; g.fillRect(0, 0, W, H); g.drawImage(c, sx, 0, pw, H);
+  function panel(x, w, cx, cy, z) { var rw = c.width / z, rh = rw * H / w; if (rh > c.height) { rh = c.height; rw = rh * w / H; } var x0 = clamp(cx * c.width - rw / 2, 0, c.width - rw), y0 = clamp(cy * c.height - rh / 2, 0, c.height - rh); g.drawImage(c, x0, y0, rw, rh, x, 0, w, H); }
+  panel(0, sx, 0.5, 0.3, 1.8); panel(sx + pw, W - sx - pw, 0.5, 0.7, 3);
+  g.fillStyle = '#e8b44f'; g.fillRect(sx - 2, 0, 3, H); g.fillRect(sx + pw - 1, 0, 3, H); return o;
+}
 function stopVideo() {
   if (vid) { try { vid.pause(); } catch (e) {} vid.srcObject = null; vid.removeAttribute('src'); vid = null; }
   if (own.stream) { own.stream.getTracks().forEach(function (t) { t.stop(); }); own.stream = null; }
@@ -573,7 +584,7 @@ function stopVideo() {
 function setOwnCloud(cl) { var sc = holder.own; sc.children.slice().forEach(function (c) { sc.remove(c); }); if (own.cloud) own.cloud.points.geometry.dispose(); own.cloud = cl; sc.add(cl.points); applyFX(); }
 function ownFrom(src, w, h, flip) { var cl = buildCloud(src, w, h, yours.dm, 'own', flip); setOwnCloud(cl); viewFor(cl); return cl; }
 function rebuildYours() {
-  if (yours.kind === 'image' && yours.canvas) { setPainting(paints[6], yours.canvas, yours.canvas.width, yours.canvas.height, yours.dm, 'yours'); ownFrom(yours.canvas, yours.canvas.width, yours.canvas.height, false); applyFX(); }
+  if (yours.kind === 'image' && yours.canvas) { var ss = stallSrc(yours.canvas); setPainting(paints[6], ss, ss.width, ss.height, yours.dm, 'yours'); ownFrom(yours.canvas, yours.canvas.width, yours.canvas.height, false); applyFX(); }
   else { if (own.cloud) own.cloud.dm = yours.dm; if (paints[6] && paints[6].cl && yours.kind === 'video') paints[6].cl.dm = yours.dm; }
 }
 function afterAdd(msg) {
@@ -587,7 +598,7 @@ function handleFile(f) {
     loadImg(u).then(function (im) {
       stopVideo(); var m = Math.min(1, 1000 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * m); c.height = Math.round(im.naturalHeight * m);
       c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); yours.kind = 'image'; yours.canvas = c; yours.has = true;
-      setPainting(paints[6], c, c.width, c.height, yours.dm, 'yours'); ownFrom(c, c.width, c.height, false);
+      var ss = stallSrc(c); setPainting(paints[6], ss, ss.width, ss.height, yours.dm, 'yours'); ownFrom(c, c.width, c.height, false);
       afterAdd(['Done. Tap the picture, or turn on Touch to push the dots. It is also hanging in the Exhibition.', 'Your painting is hanging at the end of the lane. It is also in Your own.']);
     }, function () { toast('That picture could not be opened.'); });
   } else if (/^video\//.test(f.type)) {
@@ -605,11 +616,11 @@ function useCamera() {
   }, function () { toast('The camera is not available here, or it was not allowed.'); });
 }
 function buildOwnChips() {
-  chipsEl.innerHTML = ''; chipsEl.appendChild(addLabel('chip primary', '+ Add photo or video')); chipsEl.appendChild(mkChip('Use camera', false, useCamera)); depthChips();
+  chipsEl.innerHTML = ''; chipsEl.appendChild(addLabel('chip primary', '+ Add photo or video')); chipsEl.appendChild(mkChip('Use camera', false, useCamera)); var fb = mkChip(fillFrame ? 'Frame: fill' : 'Frame: whole', fillFrame, function () { fillFrame = !fillFrame; fb.textContent = fillFrame ? 'Frame: fill' : 'Frame: whole'; fb.setAttribute('aria-pressed', fillFrame ? 'true' : 'false'); viewFor(own.cloud); }); chipsEl.appendChild(fb); depthChips();
 }
 function showOwn() {
   mode = 'own'; U.uMul.value = 1; current = holder.own; focus = -1;
-  setCfg({ thMin: -0.9, thMax: 0.9, phMin: 1.2, phMax: 1.9, rMin: 2.2, rMax: 11, sway: 0.22 });
+  setCfg({ thMin: -0.9, thMax: 0.9, phMin: 1.2, phMax: 1.9, rMin: 1.4, rMax: 11, sway: 0.22 });
   caption('Your own', 'Add any photo or video and watch it turn into light. Tap to send a shockwave. Switch Touch to “push the dots” and drag a finger through the picture. Anything you add also hangs in the Exhibition.', 'Your files stay on your phone. Nothing is uploaded.');
   chipsEl.innerHTML = ''; ctlEl.innerHTML = ''; buildOwnChips(); buildFx(); playSliders(); ctlEl.appendChild(mkReset(function () { viewFor(own.cloud); }));
   if (!own.cloud) { if (!paints.length) { market = market || buildMarket(); buildPaintings(); } var c = makePainting(0, 400, 300); ownFrom(c, 400, 300, false); }
