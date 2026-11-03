@@ -156,6 +156,7 @@ function renderPanel() {
     if (o.journey) { pBody.appendChild(el('div', 'label', 'Your festival journey')); const ol = el('ol', 'journey'); o.journey.forEach(s => ol.appendChild(el('li', '', s))); pBody.appendChild(ol); }
     pBody.appendChild(row(btn(COPY.tourLabel, startTour, 'primary')));
     if (COPY.join) { pBody.appendChild(el('div', 'label', 'Join the festival')); const jl = el('div', 'alist'); for (const k of Object.keys(COPY.join)) jl.appendChild(btn(COPY.join[k].button, () => goJoin(k))); pBody.appendChild(jl); }
+    { const tt = el('a', 'cbtn', 'See the timetable'); tt.id = 'ttlink'; tt.href = '../timetable/'; pBody.appendChild(row(tt)); }
     return; }
   if (A.spot) { const sp = COPY.spots[A.spot]; const a = sp.area ? COPY.areas[sp.area] : null;
     pBody.append(el('div', 'eyebrow', a ? a.name : COPY.title), el('h2', '', sp.title), el('p', 'note', sp.text)); if (sp.programme) { pBody.appendChild(el('div', 'label', 'On the programme here')); const ul = el('ul', 'offer'); sp.programme.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); } controls(sp.controls, pBody);
