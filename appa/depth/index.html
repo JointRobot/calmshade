@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>APPA in Depth · APPA Art Fest 2027</title>
+<meta name="description" content="Turn any photo or video into glowing 3D light. Walk the APPA Art Fest 2027 painting exhibition, watch the dhol leave echoes, then add your own painting. 12 Feb to 19 Mar 2027, Kamshet.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="APPA Art Fest 2027">
+<meta property="og:title" content="APPA in depth: play with art as light">
+<meta property="og:description" content="Turn any photo or video into glowing 3D light. Push the dots, send a shockwave, save your picture.">
+<meta property="og:url" content="https://calmshade.in/appa/depth/"><meta property="og:image" content="https://calmshade.in/appa/depth/og.jpg">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0c0a09">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Mukta:wght@400;600&display=swap" rel="stylesheet">
+<style>
+html{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: one full-bleed 3D stage, a slim top bar with scene tabs, a bottom control sheet. Dark by choice: the work is light on black. */
+:root{
+  --bg:#0c0a09; --ink:#f4ebd9; --mute:#b3a893; --ver:#ee5a30; --gold:#e8b44f; --teal:#3fb7a6;
+  --line:rgba(244,235,217,.18); --panel:rgba(16,13,11,.78);
+  --display:'Fraunces',Georgia,serif; --body:'Mukta',system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--body);overflow:hidden}
+#app{position:relative;height:100%;width:100%;overflow:hidden}
+#stage{position:absolute;inset:0;touch-action:none;cursor:grab}
+#stage:active{cursor:grabbing}
+#stage canvas{display:block;width:100%;height:100%}
+.top{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;gap:10px;padding:12px max(16px,env(safe-area-inset-left,0px)) 0 max(16px,env(safe-area-inset-left,0px));pointer-events:none}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand b{font:700 20px/1 var(--display);letter-spacing:.01em}
+.brand span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ver)}
+.tabs{display:flex;gap:6px;pointer-events:auto;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tabs::-webkit-scrollbar{display:none}
+button{font:inherit;color:inherit}
+.tab,.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;white-space:nowrap;backdrop-filter:blur(6px)}
+.tab[aria-selected=true]{background:var(--ver);border-color:var(--ver);color:#1a0d08;font-weight:600}
+.chip[aria-pressed=true]{border-color:var(--gold);color:var(--gold)}
+.tab:focus-visible,.chip:focus-visible,input:focus-visible,.reset:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.sheet{position:absolute;left:0;right:0;bottom:0;padding:14px max(16px,env(safe-area-inset-left,0px)) 14px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(12,10,9,.95) 55%,rgba(12,10,9,0));display:flex;flex-direction:column;gap:10px}
+.cap h2{margin:0;font:700 19px/1.2 var(--display);text-wrap:balance}
+.cap p{margin:4px 0 0;color:var(--mute);max-width:62ch}
+.cap .note{font-size:12.5px;color:var(--gold);margin-top:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.ctl{display:flex;gap:16px 22px;flex-wrap:wrap;align-items:center}
+.ctl label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mute)}
+.ctl input[type=range]{width:120px;accent-color:var(--ver)}
+.ctl .tog{display:flex;align-items:center;gap:6px;cursor:pointer}
+.reset{margin-left:auto;background:none;border:1px solid var(--line);border-radius:6px;padding:4px 10px;color:var(--mute);cursor:pointer;font-size:13px}
+.hint{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:64px;font-size:12px;color:var(--mute);pointer-events:none;text-align:right}
+#err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--mute)}
+@media (max-width:520px){.cap p{font-size:13px;line-height:1.4}.cap .note{font-size:12px}.sheet{background:linear-gradient(to top,rgba(12,10,9,.97) 72%,rgba(12,10,9,0));gap:8px}.hint{display:none}.ctl input[type=range]{width:96px}}
+
+.chip.primary{background:var(--ver);border-color:var(--ver);color:#1a0d08;font-weight:600}
+.chip.on{border-color:var(--gold);color:var(--gold)}
+label.chip{display:inline-flex;align-items:center}
+input[type=file].vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+label.tab{display:inline-block;cursor:pointer}
+.tab.add{background:var(--ver);border-color:var(--ver);color:#1a0d08;font-weight:600}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(238,90,48,.65)}100%{box-shadow:0 0 0 14px rgba(238,90,48,0)}}
+.tab.add.nudge{animation:pulse 1.8s ease-out 4}
+@media (max-width:520px){.tab{padding:7px 12px;font-size:14px}.opt{display:none}}
+#fxrow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+#fxrow::-webkit-scrollbar{display:none}
+.fold{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:12px;color:var(--mute);cursor:pointer}
+.sheet.min .cap p,.sheet.min .cap .note,.sheet.min .ctl{display:none}
+.sheet{padding-top:30px}
+#modal{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px max(16px,env(safe-area-inset-left,0px));background:rgba(8,6,5,.9);z-index:5;text-align:center}
+#modal.on{display:flex}
+#modal img,#modal video{max-width:100%;max-height:68%;border-radius:6px;border:1px solid var(--line)}
+#modal p{margin:0;color:var(--mute);max-width:46ch;font-size:13px}
+#modal .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#modal a.chip,#modal button.chip{text-decoration:none;color:var(--ink)}
+#toast{position:absolute;left:50%;top:96px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13px;display:none;z-index:4;max-width:86%;text-align:center}
+#vo{display:none}
+body.vid .top,body.vid .sheet,body.vid .hint,body.vid .fold{display:none}
+body.vid #vo{display:block;position:absolute;inset:0;pointer-events:none}
+body.vid .vt{position:absolute;left:7%;right:7%;bottom:15%;font:700 56px/1.08 var(--display);text-shadow:0 2px 24px #000}
+body.vid .vs{position:absolute;left:7%;right:7%;bottom:9.5%;font:400 28px/1.3 var(--body);color:var(--gold);text-shadow:0 2px 16px #000}
+body.vid .vk{position:absolute;left:7%;top:7%;font:600 22px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--ver);text-shadow:0 2px 14px #000}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="stage" role="img" aria-label="Interactive 3D point-cloud scene. Drag to look around."></div>
+  <div id="err">This page needs WebGL to draw the scenes. Try another browser.</div>
+  <div class="top">
+    <div class="brand"><b>APPA in depth</b><span>12 Feb – 19 Mar 2027 · Kamshet</span></div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </div>
+  <div class="hint">Drag to look around · tap a painting · scroll or pinch to zoom</div>
+  <div class="sheet">
+    <div class="cap"><h2 id="h"></h2><p id="p"></p><div class="note" id="n"></div></div>
+    <div class="chips" id="chips"></div>
+    <div id="fxrow"></div>
+    <div class="ctl" id="ctl"></div>
+    <button class="fold" id="fold" type="button">Less</button>
+  </div>
+  <div id="vo"><div class="vk"></div><div class="vt"></div><div class="vs"></div></div>
+  <div id="toast" role="status"></div>
+  <input type="file" id="file" class="vh" accept="image/*,video/*" aria-label="Add your painting">
+  <div id="modal"><div id="mbody"></div><p id="mnote"></p><div class="row" id="mrow"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (!window.THREE) { $('err').style.display = 'flex'; return; }
+var THREE = window.THREE;
+var renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+} catch (e) { $('err').style.display = 'flex'; return; }
+renderer.setClearColor(0x0b0908, 1);
+$('stage').appendChild(renderer.domElement);
+
+/* ---------- small helpers ---------- */
+function rng(seed) { var s = seed >>> 0; return function () { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function hex(c) { return [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255]; }
+
+/* One point material for everything: soft glowing dots, sized in world units so they hold their shape as you zoom.
+   The playground effects (wind, ripples, melt, scatter, shockwaves, the finger brush, colour grades) all live in the vertex shader, so they cost nothing per frame on the CPU. */
+var shocks = [new THREE.Vector3(0, 0, -100), new THREE.Vector3(0, 0, -100), new THREE.Vector3(0, 0, -100), new THREE.Vector3(0, 0, -100)], brushV = new THREE.Vector3(0, 0, 0);
+var dead = [new THREE.Vector3(0, 0, -100), new THREE.Vector3(0, 0, -100), new THREE.Vector3(0, 0, -100), new THREE.Vector3(0, 0, -100)], zero = new THREE.Vector3(0, 0, 0);
+var sh = { uTime: { value: 0 }, uScale: { value: 600 }, uMul: { value: 1 } };
+/* U = still scenery (no effects). UF = the paintings and your own picture, which the playground effects act on. */
+var U = { uTime: sh.uTime, uScale: sh.uScale, uMul: sh.uMul, uWind: { value: 0 }, uWave: { value: 0 }, uMelt: { value: 0 }, uScatter: { value: 0 }, uGrade: { value: 0 }, uShock: { value: dead }, uBrush: { value: zero } };
+var UF = { uTime: sh.uTime, uScale: sh.uScale, uMul: sh.uMul, uWind: { value: 0 }, uWave: { value: 0 }, uMelt: { value: 0 }, uScatter: { value: 0 }, uGrade: { value: 0 }, uShock: { value: shocks }, uBrush: { value: brushV } };
+var VERT = [
+  'attribute vec3 aCol;attribute float aSize;attribute float aSeed;',
+  'uniform float uTime,uScale,uMul,uWind,uWave,uMelt,uScatter,uGrade;uniform vec3 uShock[4];uniform vec3 uBrush;varying vec3 vCol;',
+  'float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}',
+  'void main(){',
+  ' vec3 p=position;vec3 c=aCol;float l=dot(c,vec3(.3,.59,.11));float n=h(position.xy*17.3);float glow=0.;',
+  ' p.x+=uWind*sin(uTime*1.7+p.y*2.4+p.x*.7)*.05*(1.+n*.5);p.z+=uWind*sin(uTime*1.3+p.x*3.1)*.06;p.y+=uWind*sin(uTime*2.1+p.x*4.)*.015;',
+  ' float d0=length(p.xy);p.z+=uWave*sin(d0*7.-uTime*2.6)*.14*exp(-d0*.28);',
+  ' float drip=uMelt*(1.-l)*(.1+.5*fract(n*9.+uTime*.12));p.y-=drip*(.5+.5*sin(uTime*.7+n*6.));',
+  ' for(int i=0;i<4;i++){float age=uTime-uShock[i].z;if(age>0.&&age<3.){vec2 dv=position.xy-uShock[i].xy;float dd=length(dv);float k=1.-age/3.;float ring=exp(-pow((dd-age*2.4)*2.6,2.));p.z+=ring*.7*k;p.xy+=dv/(dd+.001)*ring*.1*k;glow+=ring*k;}}',
+  ' vec2 bd=position.xy-uBrush.xy;float bl=length(bd);float f=uBrush.z*exp(-bl*bl*14.);p.xy+=bd/(bl+.001)*f*.32;p.z+=f*.5;glow+=f*.6;',
+  ' p+=uScatter*vec3(h(position.xy*3.1)-.5,h(position.yx*5.7)-.5,h(position.xy*9.3)-.5)*2.2*(1.+.15*sin(uTime+n*6.));',
+  ' if(uGrade>.5&&uGrade<1.5){c=mix(vec3(.08,.03,.12),mix(vec3(.93,.34,.18),vec3(1.,.8,.35),smoothstep(.45,.9,l)),smoothstep(.05,.5,l));}',
+  ' else if(uGrade>1.5&&uGrade<2.5){c=vec3(l)*vec3(1.,.95,.85)*1.2;}',
+  ' else if(uGrade>2.5){c=mix(vec3(l),c,2.2);c*=.55+.7*vec3(.5+.5*sin(position.y*3.+uTime),.5+.5*sin(position.y*3.+2.1+uTime),.5+.5*sin(position.y*3.+4.2+uTime));}',
+  ' vCol=c*(1.+glow*1.6);',
+  ' vec4 mv=modelViewMatrix*vec4(p,1.);float tw=aSeed>.5?1.+.4*sin(uTime*2.2+aSeed*40.):1.;',
+  ' gl_PointSize=max(1.2,aSize*uMul*(1.+glow*.8)*tw*uScale/-mv.z);gl_Position=projectionMatrix*mv;}'
+].join('\n');
+var pointMat = new THREE.ShaderMaterial({
+  uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexShader: VERT,
+  fragmentShader: 'varying vec3 vCol;void main(){float d=length(gl_PointCoord-.5);if(d>.5)discard;float a=smoothstep(.5,.1,d);gl_FragColor=vec4(vCol*a,a);}'
+});
+
+var pointMatFx = new THREE.ShaderMaterial({ uniforms: UF, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexShader: VERT, fragmentShader: pointMat.fragmentShader });
+function Buf() { this.p = []; this.c = []; this.s = []; this.t = []; }
+Buf.prototype.add = function (x, y, z, r, g, b, size, tw) {
+  this.p.push(x, y, z); this.c.push(r, g, b); this.s.push(size); this.t.push(tw ? 1 + Math.random() * 0.9 : 0);
+};
+Buf.prototype.count = function () { return this.p.length / 3; };
+Buf.prototype.points = function (dynamic, mat) {
+  var g = new THREE.BufferGeometry();
+  var pa = new THREE.BufferAttribute(new Float32Array(this.p), 3), ca = new THREE.BufferAttribute(new Float32Array(this.c), 3);
+  if (dynamic) { pa.setUsage(THREE.DynamicDrawUsage); ca.setUsage(THREE.DynamicDrawUsage); }
+  g.setAttribute('position', pa); g.setAttribute('aCol', ca);
+  g.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(this.s), 1));
+  g.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(this.t), 1));
+  var m = new THREE.Points(g, mat || pointMat); m.frustumCulled = false; return m;
+};
+function line(buf, a, b, n, col, size, tw) {
+  for (var i = 0; i <= n; i++) { var t = i / n; buf.add(lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t), col[0], col[1], col[2], size, tw); }
+}
+
+/* ---------- orbit camera ---------- */
+var camera = new THREE.PerspectiveCamera(45, 1, 0.05, 200);
+var view = { target: new THREE.Vector3(), r: 8, th: 0, ph: 1.2, drag: { x: 0, y: 0 } };
+var goal = { target: new THREE.Vector3(), r: 8, th: 0, ph: 1.2 };
+var cfg = { thMin: -9, thMax: 9, phMin: 0.35, phMax: 1.75, rMin: 1.2, rMax: 30, sway: 0.0 };
+var lastTouch = 0;
+function NR() { var st = document.getElementById('stage'); return st.clientWidth / (st.clientHeight || 1) < 0.8 ? 1.45 : 1; }
+function snap() { view.target.copy(goal.target); view.r = goal.r; view.th = goal.th; view.ph = goal.ph; view.drag.x = 0; view.drag.y = 0; }
+var focus = -1, paints = [], mode = '', own = { cloud: null, video: null, stream: null, url: null }; var stage = $('stage'), ptrs = {}, pinch0 = 0, tap = null, brush = { down: false, k: 0 }, si = 0, T = 0, fxMode = false, playMode = false;
+var ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hitV = new THREE.Vector3(), ndc = new THREE.Vector2();
+var inv = new THREE.Matrix4(), lray = new THREE.Ray(), lplane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hitL = new THREE.Vector3();
+/* where a finger lands on a picture, in the picture's own flat coordinates (the effects work in that space) */
+function hitOn(mesh, cx, cy) { var r = stage.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); mesh.updateMatrixWorld(true); inv.copy(mesh.matrixWorld).invert(); lray.copy(ray.ray).applyMatrix4(inv); return lray.intersectPlane(lplane, hitL) ? hitL : null; }
+function activePic() { if (mode === 'own') return own.cloud ? { mesh: own.cloud.points, G: own.cloud.G } : null; if (mode === 'market' && focus >= 0 && paints[focus] && paints[focus].mesh) return paints[focus]; return null; }
+function worldXY(cx, cy) { var P = activePic(); return P ? hitOn(P.mesh, cx, cy) : null; }
+function tapScene(cx, cy) {
+  var P = activePic(), w = P && worldXY(cx, cy);
+  if (w && Math.abs(w.x) < P.G.W / 2 + 0.2 && Math.abs(w.y) < P.G.H / 2 + 0.2) { shock(w.x, w.y); return; }
+  if (mode !== 'market') return;
+  var best = -1, bd = 1e9;
+  paints.forEach(function (Q, i) { if (!Q.mesh) return; var h = hitOn(Q.mesh, cx, cy); if (h && Math.abs(h.x) < Q.G.W / 2 + 0.2 && Math.abs(h.y) < Q.G.H / 2 + 0.2) { var d = camera.position.distanceTo(Q.pos); if (d < bd) { bd = d; best = i; } } });
+  if (best >= 0 && best !== focus) marketGo(best);
+}
+function shock(x, y) { shocks[si % 4].set(x, y, T); si++; }
+function dist2() { var k = Object.keys(ptrs); if (k.length < 2) return 0; var a = ptrs[k[0]], b = ptrs[k[1]]; return Math.hypot(a.x - b.x, a.y - b.y); }
+stage.addEventListener('pointerdown', function (e) {
+  stage.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; pinch0 = dist2(); lastTouch = performance.now();
+  if (Object.keys(ptrs).length === 1) { tap = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false }; if (fxMode && playMode) { brush.down = true; var w = worldXY(e.clientX, e.clientY); if (w) { brushV.x = w.x; brushV.y = w.y; } } }
+  else { tap = null; brush.down = false; }
+});
+stage.addEventListener('pointermove', function (e) {
+  var p = ptrs[e.pointerId]; if (!p) return;
+  var n = Object.keys(ptrs).length;
+  if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 7) tap.moved = true;
+  if (n >= 2) { var d = dist2(); if (pinch0 > 0 && d > 0) goal.r = clamp(goal.r * pinch0 / d, cfg.rMin, cfg.rMax); pinch0 = d; }
+  else if (fxMode && playMode) { var w = worldXY(e.clientX, e.clientY); if (w) { brushV.x = w.x; brushV.y = w.y; } }
+  else { goal.th = clamp(goal.th - (e.clientX - p.x) * 0.006, cfg.thMin, cfg.thMax); goal.ph = clamp(goal.ph - (e.clientY - p.y) * 0.005, cfg.phMin, cfg.phMax); }
+  p.x = e.clientX; p.y = e.clientY; lastTouch = performance.now();
+});
+function up(e) {
+  if (tap && !tap.moved && performance.now() - tap.t < 380 && (mode === 'market' || mode === 'own')) tapScene(e.clientX, e.clientY);
+  tap = null; brush.down = false; delete ptrs[e.pointerId]; pinch0 = dist2();
+}
+stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', function (e) { tap = null; brush.down = false; delete ptrs[e.pointerId]; pinch0 = dist2(); });
+stage.addEventListener('wheel', function (e) { e.preventDefault(); goal.r = clamp(goal.r * Math.exp(e.deltaY * 0.0012), cfg.rMin, cfg.rMax); lastTouch = performance.now(); }, { passive: false });
+
+function placeCamera(sx) {
+  var th = view.th + sx, ph = view.ph, r = view.r;
+  camera.position.set(view.target.x + r * Math.sin(ph) * Math.sin(th), view.target.y + r * Math.cos(ph), view.target.z + r * Math.sin(ph) * Math.cos(th));
+  camera.lookAt(view.target);
+}
+function updateCamera(t, dt) {
+  var k = 1 - Math.pow(0.0015, dt);
+  view.target.lerp(goal.target, k); view.r = lerp(view.r, goal.r, k); view.th = lerp(view.th, goal.th, k); view.ph = lerp(view.ph, goal.ph, k);
+  var idle = performance.now() - lastTouch > 2500 && !reduceMotion && !(playMode && fxMode);
+  var sway = idle ? Math.sin(t * 0.22) * cfg.sway : 0;
+  view.drag.x = lerp(view.drag.x, sway, 1 - Math.pow(0.2, dt));
+  placeCamera(view.drag.x);
+}
+
+/* ================= SCENE 1: the painting market ================= */
+var PAINTINGS = [
+  { name: 'Dusk over the lake', pal: ['#f2b25a', '#d9532c', '#fff1c4', '#2a2f3d'] },
+  { name: 'Dhol night', pal: ['#1b1226', '#4a1730', '#ee5a30', '#e8b44f'] },
+  { name: 'Forest strokes', pal: ['#c9d9a0', '#2f5a3a', '#f6e7a8', '#16301f'] },
+  { name: 'Lamps at the mela', pal: ['#0f1a3a', '#241a4a', '#e8b44f', '#ee5a30'] },
+  { name: 'Water lines', pal: ['#0f3a4a', '#3fb7a6', '#f1e6c8', '#0b2530'] },
+  { name: 'Ridge in mist', pal: ['#f0c9a0', '#8a5a6a', '#fff2dc', '#2d2a45'] },
+  { name: 'Your painting', pal: null }
+];
+function placeholder(c, g, w, h) {
+  var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#2a1d15'); gr.addColorStop(1, '#120d0a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#e8b44f'; g.lineWidth = h * 0.016; g.setLineDash([h * 0.05, h * 0.035]); g.strokeRect(w * 0.06, h * 0.08, w * 0.88, h * 0.84); g.setLineDash([]);
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#f6d58a'; g.font = '700 ' + Math.round(h * 0.4) + 'px Georgia, serif'; g.fillText('+', w / 2, h * 0.42);
+  g.fillStyle = '#f4ebd9'; g.font = '700 ' + Math.round(h * 0.09) + 'px Georgia, serif'; g.fillText('Your painting here', w / 2, h * 0.74);
+  g.fillStyle = '#b3a893'; g.font = Math.round(h * 0.052) + 'px Georgia, serif'; g.fillText('tap + Add your painting', w / 2, h * 0.85);
+  return c;
+}
+function makePainting(i, w, h) {
+  var c = document.createElement('canvas'); c.width = w; c.height = h; var g = c.getContext('2d'); var R = rng(900 + i * 31); var P = PAINTINGS[i].pal;
+  if (i === 6) return placeholder(c, g, w, h);
+  var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, P[0]); gr.addColorStop(1, P[1]); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  var k;
+  if (i === 0) {
+    g.fillStyle = P[2]; g.beginPath(); g.arc(w * 0.62, h * 0.42, h * 0.13, 0, 7); g.fill();
+    for (k = 0; k < 26; k++) { g.fillStyle = 'rgba(255,241,196,' + (0.55 - k * 0.018) + ')'; var ww = (0.28 - k * 0.006) * w * (0.5 + R()); g.fillRect(w * 0.62 - ww / 2, h * (0.58 + k * 0.012), ww, h * 0.006); }
+    g.fillStyle = P[3]; g.beginPath(); g.moveTo(0, h); g.lineTo(0, h * 0.72); for (k = 0; k <= 12; k++) g.lineTo(w * k / 12, h * (0.66 + 0.1 * R())); g.lineTo(w, h); g.fill();
+  } else if (i === 1) {
+    for (k = 0; k < 16; k++) { var cx = R() * w, cy = R() * h, rr = h * (0.08 + R() * 0.18); for (var q = 0; q < 6; q++) { g.strokeStyle = q % 2 ? P[2] : P[3]; g.lineWidth = rr * 0.09; g.beginPath(); g.arc(cx, cy, rr * (1 - q * 0.16), 0, 7); g.stroke(); } }
+    g.fillStyle = 'rgba(232,180,79,.7)'; for (k = 0; k < 40; k++) g.fillRect(R() * w, R() * h, 2 + R() * 3, 2 + R() * 3);
+  } else if (i === 2) {
+    var sg = g.createRadialGradient(w * 0.5, 0, 2, w * 0.5, 0, h * 0.9); sg.addColorStop(0, P[2]); sg.addColorStop(1, 'rgba(246,231,168,0)'); g.fillStyle = sg; g.fillRect(0, 0, w, h);
+    for (k = 0; k < 150; k++) { var x = R() * w, y0 = h * (0.25 + R() * 0.5); g.strokeStyle = 'rgba(' + (20 + R() * 40 | 0) + ',' + (70 + R() * 90 | 0) + ',' + (40 + R() * 40 | 0) + ',.85)'; g.lineWidth = 1.5 + R() * 5; g.beginPath(); g.moveTo(x, y0); g.lineTo(x + (R() - 0.5) * 8, h); g.stroke(); }
+  } else if (i === 3) {
+    for (k = 0; k < 170; k++) { var x2 = R() * w, y2 = R() * h, r2 = 3 + R() * 11, cc = R() < 0.55 ? P[2] : (R() < 0.5 ? P[3] : '#f4ebd9'); var rg = g.createRadialGradient(x2, y2, 0, x2, y2, r2 * 2.2); rg.addColorStop(0, cc); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.beginPath(); g.arc(x2, y2, r2 * 2.2, 0, 7); g.fill(); }
+  } else if (i === 4) {
+    for (k = 0; k < 22; k++) { g.strokeStyle = k % 3 === 0 ? P[2] : (k % 3 === 1 ? P[1] : P[3]); g.lineWidth = 2 + R() * 4; g.beginPath(); for (var xx = 0; xx <= w; xx += 6) { var yy = h * (k + 1) / 23 + Math.sin(xx * 0.03 + k * 0.7) * h * 0.04 + Math.sin(xx * 0.011 + k) * h * 0.03; xx ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); }
+  } else {
+    for (k = 0; k < 6; k++) { g.fillStyle = k % 2 ? P[1] : P[3]; g.globalAlpha = 0.45 + k * 0.09; g.beginPath(); g.moveTo(0, h); g.lineTo(0, h * (0.3 + k * 0.1)); for (var m = 0; m <= 10; m++) g.lineTo(w * m / 10, h * (0.25 + k * 0.1 + 0.1 * R())); g.lineTo(w, h); g.fill(); var fg = g.createLinearGradient(0, h * (0.3 + k * 0.1), 0, h * (0.55 + k * 0.1)); fg.addColorStop(0, 'rgba(255,242,220,.45)'); fg.addColorStop(1, 'rgba(255,242,220,0)'); g.globalAlpha = 1; g.fillStyle = fg; g.fillRect(0, h * (0.3 + k * 0.1), w, h * 0.25); }
+    g.globalAlpha = 1;
+  }
+  return c;
+}
+
+var STALLS = [[-3.4, -5, Math.PI / 2], [-3.4, 0, Math.PI / 2], [-3.4, 5, Math.PI / 2], [3.4, -5, -Math.PI / 2], [3.4, 0, -Math.PI / 2], [3.4, 5, -Math.PI / 2], [0, -9.2, 0]];
+var CLOTH = ['#c9822f', '#2f7d74', '#3d4a8a', '#a8452c', '#6a8a3a', '#8a5a7a', '#e8b44f'];
+function buildMarket() {
+  var sc = new THREE.Scene(), b = new Buf(), R = rng(7), foci = [];
+  // dusty lane
+  for (var i = 0; i < 12000; i++) { var x = (R() - 0.5) * 14, z = (R() - 0.5) * 26 - 2, v = 0.1 + R() * 0.18; b.add(x, 0, z, v * 1.1, v * 0.8, v * 0.45, 0.02); }
+  // lamp strings across the lane
+  for (var zi = -10.5; zi <= 7; zi += 3.5) {
+    for (var s = 0; s <= 90; s++) { var u = s / 90, lx = lerp(-4.2, 4.2, u), ly = 3.2 - 0.55 * Math.sin(u * Math.PI); b.add(lx, ly, zi, 0.5, 0.4, 0.2, 0.014); }
+    for (var bl = 0; bl <= 14; bl++) { var u2 = bl / 14; b.add(lerp(-4.2, 4.2, u2), 3.2 - 0.55 * Math.sin(u2 * Math.PI) - 0.05, zi, 1.0, 0.72, 0.3, 0.1, true); }
+  }
+  // stalls
+  STALLS.forEach(function (S, si) {
+    var X = S[0], Z = S[1], Y = S[2], cy = Math.cos(Y), sy = Math.sin(Y);
+    function W(lx, ly, lz) { return [X + lx * cy + lz * sy, ly, Z - lx * sy + lz * cy]; }
+    function A(lx, ly, lz, c, sz, tw) { var p = W(lx, ly, lz); b.add(p[0], p[1], p[2], c[0], c[1], c[2], sz, tw); }
+    var wood = [0.62, 0.42, 0.22], cloth = hex(parseInt(CLOTH[si].slice(1), 16)), n;
+    [[-1.25, -0.7], [1.25, -0.7], [-1.25, 0.7], [1.25, 0.7]].forEach(function (pp) { for (n = 0; n <= 70; n++) A(pp[0], n / 70 * 2.4, pp[1], wood, 0.022); });
+    for (var gx = 0; gx < 64; gx++) for (var gz = 0; gz < 20; gz++) {
+      var lx = (gx / 63 - 0.5) * 2.9, t = gz / 19, lz = lerp(0.9, -0.9, t), ly = lerp(2.25, 2.75, t), stripe = Math.floor((lx + 1.45) / 0.29) % 2;
+      var c = stripe ? [0.93, 0.35, 0.18] : [0.95, 0.9, 0.78]; A(lx, ly, lz, c, 0.024);
+    }
+    for (n = 0; n <= 40; n++) { var fx = (n / 40 - 0.5) * 2.9; A(fx, 2.2 + (n % 2) * 0.05, 0.92, [0.95, 0.9, 0.78], 0.02); }
+    for (var tx = 0; tx < 46; tx++) for (var tz = 0; tz < 16; tz++) A((tx / 45 - 0.5) * 2.4, 0.85, (tz / 15 - 0.5) * 1.2, cloth, 0.022);
+    for (var dx = 0; dx < 46; dx++) for (var dy = 0; dy < 10; dy++) { var sh = 0.55 + 0.45 * Math.sin(dx * 0.9); A((dx / 45 - 0.5) * 2.4, 0.85 - dy * 0.075, 0.6, [cloth[0] * sh, cloth[1] * sh, cloth[2] * sh], 0.02); }
+    // the painting, lifted from flat colour into relief
+    var cx0 = 0, cy0 = 1.62;
+    var gold = [0.95, 0.72, 0.3];
+    for (n = 0; n <= 80; n++) { var u3 = n / 80; A(-0.83 + u3 * 1.66, cy0 + 0.62, -0.13, gold, 0.03, true); A(-0.83 + u3 * 1.66, cy0 - 0.62, -0.13, gold, 0.03, true); }
+    for (n = 0; n <= 60; n++) { var u4 = n / 60; A(-0.83, cy0 - 0.62 + u4 * 1.24, -0.13, gold, 0.03, true); A(0.83, cy0 - 0.62 + u4 * 1.24, -0.13, gold, 0.03, true); }
+    for (n = 0; n <= 24; n++) A(-0.4 + n / 24 * 0.8, cy0 - 0.72, -0.1, [0.95, 0.9, 0.78], 0.02);
+    for (n = 0; n < 4; n++) A(-1.0 + n * 0.66, 2.12, 0.8, [1, 0.74, 0.32], 0.1, true);
+    var cc = W(0, cy0, -0.15); foci.push({ c: cc, yaw: Y });
+  });
+  sc.add(b.points());
+  return { scene: sc, foci: foci };
+}
+
+/* ================= SCENE 2: photographs and videos lifted into depth ================= */
+function loadImg(src) { return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = src; }); }
+function gridFor(sw, sh, ms) { ms = ms || 240; var a = sw / sh, w, h, lo = Math.round(ms / 4); if (a >= 1) { w = ms; h = Math.max(lo, Math.round(ms / a)); } else { h = ms; w = Math.max(lo, Math.round(ms * a)); } var m = Math.max(w, h); return { w: w, h: h, W: w / m * 4, H: h / m * 4 }; }
+/* Depth is a guess made from the picture itself: three ways of guessing, chosen per picture. */
+function depthInto(d, w, h, dm, nr) {
+  for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
+    var o = (j * w + i) * 4, r = d[o] / 255, g = d[o + 1] / 255, b = d[o + 2] / 255, lum = 0.3 * r + 0.59 * g + 0.11 * b, yn = j / h, xn = i / w, near;
+    if (dm === 'portrait') { var dx = (xn - 0.5) * 1.7, dy = (yn - 0.5) * 1.3, rr = Math.min(1, Math.hypot(dx, dy)); near = 0.12 + 0.7 * Math.pow(1 - rr, 1.3) + (lum - 0.5) * 0.14; }
+    else if (dm === 'relief') { near = 0.12 + 0.78 * lum; }
+    else {
+      near = 0.1 + 0.72 * Math.pow(yn, 1.1) + (0.5 - lum) * 0.2;
+      var sky = clamp((b - r) * 5, 0, 1) * clamp((lum - 0.45) * 3, 0, 1) * (yn < 0.6 ? 1 : 0); if (sky > 0.05) near = lerp(near, 0.0, sky);
+    }
+    nr[j * w + i] = clamp(near, 0, 1);
+  }
+}
+function boxBlur(nr, w, h, passes) {
+  for (var pass = 0; pass < passes; pass++) { var tmp = new Float32Array(nr); for (var y = 2; y < h - 2; y++) for (var x = 2; x < w - 2; x++) { var acc = 0; for (var dy = -2; dy <= 2; dy++) for (var dx = -2; dx <= 2; dx++) acc += tmp[(y + dy) * w + x + dx]; nr[y * w + x] = acc / 25; } }
+}
+function cv2d(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return { c: c, g: c.getContext('2d', { willReadFrequently: true }) }; }
+function drawSrc(g, src, w, h, flip) { g.save(); if (flip) { g.translate(w, 0); g.scale(-1, 1); } g.drawImage(src, 0, 0, w, h); g.restore(); }
+/* A cloud is a grid of dots; still pictures get a smoothed depth once, moving pictures re-read every few frames. */
+function buildCloud(src, sw, sh, dm, key, flip, ms, size) {
+  var G = gridFor(sw, sh, ms), a = cv2d(G.w, G.h); drawSrc(a.g, src, G.w, G.h, flip);
+  var d = a.g.getImageData(0, 0, G.w, G.h).data, nr = new Float32Array(G.w * G.h);
+  depthInto(d, G.w, G.h, dm, nr); boxBlur(nr, G.w, G.h, 3);
+  var b = new Buf(), mask = [];
+  for (var j = 0; j < G.h; j++) for (var i = 0; i < G.w; i++) {
+    var o = (j * G.w + i) * 4, r = d[o] / 255, g = d[o + 1] / 255, bl = d[o + 2] / 255, lum = 0.3 * r + 0.59 * g + 0.11 * bl, xn = i / G.w, yn = j / G.h, idx = b.count();
+    var mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), sat = mx ? (mx - mn) / mx : 0;
+    b.add((i / (G.w - 1) - 0.5) * G.W, (0.5 - j / (G.h - 1)) * G.H, (nr[j * G.w + i] - 0.5) * 1.5, clamp(r * 1.2, 0, 1), clamp(g * 1.2, 0, 1), clamp(bl * 1.2, 0, 1), size || 0.0225);
+    if (key === 'wall' && sat < 0.2 && lum > 0.38 && lum < 0.85 && yn > 0.2 && yn < 0.58 && xn > 0.12) mask.push({ i: idx, u: xn, v: yn, l: lum });
+  }
+  var pts = b.points(true, pointMatFx), cl = { points: pts, G: G, mask: mask, base: new Float32Array(b.c), a: a, dm: dm, flip: !!flip, key: key, last: 0 };
+  var tw = Math.max(16, Math.round(G.w / 5)), th = Math.max(12, Math.round(G.h / 5)); cl.t = cv2d(tw, th); cl.b = cv2d(G.w, G.h);
+  return cl;
+}
+function refill(cl, src) {
+  var G = cl.G, d, nr = cl.nr || (cl.nr = new Float32Array(G.w * G.h));
+  drawSrc(cl.a.g, src, G.w, G.h, cl.flip); d = cl.a.g.getImageData(0, 0, G.w, G.h).data;
+  drawSrc(cl.t.g, src, cl.t.c.width, cl.t.c.height, cl.flip); cl.b.g.imageSmoothingEnabled = true; cl.b.g.drawImage(cl.t.c, 0, 0, G.w, G.h);
+  depthInto(cl.b.g.getImageData(0, 0, G.w, G.h).data, G.w, G.h, cl.dm, nr);
+  var P = cl.points.geometry.attributes.position, C = cl.points.geometry.attributes.aCol, pa = P.array, ca = C.array, n = G.w * G.h;
+  for (var k = 0; k < n; k++) { var o = k * 4; pa[k * 3 + 2] = (nr[k] - 0.5) * 1.5; ca[k * 3] = clamp(d[o] / 255 * 1.2, 0, 1); ca[k * 3 + 1] = clamp(d[o + 1] / 255 * 1.2, 0, 1); ca[k * 3 + 2] = clamp(d[o + 2] / 255 * 1.2, 0, 1); }
+  P.needsUpdate = true; C.needsUpdate = true;
+}
+
+/* ================= SCENE 3: dhol player with time echoes ================= */
+function buildDhol() {
+  var sc = new THREE.Scene(), R = rng(21);
+  var SEGS = [
+    ['hip', 'chest', 0.17, 150, 'body'], ['chest', 'neck', 0.1, 30, 'body'], ['neck', 'head', 0.05, 12, 'body'],
+    ['sL', 'eL', 0.05, 26, 'body'], ['eL', 'hL', 0.045, 26, 'body'], ['sR', 'eR', 0.05, 26, 'body'], ['eR', 'hR', 0.045, 26, 'body'],
+    ['hipL', 'kL', 0.07, 30, 'body'], ['kL', 'fL', 0.06, 30, 'body'], ['hipR', 'kR', 0.07, 30, 'body'], ['kR', 'fR', 0.06, 30, 'body'],
+    ['sL', 'sR', 0.06, 18, 'body'], ['hL', 'tL', 0.012, 20, 'stick'], ['hR', 'tR', 0.02, 20, 'stick'],
+    ['drA', 'drB', 0.2, 190, 'drum'], ['drA', 'drA2', 0.22, 40, 'skin'], ['drB', 'drB2', 0.18, 40, 'skin'], ['sL', 'drA', 0.012, 24, 'strap']
+  ];
+  var pts = [], ci = 0;
+  SEGS.forEach(function (s) { for (var n = 0; n < s[3]; n++) { var v = [R() - 0.5, R() - 0.5, R() - 0.5], L = Math.hypot(v[0], v[1], v[2]) || 1; pts.push({ a: s[0], b: s[1], t: R(), r: s[2], o: [v[0] / L, v[1] / L, v[2] / L], k: s[4], rr: R() }); } });
+  var base0 = pts.slice(); for (var rep = 0; rep < 2; rep++) base0.forEach(function (q) { var v3 = [R() - 0.5, R() - 0.5, R() - 0.5], L3 = Math.hypot(v3[0], v3[1], v3[2]) || 1; pts.push({ a: q.a, b: q.b, t: R(), r: q.r, o: [v3[0] / L3, v3[1] / L3, v3[2] / L3], k: q.k, rr: R() }); });
+  for (var n = 0; n < 90; n++) { var an = n / 90 * Math.PI * 2, rj = 0.14 + R() * 0.03; pts.push({ a: 'head', b: 'head', t: 0, r: 0, o: [Math.cos(an) * rj, 0.1 + 0.05 * Math.sin(an * 3), Math.sin(an) * rj], k: 'pheta', rr: R() }); }
+  for (n = 0; n < 60; n++) { var v2 = [R() - 0.5, R() - 0.2, R() - 0.5], L2 = Math.hypot(v2[0], v2[1], v2[2]) || 1; pts.push({ a: 'head', b: 'head', t: 0, r: 0, o: [v2[0] / L2 * 0.11, v2[1] / L2 * 0.12, v2[2] / L2 * 0.11], k: 'head', rr: R() }); }
+  var N = pts.length, MAXE = 24;
+  var buf = new Buf();
+  for (var e = 0; e < MAXE; e++) for (var q = 0; q < N; q++) buf.add(0, -50, 0, 0, 0, 0, 0.03);
+  var cloud = buf.points(true); sc.add(cloud);
+  // stage floor and a measuring box, like an editor's viewport
+  var fb = new Buf(); for (var gx = -6; gx <= 6; gx++) { line(fb, [gx * 0.7, 0, -2.4], [gx * 0.7, 0, 2.4], 36, [0.3, 0.26, 0.2], 0.014); }
+  for (var gz = -3; gz <= 3; gz++) { line(fb, [-4.2, 0, gz * 0.8], [4.2, 0, gz * 0.8], 90, [0.3, 0.26, 0.2], 0.014); }
+  sc.add(fb.points());
+  var bb = new Buf(), bx0 = -4.1, bx1 = 4.1, by1 = 2.4, bz = 1.6, bc = [0.9, 0.85, 0.7];
+  [[bx0, 0, -bz, bx1, 0, -bz], [bx0, by1, -bz, bx1, by1, -bz], [bx0, 0, bz, bx1, 0, bz], [bx0, by1, bz, bx1, by1, bz], [bx0, 0, -bz, bx0, by1, -bz], [bx1, 0, -bz, bx1, by1, -bz], [bx0, 0, bz, bx0, by1, bz], [bx1, 0, bz, bx1, by1, bz], [bx0, 0, -bz, bx0, 0, bz], [bx1, 0, -bz, bx1, 0, bz], [bx0, by1, -bz, bx0, by1, bz], [bx1, by1, -bz, bx1, by1, bz]].forEach(function (L) { line(bb, [L[0], L[1], L[2]], [L[3], L[4], L[5]], 60, [bc[0] * 0.5, bc[1] * 0.5, bc[2] * 0.5], 0.012); });
+  sc.add(bb.points());
+  function pose(t) {
+    var beat = t * Math.PI * 2 * 1.7, sway = Math.sin(beat * 0.5) * 0.07, bob = Math.abs(Math.sin(beat * 0.5)) * 0.04, J = {};
+    J.hip = [sway, 0.98 + bob, 0]; J.chest = [sway * 1.5, 1.5 + bob, 0]; J.neck = [sway * 1.6, 1.64 + bob, 0.02]; J.head = [sway * 1.8, 1.78 + bob, 0.03];
+    J.sL = [-0.2 + sway * 1.5, 1.55 + bob, 0]; J.sR = [0.2 + sway * 1.5, 1.55 + bob, 0];
+    var cr = Math.cos(beat), cl = Math.cos(beat + Math.PI);
+    J.hR = [0.36, 0.98 + 0.3 * (cr * 0.5 + 0.5), 0.34]; J.hL = [-0.34, 1.02 + 0.26 * (cl * 0.5 + 0.5), 0.34];
+    J.eR = [0.5, 1.2 + 0.1 * cr, 0.12]; J.eL = [-0.48, 1.2 + 0.1 * cl, 0.12];
+    J.tR = [J.hR[0] + 0.1, J.hR[1] + 0.14, J.hR[2] + 0.03]; J.tL = [J.hL[0] - 0.12, J.hL[1] + 0.18, J.hL[2] + 0.02];
+    J.hipL = [-0.12, 0.96 + bob, 0]; J.hipR = [0.12, 0.96 + bob, 0];
+    var st = Math.sin(beat * 0.5), lift = 0.16;
+    J.fL = [-0.2, Math.max(0, lift * st), 0.02]; J.fR = [0.2, Math.max(0, -lift * st), 0.02];
+    J.kL = [-0.17, 0.5 + Math.max(0, st) * 0.12, 0.1]; J.kR = [0.17, 0.5 + Math.max(0, -st) * 0.12, 0.1];
+    J.drA = [-0.34 + sway, 0.84, 0.3]; J.drB = [0.34 + sway, 0.84, 0.3]; J.drA2 = [-0.38 + sway, 0.84, 0.3]; J.drB2 = [0.38 + sway, 0.84, 0.3];
+    return { J: J, pulse: Math.pow(Math.max(0, -cr), 5), pulseL: Math.pow(Math.max(0, -cl), 5) };
+  }
+  var COL = { body: [0.95, 0.9, 0.78], head: [1, 0.86, 0.66], pheta: [0.93, 0.35, 0.18], drum: [0.7, 0.2, 0.1], skin: [0.95, 0.82, 0.55], strap: [0.9, 0.7, 0.3], stick: [1, 0.82, 0.4] };
+  var state = { echoes: 8, spread: 0.42, lag: 0.075 };
+  function update(t) {
+    var pa = cloud.geometry.attributes.position, ca = cloud.geometry.attributes.aCol, P = pa.array, C = ca.array, E = Math.round(state.echoes);
+    for (var e = 0; e < MAXE; e++) {
+      var base = e * N * 3;
+      if (e > E) { for (var z = 0; z < N; z++) { P[base + z * 3 + 1] = -50; C[base + z * 3] = C[base + z * 3 + 1] = C[base + z * 3 + 2] = 0; } continue; }
+      var tau = t - e * state.lag, pz = pose(tau), J = pz.J, fade = Math.pow(1 - e / (E + 1), 1.6), xo = -(e * state.spread) + 0.0, hue = e / (E + 1);
+      for (var i = 0; i < N; i++) {
+        var p = pts[i], A = J[p.a], B = J[p.b], k = p.k, o = base + i * 3, x, y, zz;
+        x = A[0] + (B[0] - A[0]) * p.t + p.o[0] * p.r; y = A[1] + (B[1] - A[1]) * p.t + p.o[1] * p.r; zz = A[2] + (B[2] - A[2]) * p.t + p.o[2] * p.r;
+        if (k === 'pheta' || k === 'head') { x = A[0] + p.o[0]; y = A[1] + p.o[1]; zz = A[2] + p.o[2]; }
+        P[o] = x + xo; P[o + 1] = y; P[o + 2] = zz;
+        var c = COL[k], g = fade * (k === 'drum' ? 0.7 + 1.4 * Math.max(pz.pulse, pz.pulseL) : k === 'skin' ? 0.8 + 1.8 * pz.pulse : 0.85);
+        // echoes drift from paper to vermilion to gold, the way a time-sliced trail would
+        var tint = hue * 1.6, rr = c[0], gg = c[1], bl = c[2];
+        if (k !== 'pheta' && k !== 'drum') { rr = lerp(rr, 0.95, Math.min(1, tint)); gg = lerp(gg, 0.42 + 0.3 * Math.max(0, 1 - tint), Math.min(1, tint)); bl = lerp(bl, 0.16, Math.min(1, tint)); }
+        C[o] = rr * g; C[o + 1] = gg * g; C[o + 2] = bl * g;
+      }
+    }
+    pa.needsUpdate = true; ca.needsUpdate = true;
+  }
+  return { scene: sc, update: update, state: state };
+}
+
+/* ================= scene manager + UI ================= */
+var current = null, market = null, dhol = null, marketGo = null, vid = null;
+var FX = { wind: 0, wave: 0, melt: 0, scatter: 0, grade: 0, depth: 1 };
+var GRADES = ['Original', 'Mela night', 'Ink', 'Neon'];
+var yours = { dm: 'relief', kind: '', canvas: null, has: false, camera: false };
+var holder = { own: new THREE.Scene() };
+var tabsEl = $('tabs'), chipsEl = $('chips'), ctlEl = $('ctl'), fxEl = $('fxrow'), sheet = document.querySelector('.sheet');
+var TABS = [['market', 'Exhibition'], ['dhol', 'Dhol echo'], ['own', 'Your own']];
+var VIDEO_MODE = /[?&]video/.test(location.search);
+function NR() { var st = document.getElementById('stage'); return st.clientWidth / (st.clientHeight || 1) < 0.8 ? 1.45 : 1; }
+
+function mkRange(label, min, max, step, val, fn) {
+  var l = document.createElement('label'), s = document.createElement('span'); s.textContent = label; var inp = document.createElement('input');
+  inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step; inp.value = val; inp.id = 'r-' + label.toLowerCase().replace(/\W+/g, '-'); inp.setAttribute('aria-label', label);
+  inp.addEventListener('input', function () { fn(+inp.value); }); l.appendChild(s); l.appendChild(inp); return l;
+}
+function mkTog(label, val, fn) {
+  var l = document.createElement('label'); l.className = 'tog'; var c = document.createElement('input'); c.type = 'checkbox'; c.checked = val; c.id = 'c-' + label.toLowerCase().replace(/\W+/g, '-');
+  c.addEventListener('change', function () { fn(c.checked); }); l.appendChild(c); l.appendChild(document.createTextNode(label)); return l;
+}
+function mkChip(label, pressed, fn) { var b = document.createElement('button'); b.className = 'chip'; b.type = 'button'; b.textContent = label; b.setAttribute('aria-pressed', pressed ? 'true' : 'false'); b.addEventListener('click', fn); return b; }
+function mkReset(fn) { var b = document.createElement('button'); b.className = 'reset'; b.type = 'button'; b.textContent = 'Reset view'; b.addEventListener('click', fn); return b; }
+function caption(h, p, n) { $('h').textContent = h; $('p').textContent = p; $('n').textContent = n || ''; }
+function setCfg(o) { for (var k in cfg) if (k in o) cfg[k] = o[k]; }
+function glowControl(def) { return mkRange('Glow', 0.5, 2, 0.05, def, function (v) { U.uMul.value = v; }); }
+var toastT = 0;
+function toast(msg) { var t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(function () { t.style.display = 'none'; }, 4200); }
+
+
+/* playground: effects act on the paintings and on your own picture; the scenery and the dhol stay as drawn */
+function applyFX() {
+  var on = mode === 'market' || mode === 'own';
+  UF.uWind.value = on ? FX.wind : 0; UF.uWave.value = on ? FX.wave : 0; UF.uMelt.value = on ? FX.melt : 0; UF.uScatter.value = on ? FX.scatter : 0; UF.uGrade.value = on ? FX.grade : 0;
+  fxMode = (mode === 'market' && focus >= 0) || mode === 'own';
+  paints.forEach(function (P) { if (P.mesh) P.mesh.scale.z = P.s * 0.5 * FX.depth; });
+  if (own.cloud) own.cloud.points.scale.z = FX.depth;
+}
+function buildFx() {
+  fxEl.innerHTML = '';
+  function tg(label, key) { var b = mkChip(label, FX[key] > 0, function () { FX[key] = FX[key] > 0 ? 0 : 1; b.setAttribute('aria-pressed', FX[key] > 0 ? 'true' : 'false'); applyFX(); }); fxEl.appendChild(b); }
+  tg('Wind', 'wind'); tg('Ripples', 'wave'); tg('Melt', 'melt');
+  var cb = mkChip('Colour: ' + GRADES[FX.grade], false, function () { FX.grade = (FX.grade + 1) % GRADES.length; cb.textContent = 'Colour: ' + GRADES[FX.grade]; applyFX(); }); fxEl.appendChild(cb);
+  function ptxt() { return playMode ? 'Touch: push the dots' : 'Touch: look around'; }
+  var pb = mkChip(ptxt(), playMode, function () { playMode = !playMode; pb.textContent = ptxt(); pb.setAttribute('aria-pressed', playMode ? 'true' : 'false'); }); fxEl.appendChild(pb);
+  var sv = mkChip('Save picture', false, savePicture); sv.classList.add('primary'); sv.removeAttribute('aria-pressed'); fxEl.appendChild(sv);
+  if (window.MediaRecorder && renderer.domElement.captureStream) { var rc = mkChip('Record 8 s', false, function () { recordClip(rc); }); rc.removeAttribute('aria-pressed'); fxEl.appendChild(rc); }
+}
+function playSliders() {
+  ctlEl.appendChild(mkRange('Depth', 0, 2.2, 0.05, FX.depth, function (v) { FX.depth = v; applyFX(); }));
+  ctlEl.appendChild(mkRange('Scatter', 0, 1, 0.02, FX.scatter, function (v) { FX.scatter = v; applyFX(); }));
+  ctlEl.appendChild(glowControl(1));
+}
+function addLabel(cls, text) { var l = document.createElement('label'); l.className = cls; l.setAttribute('for', 'file'); l.textContent = text; return l; }
+function depthChips() {
+  [['relief', 'Depth: relief'], ['portrait', 'Depth: portrait'], ['scene', 'Depth: landscape']].forEach(function (k) {
+    var c = mkChip(k[1], k[0] === yours.dm, function () { yours.dm = k[0]; rebuildYours(); chipsEl.querySelectorAll('.chip[data-dm]').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.dm === yours.dm ? 'true' : 'false'); }); }); c.dataset.dm = k[0]; chipsEl.appendChild(c);
+  });
+}
+/* ---- save a picture or a short clip, shown in a sheet so it can be pressed and held, saved or shared ---- */
+function closeModal() { $('modal').classList.remove('on'); $('mbody').innerHTML = ''; }
+function showMedia(kind, url, blob, name, note) {
+  var mb = $('mbody'); mb.innerHTML = ''; var el = document.createElement(kind === 'img' ? 'img' : 'video'); el.src = url;
+  if (kind !== 'img') { el.controls = true; el.loop = true; el.muted = true; el.autoplay = true; el.setAttribute('playsinline', ''); } else el.alt = 'Your APPA depth picture';
+  mb.appendChild(el); $('mnote').textContent = note; var row = $('mrow'); row.innerHTML = '';
+  var file; try { file = new File([blob], name, { type: blob.type }); } catch (e) { file = null; }
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) { var sh = mkChip('Share', false, function () { navigator.share({ files: [file], title: 'APPA Art Fest 2027', text: 'Made with APPA in depth: calmshade.in/appa/depth' }).catch(function () {}); }); sh.classList.add('primary'); row.appendChild(sh); }
+  var a = document.createElement('a'); a.className = 'chip'; a.href = url; a.download = name; a.textContent = 'Save'; row.appendChild(a);
+  row.appendChild(mkChip('Close', false, closeModal)); $('modal').classList.add('on');
+}
+function savePicture() {
+  if (!current) return; renderer.render(current, camera);
+  var src = renderer.domElement, w = src.width, h = src.height, c = document.createElement('canvas'); c.width = w; c.height = h; var g = c.getContext('2d');
+  g.drawImage(src, 0, 0);
+  var bh = Math.round(h * 0.075), gr = g.createLinearGradient(0, h - bh * 1.8, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.85)'); g.fillStyle = gr; g.fillRect(0, h - bh * 1.8, w, bh * 1.8);
+  g.fillStyle = '#f4ebd9'; g.font = '700 ' + Math.round(bh * 0.4) + 'px Fraunces, Georgia, serif'; g.fillText('APPA Art Fest 2027', w * 0.04, h - bh * 0.55);
+  g.fillStyle = '#e8b44f'; g.font = '400 ' + Math.round(bh * 0.28) + 'px Mukta, system-ui, sans-serif'; g.fillText('12 Feb – 19 Mar · Kamshet · calmshade.in/appa/depth', w * 0.04, h - bh * 0.16);
+  c.toBlob(function (blob) { if (!blob) { toast('The picture could not be made.'); return; } showMedia('img', URL.createObjectURL(blob), blob, 'appa-in-depth.png', 'Press and hold the picture to save it, or tap Share. Tag #APPAArtFest so we can find it.'); }, 'image/png');
+}
+function recordClip(btn) {
+  var types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'], mt = '', i;
+  for (i = 0; i < types.length; i++) if (MediaRecorder.isTypeSupported(types[i])) { mt = types[i]; break; }
+  var rec; try { rec = new MediaRecorder(renderer.domElement.captureStream(30), mt ? { mimeType: mt, videoBitsPerSecond: 6000000 } : {}); } catch (e) { toast('Recording is not available here.'); return; }
+  var chunks = []; rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = function () {
+    btn.textContent = 'Record 8 s'; btn.disabled = false; var blob = new Blob(chunks, { type: rec.mimeType || mt || 'video/webm' }), ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
+    showMedia('video', URL.createObjectURL(blob), blob, 'appa-in-depth.' + ext, 'Press and hold the clip to save it, or tap Share. Tag #APPAArtFest.');
+  };
+  rec.start(); var n = 8; btn.disabled = true; btn.textContent = 'Recording ' + n + '…';
+  var iv = setInterval(function () { n--; if (n <= 0) { clearInterval(iv); rec.stop(); } else btn.textContent = 'Recording ' + n + '…'; }, 1000);
+}
+
+
+/* ---- scene 1: the exhibition ---- */
+function setPainting(P, src, sw, sh, dm, key) {
+  if (P.mesh) { market.scene.remove(P.mesh); P.mesh.geometry.dispose(); }
+  var G = gridFor(sw, sh, 150), s = Math.min(1.6 / G.W, 1.2 / G.H), size = G.W / (G.w - 1) * s * 1.4;
+  var cl = buildCloud(src, sw, sh, dm, key, false, 150, size);
+  P.cl = cl; P.mesh = cl.points; P.G = G; P.s = s; P.mesh.position.copy(P.pos); P.mesh.rotation.y = P.yaw; P.mesh.scale.set(s, s, s * 0.5 * FX.depth);
+  market.scene.add(P.mesh); return cl;
+}
+function buildPaintings() {
+  paints = market.foci.map(function (f, i) { var P = { yaw: f.yaw, pos: new THREE.Vector3(f.c[0], f.c[1], f.c[2]), mesh: null, G: null, s: 0.4, cl: null }; setPainting(P, makePainting(i, 300, 225), 300, 225, 'relief', 'p' + i); return P; });
+}
+function marketChips() {
+  chipsEl.innerHTML = ''; chipsEl.appendChild(addLabel('chip primary', '+ Add your painting'));
+  var w0 = mkChip('Whole exhibition', focus < 0, function () { marketGo(-1); }); w0.dataset.i = -1; chipsEl.appendChild(w0);
+  PAINTINGS.forEach(function (p, i) { var c = mkChip(i === 6 && yours.has ? 'Your painting ✓' : p.name, focus === i, function () { marketGo(i); }); c.dataset.i = i; chipsEl.appendChild(c); });
+  if (yours.has && yours.kind !== 'camera') depthChips();
+}
+function showMarket() {
+  mode = 'market'; if (!market) { market = buildMarket(); buildPaintings(); } current = market.scene; U.uMul.value = 1;
+  setCfg({ thMin: -9, thMax: 9, phMin: 0.5, phMax: 1.6, rMin: 1.4, rMax: 26, sway: 0.18 });
+  function go(i) {
+    focus = i; applyFX();
+    if (i < 0) { goal.target.set(0, 1.3, -2); goal.r = 15 * NR(); goal.th = 0.45; goal.ph = 1.2; caption('The APPA exhibition', 'Seven stalls along a lamp-lit lane. Tap a painting, or a name below, to walk up to it. Then push the dots: tap for a shockwave, or switch Touch on and drag a finger through the paint. The last stall is empty. Add your own painting and it hangs there.', 'Six are stand-in paintings made for this demo; the real show would carry K. N. Ramachandran’s works. Your file stays on your phone. Nothing is uploaded.'); }
+    else {
+      var P = paints[i]; goal.target.copy(P.pos); goal.r = clamp(Math.max(P.G.H * P.s * 2.6, P.G.W * P.s * 2.0), 2.4, 4.4) * NR(); goal.th = P.yaw; goal.ph = 1.5;
+      if (i === 6 && !yours.has) caption('Your painting', 'This stall is waiting for you. Tap “+ Add your painting”, choose a photo of a painting (or any picture, or a short video) and it hangs here, lifted into depth.', '');
+      else if (i === 6) caption('Your painting', 'Hanging at the end of the lane. Tap it for a shockwave, try the effects, or change the depth guess below.', 'Depth is a guess made from the picture itself, so try relief, portrait or landscape.');
+      else caption(PAINTINGS[i].name, 'Tap the painting for a shockwave. Try Wind, Ripples or Melt, change the Colour, or switch Touch on and drag through the paint.', 'A stand-in painting made for this demo.');
+    }
+    chipsEl.querySelectorAll('.chip').forEach(function (c) { if (c.dataset.i !== undefined) c.setAttribute('aria-pressed', +c.dataset.i === i ? 'true' : 'false'); });
+  }
+  marketGo = go; marketChips();
+  ctlEl.innerHTML = ''; buildFx(); playSliders(); ctlEl.appendChild(mkReset(function () { go(-1); }));
+  go(-1); snap(); view.r = 16 * NR();
+}
+
+/* ---- scene 2: your own photo, video or camera ---- */
+function viewFor(cl) { goal.target.set(0, cl && cl.G.H > 3.2 ? -0.5 : -0.35, 0); goal.r = (cl && cl.G.H > 3.2 ? 7.6 : 6.4) * NR(); goal.th = 0.12; goal.ph = 1.52; }
+function stopVideo() {
+  if (vid) { try { vid.pause(); } catch (e) {} vid.srcObject = null; vid.removeAttribute('src'); vid = null; }
+  if (own.stream) { own.stream.getTracks().forEach(function (t) { t.stop(); }); own.stream = null; }
+  if (own.url) { URL.revokeObjectURL(own.url); own.url = null; }
+  yours.camera = false;
+}
+function setOwnCloud(cl) { var sc = holder.own; sc.children.slice().forEach(function (c) { sc.remove(c); }); if (own.cloud) own.cloud.points.geometry.dispose(); own.cloud = cl; sc.add(cl.points); applyFX(); }
+function ownFrom(src, w, h, flip) { var cl = buildCloud(src, w, h, yours.dm, 'own', flip); setOwnCloud(cl); viewFor(cl); return cl; }
+function rebuildYours() {
+  if (yours.kind === 'image' && yours.canvas) { setPainting(paints[6], yours.canvas, yours.canvas.width, yours.canvas.height, yours.dm, 'yours'); ownFrom(yours.canvas, yours.canvas.width, yours.canvas.height, false); applyFX(); }
+  else { if (own.cloud) own.cloud.dm = yours.dm; if (paints[6] && paints[6].cl && yours.kind === 'video') paints[6].cl.dm = yours.dm; }
+}
+function afterAdd(msg) {
+  yours.has = true; var t = document.querySelector('.tab.add'); if (t) t.classList.remove('nudge');
+  if (mode === 'own') { buildOwnChips(); viewFor(own.cloud); toast(msg[0]); } else { if (mode !== 'market') setMode('market'); marketChips(); marketGo(6); toast(msg[1]); }
+}
+function handleFile(f) {
+  if (!f) return;
+  if (/^image\//.test(f.type)) {
+    var u = URL.createObjectURL(f);
+    loadImg(u).then(function (im) {
+      stopVideo(); var m = Math.min(1, 1000 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * m); c.height = Math.round(im.naturalHeight * m);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); yours.kind = 'image'; yours.canvas = c; yours.has = true;
+      setPainting(paints[6], c, c.width, c.height, yours.dm, 'yours'); ownFrom(c, c.width, c.height, false);
+      afterAdd(['Done. Tap the picture, or turn on Touch to push the dots. It is also hanging in the Exhibition.', 'Your painting is hanging at the end of the lane. It is also in Your own.']);
+    }, function () { toast('That picture could not be opened.'); });
+  } else if (/^video\//.test(f.type)) {
+    stopVideo(); var v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); own.url = URL.createObjectURL(f); v.src = own.url; vid = v; yours.kind = 'video'; yours.canvas = null;
+    v.onloadeddata = function () { if (vid !== v || !v.videoWidth) return; yours.has = true; setPainting(paints[6], v, v.videoWidth, v.videoHeight, yours.dm, 'yours'); ownFrom(v, v.videoWidth, v.videoHeight, false); afterAdd(['Playing your video as light.', 'Your video is playing on the last stall. It is also in Your own.']); };
+    var pr = v.play(); if (pr && pr.catch) pr.catch(function () { toast('Tap the picture to start the video.'); });
+  } else toast('Choose a photo or a video.');
+}
+function useCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('The camera is not available on this page.'); return; }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false }).then(function (st) {
+    stopVideo(); var v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.srcObject = st; own.stream = st; vid = v; yours.kind = 'camera'; yours.camera = true;
+    v.onloadeddata = function () { if (vid !== v || !v.videoWidth) return; ownFrom(v, v.videoWidth, v.videoHeight, true); toast('You are in the picture. Move around.'); };
+    var pr = v.play(); if (pr && pr.catch) pr.catch(function () {});
+  }, function () { toast('The camera is not available here, or it was not allowed.'); });
+}
+function buildOwnChips() {
+  chipsEl.innerHTML = ''; chipsEl.appendChild(addLabel('chip primary', '+ Add photo or video')); chipsEl.appendChild(mkChip('Use camera', false, useCamera)); depthChips();
+}
+function showOwn() {
+  mode = 'own'; U.uMul.value = 1; current = holder.own; focus = -1;
+  setCfg({ thMin: -0.9, thMax: 0.9, phMin: 1.2, phMax: 1.9, rMin: 2.2, rMax: 11, sway: 0.22 });
+  caption('Your own', 'Add any photo or video and watch it turn into light. Tap to send a shockwave. Switch Touch to “push the dots” and drag a finger through the picture. Anything you add also hangs in the Exhibition.', 'Your files stay on your phone. Nothing is uploaded.');
+  chipsEl.innerHTML = ''; ctlEl.innerHTML = ''; buildOwnChips(); buildFx(); playSliders(); ctlEl.appendChild(mkReset(function () { viewFor(own.cloud); }));
+  if (!own.cloud) { if (!paints.length) { market = market || buildMarket(); buildPaintings(); } var c = makePainting(0, 400, 300); ownFrom(c, 400, 300, false); }
+  applyFX(); viewFor(own.cloud); snap();
+}
+/* ---- scene 3: dhol ---- */
+function showDhol() {
+  mode = 'dhol'; if (!dhol) dhol = buildDhol(); current = dhol.scene; U.uMul.value = 1; applyFX();
+  setCfg({ thMin: -9, thMax: 9, phMin: 0.4, phMax: 1.7, rMin: 2.5, rMax: 16, sway: 0.2 });
+  caption('Dhol echo', 'A dhol-tasha player from the village pathak that will open the big nights. Each ghost is the same moment a split second earlier, so the drumbeat shows up as a trail you can walk around.', 'A drawn stand-in figure. Real footage of the pathak would fill the same trails.');
+  chipsEl.innerHTML = ''; ctlEl.innerHTML = ''; fxEl.innerHTML = '';
+  ctlEl.appendChild(mkRange('Echoes', 0, 24, 1, dhol.state.echoes, function (v) { dhol.state.echoes = v; }));
+  ctlEl.appendChild(mkRange('Spread', 0, 0.7, 0.02, dhol.state.spread, function (v) { dhol.state.spread = v; }));
+  ctlEl.appendChild(mkRange('Delay', 0.02, 0.16, 0.01, dhol.state.lag, function (v) { dhol.state.lag = v; }));
+  ctlEl.appendChild(glowControl(1));
+  ctlEl.appendChild(mkReset(function () { goal.target.set(-1.3, 0.85, 0); goal.r = 6.4 * NR(); goal.th = 0.28; goal.ph = 1.38; }));
+  goal.target.set(-1.3, 0.85, 0); goal.r = 6.4 * NR(); goal.th = 0.28; goal.ph = 1.38; snap();
+}
+
+
+function setMode(m) {
+  Object.keys(ptrs).forEach(function (k) { delete ptrs[k]; }); tap = null; brush.down = false; closeModal();
+  if (m === 'base') m = 'market';
+  if (vid && !yours.camera && m === 'dhol') { try { vid.pause(); } catch (e) {} }
+  tabsEl.querySelectorAll('.tab').forEach(function (t) { if (t.dataset.m) t.setAttribute('aria-selected', t.dataset.m === m ? 'true' : 'false'); });
+  if (m === 'market') showMarket(); else if (m === 'own') showOwn(); else { m = 'dhol'; showDhol(); }
+  if (vid && (m === 'market' || m === 'own')) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
+  try { history.replaceState(null, '', '#' + m); } catch (e) {}
+}
+(function () {
+  var a = addLabel('tab add nudge', ''); a.innerHTML = '+ Add <span class="opt">your </span>painting'; tabsEl.appendChild(a);
+  TABS.forEach(function (t) { var b = document.createElement('button'); b.className = 'tab'; b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.m = t[0]; b.textContent = t[1]; b.addEventListener('click', function () { setMode(t[0]); }); tabsEl.appendChild(b); });
+  $('file').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; handleFile(f); });
+})();
+$('fold').addEventListener('click', function () { var m = sheet.classList.toggle('min'); $('fold').textContent = m ? 'More' : 'Less'; });
+if (window.innerWidth <= 520) { sheet.classList.add('min'); $('fold').textContent = 'More'; }
+
+/* ---------- render loop ---------- */
+var stageEl = $('stage');
+function resize() {
+  var w = stageEl.clientWidth || 800, h = stageEl.clientHeight || 600, pr = VIDEO_MODE ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(pr); renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  U.uScale.value = (h * pr) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+}
+if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl); window.addEventListener('resize', resize); resize();
+
+var clock = new THREE.Clock();
+function tickScene() {
+  if (mode === 'dhol' && dhol) dhol.update(T);
+  if (vid && vid.readyState >= 2) {
+    if (mode === 'own' && own.cloud && T - own.cloud.last > 0.05) { refill(own.cloud, vid); own.cloud.last = T; }
+    else if (mode === 'market' && !yours.camera && paints[6] && paints[6].cl && T - paints[6].cl.last > 0.05) { refill(paints[6].cl, vid); paints[6].cl.last = T; }
+  }
+}
+function frame() {
+  var dt = Math.min(clock.getDelta(), 0.05); T += dt; U.uTime.value = T;
+  brush.k = lerp(brush.k, brush.down ? 1 : 0, 1 - Math.pow(0.0005, dt)); brushV.z = brush.k;
+  tickScene(); updateCamera(T, dt);
+  if (current) renderer.render(current, camera);
+  requestAnimationFrame(frame);
+}
+var start = (location.hash || '').replace('#', ''); setMode(['market', 'dhol', 'own'].indexOf(start) >= 0 ? start : 'market');
+
+/* a small hook for filming the scenes frame by frame (used for the Reels and Shorts) */
+window.__appa = {
+  setMode: setMode, mode: function () { return mode; },
+  ready: function () { return (mode === 'market' && paints.length === 7) || (mode === 'dhol' && !!dhol) || (mode === 'own' && !!own.cloud); },
+  foci: function () { return market ? market.foci : []; }, go: function (i) { if (marketGo) marketGo(i); },
+  fx: function (o) { for (var k in o) FX[k] = o[k]; applyFX(); }, glow: function (v) { U.uMul.value = v; },
+  dhol: function (o) { if (dhol) for (var k in o) dhol.state[k] = o[k]; }, shock: function (x, y, t) { shocks[si % 4].set(x, y, t); si++; },
+  cam: function (o) { view.target.set(o.tx, o.ty, o.tz); view.r = o.r; view.th = o.th; view.ph = o.ph; goal.target.copy(view.target); goal.r = o.r; goal.th = o.th; goal.ph = o.ph; },
+  tick: function (t, o) {
+    T = t; U.uTime.value = t; brushV.z = 0; tickScene(); placeCamera(0); renderer.render(current, camera);
+    var vo = $('vo'); if (o) { vo.querySelector('.vk').textContent = o.k || ''; vo.querySelector('.vt').textContent = o.t || ''; vo.querySelector('.vs').textContent = o.s || ''; vo.style.opacity = o.o == null ? 1 : o.o; }
+  }
+};
+if (VIDEO_MODE) document.body.classList.add('vid'); else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
