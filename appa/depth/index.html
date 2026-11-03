@@ -822,6 +822,8 @@ function buildFest() {
   addEnt(tDog(R, 1), loopPath(0, 0, 3.3, 3.3, 0.22, 1, 0), { mean: 0.73, gait: 6, amp: 0.8, dot: 1.1 });
   [[3, -2.0, 1.6], [4, 2.0, 1.6]].forEach(function (cp2) { var P = pv[cp2[0]], pp = P.W(cp2[1], 0, cp2[2]); addEnt(tCat(R), standPath(pp[0], pp[2], P.Y + 0.4), { amp: 0, dot: 1.2 }); });
   var order = ents.map(function (e, q) { return q; }); for (i = order.length - 1; i > 0; i--) { var j2 = Math.floor(R() * (i + 1)), tm = order[i]; order[i] = order[j2]; order[j2] = tm; } order.forEach(function (q, rank) { ents[q].rank = rank; });
+  spriteTo(cb, signCv('YOUR FESTIVAL', '#f6d58a'), function (x, y) { return [x, 4.75 + y, 0]; }, 4.2, 0.68, 3, 0.04, 1.15);
+  spriteTo(cb, signCv('HAVE YOUR OWN, RIGHT HERE', '#f4ebd9'), function (x, y) { return [x, 4.1 + y, 0]; }, 3.6, 0.38, 3, 0.03, 0.9);
   sc.add(b.points()); var posts = cb.points(); sc.add(posts); var dynPts = dyn.points(true); sc.add(dynPts);
   var Pa = dynPts.geometry.attributes.position, Ca = dynPts.geometry.attributes.aCol;
   var centre = { yaw: 0, pos: new THREE.Vector3(0, 2.55, 0), mesh: null, G: null, s: 0.4, cl: null, scene: sc, k: 1.65 };
