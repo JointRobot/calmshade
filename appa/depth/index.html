@@ -57,6 +57,7 @@ button{font:inherit;color:inherit}
 .chip.primary{background:var(--ver);border-color:var(--ver);color:#1a0d08;font-weight:600}
 .chip.on{border-color:var(--gold);color:var(--gold)}
 label.chip{display:inline-flex;align-items:center}
+.snd{margin-left:auto;pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:12px;color:var(--mute);cursor:pointer}
 #connect{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(8,6,5,.86);z-index:6}
 #connect.on{display:flex}
 #connect .cbox{max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
@@ -95,7 +96,7 @@ body.vid .vk{position:absolute;left:7%;top:7%;font:600 22px/1 var(--body);letter
   <div id="stage" role="img" aria-label="Interactive 3D point-cloud scene. Drag to look around."></div>
   <div id="err">This page needs WebGL to draw the scenes. Try another browser.</div>
   <div class="top">
-    <div class="brand"><b>APPA in depth</b><span>12 Feb – 19 Mar 2027 · Kamshet</span></div>
+    <div class="brand"><b>APPA in depth</b><span>12 Feb – 19 Mar 2027 · Kamshet</span><button class="snd" id="snd" type="button" aria-pressed="true">Sound: on</button></div>
     <div class="tabs" role="tablist" id="tabs"></div>
   </div>
   <div class="hint">Drag to look around · tap a painting · scroll or pinch to zoom</div>
@@ -210,7 +211,7 @@ function tapScene(cx, cy) {
   paints.forEach(function (Q, i) { if (!Q.mesh) return; var h = hitOn(Q.mesh, cx, cy); if (h && Math.abs(h.x) < Q.G.W / 2 + 0.2 && Math.abs(h.y) < Q.G.H / 2 + 0.2) { var d = camera.position.distanceTo(Q.pos); if (d < bd) { bd = d; best = i; } } });
   if (best >= 0 && best !== focus) marketGo(best);
 }
-function shock(x, y) { shocks[si % 4].set(x, y, T); si++; }
+function shock(x, y) { shocks[si % 4].set(x, y, T); si++; sfx.shock(); }
 function dist2() { var k = Object.keys(ptrs); if (k.length < 2) return 0; var a = ptrs[k[0]], b = ptrs[k[1]]; return Math.hypot(a.x - b.x, a.y - b.y); }
 stage.addEventListener('pointerdown', function (e) {
   stage.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; pinch0 = dist2(); lastTouch = performance.now();
@@ -442,6 +443,102 @@ function buildDhol() {
   return { scene: sc, update: update, state: state };
 }
 
+/* ---------- sound: every effect is synthesised in the browser, so there are no audio files to load ---------- */
+var SND = { ctx: null, master: null, noise: null, on: true, want: 'market', key: '', amb: null, bi: -1, shim: 0 };
+try { if (localStorage.getItem('appa-snd') === '0') SND.on = false; } catch (e) {}
+function audio() {
+  if (!SND.ctx) {
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    try { SND.ctx = new AC(); } catch (e) { return null; }
+    var c = SND.ctx, cp = c.createDynamicsCompressor(); SND.master = c.createGain(); SND.master.gain.value = SND.on ? 0.8 : 0; SND.master.connect(cp); cp.connect(c.destination);
+    var n = c.sampleRate * 2, buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0), b0 = 0, b1 = 0;
+    for (var i = 0; i < n; i++) { var w = Math.random() * 2 - 1; b0 = 0.99 * b0 + w * 0.0555; b1 = 0.96 * b1 + w * 0.2965; d[i] = (b0 + b1 + w * 0.5) * 0.35; } SND.noise = buf;
+  }
+  if (SND.ctx.state === 'suspended') { try { SND.ctx.resume(); } catch (e) {} }
+  return SND.ctx;
+}
+function tone(f, dur, o) {
+  if (!SND.on) return; var c = audio(); if (!c) return; o = o || {};
+  var t0 = c.currentTime + (o.at || 0), g = c.createGain(), os = c.createOscillator(); os.type = o.type || 'sine'; os.frequency.setValueAtTime(f, t0); if (o.to) os.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(o.vol || 0.2, t0 + (o.att || 0.008)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  os.connect(g); g.connect(o.dest || SND.master); os.start(t0); os.stop(t0 + dur + 0.05);
+}
+function puff(dur, o) {
+  if (!SND.on) return; var c = audio(); if (!c) return; o = o || {};
+  var t0 = c.currentTime + (o.at || 0), s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = SND.noise; s.loop = true; f.type = o.type || 'bandpass'; f.frequency.setValueAtTime(o.f || 1000, t0); if (o.to) f.frequency.exponentialRampToValueAtTime(o.to, t0 + dur); f.Q.value = o.q || 1;
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(o.vol || 0.2, t0 + (o.att || 0.01)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  s.connect(f); f.connect(g); g.connect(o.dest || SND.master); s.start(t0, Math.random() * 1.5); s.stop(t0 + dur + 0.05);
+}
+var PENT = [0, 2, 4, 7, 9];
+function note(i, oct) { return 220 * Math.pow(2, (PENT[((i % 5) + 5) % 5] + 12 * (oct + Math.floor(i / 5))) / 12); }
+var sfx = {
+  tab: function () { tone(520, 0.12, { type: 'triangle', vol: 0.12, to: 780 }); },
+  tick: function () { tone(900, 0.05, { type: 'square', vol: 0.035 }); },
+  chime: function (i) { var f = note(i || 0, 1); tone(f, 0.9, { vol: 0.14 }); tone(f * 2, 0.5, { vol: 0.05, at: 0.02 }); },
+  shock: function () { tone(150, 0.5, { vol: 0.5, to: 45 }); puff(0.35, { type: 'lowpass', f: 900, to: 120, vol: 0.3 }); tone(900, 0.6, { vol: 0.05, to: 300, at: 0.04, type: 'triangle' }); },
+  add: function () { for (var q = 0; q < 5; q++) tone(note(q, 1), 0.7, { vol: 0.12, at: q * 0.09 }); },
+  fx: function (key, on) {
+    if (!on) { tone(380, 0.14, { vol: 0.08, to: 260 }); return; }
+    if (key === 'wind') puff(1.3, { f: 400, to: 1800, vol: 0.14, q: 0.7, att: 0.45 });
+    else if (key === 'wave') { for (var q = 0; q < 4; q++) tone(520 - q * 70, 0.35, { vol: 0.1, to: 260 - q * 30, at: q * 0.14 }); }
+    else { puff(1.1, { type: 'lowpass', f: 2000, to: 260, vol: 0.12 }); tone(300, 0.5, { vol: 0.08, to: 120, at: 0.1 }); }
+  },
+  shutter: function () { puff(0.05, { f: 4000, q: 2, vol: 0.2 }); puff(0.07, { f: 2000, q: 2, vol: 0.18, at: 0.07 }); },
+  rec: function () { tone(880, 0.18, { type: 'square', vol: 0.05 }); },
+  shim: function () { puff(0.14, { f: 3500 + Math.random() * 2500, q: 3, vol: 0.035 }); },
+  dhol: function (side, v, at) {
+    if (side) { tone(95, 0.34, { vol: 0.75 * v, to: 46, at: at }); puff(0.09, { type: 'lowpass', f: 500, vol: 0.25 * v, at: at }); }
+    else { puff(0.09, { f: 2400, q: 1.5, vol: 0.28 * v, at: at }); tone(330, 0.1, { type: 'triangle', vol: 0.1 * v, to: 220, at: at }); }
+  }
+};
+function stopAmb() {
+  var a = SND.amb; if (!a) return; SND.amb = null; a.timers.forEach(clearInterval);
+  var c = SND.ctx, t = c.currentTime; a.out.gain.cancelScheduledValues(t); a.out.gain.setTargetAtTime(0, t, 0.25);
+  setTimeout(function () { a.nodes.forEach(function (n) { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} }); try { a.out.disconnect(); } catch (e) {} }, 1600);
+}
+function aNoise(a, type, f, q, vol, lfo) {
+  var c = SND.ctx, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); s.buffer = SND.noise; s.loop = true; fl.type = type; fl.frequency.value = f; fl.Q.value = q; g.gain.value = vol;
+  s.connect(fl); fl.connect(g); g.connect(a.out); s.start(); a.nodes.push(s);
+  if (lfo) { var o = c.createOscillator(), og = c.createGain(); o.frequency.value = lfo[0]; og.gain.value = vol * lfo[1]; o.connect(og); og.connect(g.gain); o.start(); a.nodes.push(o); }
+  return fl;
+}
+function aOsc(a, type, f, vol) { var c = SND.ctx, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = f; g.gain.value = vol; o.connect(g); g.connect(a.out); o.start(); a.nodes.push(o); return o; }
+function every(a, ms, fn) { a.timers.push(setInterval(function () { if (SND.on && SND.ctx && SND.ctx.state === 'running') fn(a); }, ms)); }
+function crickets(a, v) { var c = SND.ctx, o = c.createOscillator(), g = c.createGain(), l = c.createOscillator(), lg = c.createGain(); o.frequency.value = 4300; g.gain.value = v; l.type = 'square'; l.frequency.value = 13; lg.gain.value = v; l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(a.out); o.start(); l.start(); a.nodes.push(o, l); }
+function crowd(a, v) { aNoise(a, 'bandpass', 600, 0.6, v, [0.3, 0.6]); every(a, 650, function () { if (Math.random() < 0.6) tone(170 + Math.random() * 190, 0.28, { type: 'triangle', vol: v * 0.5, to: 140 + Math.random() * 200, dest: a.out }); }); }
+function bell(a, ms, v) { every(a, ms, function () { var f = Math.random() < 0.5 ? 880 : 1320; tone(f, 1.8, { vol: v, dest: a.out }); tone(f * 2.76, 0.8, { vol: v * 0.3, dest: a.out }); }); }
+function setAmbient(key) {
+  SND.want = key; if (!SND.ctx || key === SND.key) return; SND.key = key; stopAmb();
+  var c = SND.ctx, a = { nodes: [], timers: [], out: c.createGain() }; a.out.gain.value = 0; a.out.connect(SND.master); a.out.gain.setTargetAtTime(1, c.currentTime, 0.6); SND.amb = a;
+  var idx = key.indexOf('fest') === 0 && key.length > 4 ? +key.slice(4) : -1;
+  aNoise(a, 'bandpass', 500, 0.3, 0.05, [0.07, 0.5]);
+  if (key === 'market') { crickets(a, 0.005); crowd(a, 0.03); bell(a, 7000, 0.05); }
+  else if (key === 'own') { aOsc(a, 'triangle', 220, 0.012); aOsc(a, 'triangle', 330.5, 0.01); aOsc(a, 'sine', 440.8, 0.006); }
+  else if (key === 'dhol') { crickets(a, 0.003); aOsc(a, 'sine', 55, 0.03); }
+  else if (key === 'fest' || idx === 6) {
+    crickets(a, 0.005); crowd(a, idx === 6 ? 0.025 : 0.06); bell(a, 8000, 0.04);
+    every(a, 6500, function () { tone(2300, 0.3, { vol: 0.04, dest: a.out }); tone(2300, 0.3, { vol: 0.04, at: 0.22, dest: a.out }); });
+    if (idx === 6) { aOsc(a, 'triangle', 220, 0.025); aOsc(a, 'triangle', 277.2, 0.02); aOsc(a, 'triangle', 330, 0.02); every(a, 4000, function () { tone(660, 2, { vol: 0.04, to: 1320, dest: a.out }); }); }
+  } else {
+    crowd(a, 0.025);
+    if (idx === 0) { var lp = aOsc(a, 'sawtooth', 55, 0.05); aOsc(a, 'sawtooth', 58, 0.04); every(a, 5000, function () { puff(0.9, { f: 300, to: 900, q: 8, vol: 0.08, dest: a.out }); }); every(a, 9000, function () { tone(420, 1.2, { vol: 0.04, to: 300, dest: a.out }); tone(380, 1.2, { vol: 0.04, to: 260, at: 0.5, dest: a.out }); }); }
+    if (idx === 1) every(a, 2600, function () { for (var k = 0; k < 14; k++) puff(0.05, { f: 1800 + Math.random() * 1600, q: 1, vol: 0.07, at: k * 0.07 + Math.random() * 0.04, dest: a.out }); });
+    if (idx === 2) every(a, 320, function () { tone(note(Math.floor(Math.random() * 8), 2), 0.7, { vol: 0.05, dest: a.out }); });
+    if (idx === 3) { var o1 = aOsc(a, 'sine', 110, 0.06), o2 = aOsc(a, 'sine', 220, 0.04); every(a, 100, function () { var t = SND.ctx.currentTime, n1 = 2.5 + 2 * Math.sin(FT * 0.37), m1 = 3.5 + 2.5 * Math.sin(FT * 0.23 + 1); o1.frequency.setTargetAtTime(55 * n1, t, 0.1); o2.frequency.setTargetAtTime(55 * m1, t, 0.1); }); }
+    if (idx === 4) { aNoise(a, 'highpass', 4000, 0.5, 0.05, [9, 0.9]); every(a, 170, function () { puff(0.03, { f: 3000 + Math.random() * 3000, q: 2, vol: 0.1, dest: a.out }); }); every(a, 2300, function () { tone(190, 0.07, { type: 'square', vol: 0.05, dest: a.out }); tone(210, 0.07, { type: 'square', vol: 0.05, at: 0.12, dest: a.out }); }); }
+    if (idx === 5) { every(a, 520, function () { var f = note(Math.floor(Math.random() * 8), 1); tone(f, 0.9, { vol: 0.07, dest: a.out }); tone(f * 4, 0.12, { vol: 0.03, dest: a.out }); }); every(a, 2600, function () { puff(0.6, { f: 2500, to: 900, vol: 0.04, dest: a.out }); }); }
+  }
+}
+function setSound(on) {
+  SND.on = on; try { localStorage.setItem('appa-snd', on ? '1' : '0'); } catch (e) {}
+  var b = document.getElementById('snd'); if (b) { b.textContent = on ? 'Sound: on' : 'Sound: off'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  if (SND.master) SND.master.gain.setTargetAtTime(on ? 0.8 : 0, SND.ctx.currentTime, 0.05);
+  if (on && audio()) { SND.key = ''; setAmbient(SND.want); sfx.tab(); }
+}
+function dholSound(bi) {
+  var side = bi % 2 ? 1 : 0; sfx.dhol(side, 1, 0);
+  var E = dhol ? Math.min(6, Math.round(dhol.state.echoes)) : 0; for (var k = 1; k <= E; k++) sfx.dhol(side, Math.pow(0.62, k), k * 0.11);
+}
 /* ================= scene manager + UI ================= */
 var current = null, market = null, dhol = null, marketGo = null, vid = null;
 var FX = { wind: 0, wave: 0, melt: 0, scatter: 0, grade: 0, depth: 1 };
@@ -482,11 +579,11 @@ function applyFX() {
 }
 function buildFx() {
   fxEl.innerHTML = '';
-  function tg(label, key) { var b = mkChip(label, FX[key] > 0, function () { FX[key] = FX[key] > 0 ? 0 : 1; b.setAttribute('aria-pressed', FX[key] > 0 ? 'true' : 'false'); applyFX(); }); fxEl.appendChild(b); }
+  function tg(label, key) { var b = mkChip(label, FX[key] > 0, function () { FX[key] = FX[key] > 0 ? 0 : 1; b.setAttribute('aria-pressed', FX[key] > 0 ? 'true' : 'false'); applyFX(); sfx.fx(key, FX[key] > 0); }); fxEl.appendChild(b); }
   tg('Wind', 'wind'); tg('Ripples', 'wave'); tg('Melt', 'melt');
-  var cb = mkChip('Colour: ' + GRADES[FX.grade], false, function () { FX.grade = (FX.grade + 1) % GRADES.length; cb.textContent = 'Colour: ' + GRADES[FX.grade]; applyFX(); }); fxEl.appendChild(cb);
+  var cb = mkChip('Colour: ' + GRADES[FX.grade], false, function () { FX.grade = (FX.grade + 1) % GRADES.length; cb.textContent = 'Colour: ' + GRADES[FX.grade]; applyFX(); sfx.chime(FX.grade * 2); }); fxEl.appendChild(cb);
   function ptxt() { return playMode ? 'Touch: push the dots' : 'Touch: look around'; }
-  var pb = mkChip(ptxt(), playMode, function () { playMode = !playMode; pb.textContent = ptxt(); pb.setAttribute('aria-pressed', playMode ? 'true' : 'false'); }); fxEl.appendChild(pb);
+  var pb = mkChip(ptxt(), playMode, function () { playMode = !playMode; sfx.tick(); pb.textContent = ptxt(); pb.setAttribute('aria-pressed', playMode ? 'true' : 'false'); }); fxEl.appendChild(pb);
   var sv = mkChip('Save picture', false, savePicture); sv.classList.add('primary'); sv.removeAttribute('aria-pressed'); fxEl.appendChild(sv);
   if (window.MediaRecorder && renderer.domElement.captureStream) { var rc = mkChip('Record 8 s', false, function () { recordClip(rc); }); rc.removeAttribute('aria-pressed'); fxEl.appendChild(rc); }
 }
@@ -513,7 +610,7 @@ function showMedia(kind, url, blob, name, note) {
   row.appendChild(mkChip('Close', false, closeModal)); $('modal').classList.add('on');
 }
 function savePicture() {
-  if (!current) return; renderer.render(current, camera);
+  if (!current) return; sfx.shutter(); renderer.render(current, camera);
   var src = renderer.domElement, w = src.width, h = src.height, c = document.createElement('canvas'); c.width = w; c.height = h; var g = c.getContext('2d');
   g.drawImage(src, 0, 0);
   var bh = Math.round(h * 0.075), gr = g.createLinearGradient(0, h - bh * 1.8, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.85)'); g.fillStyle = gr; g.fillRect(0, h - bh * 1.8, w, bh * 1.8);
@@ -530,7 +627,7 @@ function recordClip(btn) {
     btn.textContent = 'Record 8 s'; btn.disabled = false; var blob = new Blob(chunks, { type: rec.mimeType || mt || 'video/webm' }), ext = /mp4/.test(blob.type) ? 'mp4' : 'webm';
     showMedia('video', URL.createObjectURL(blob), blob, 'appa-in-depth.' + ext, 'Press and hold the clip to save it, or tap Share. Tag #APPAArtFest.');
   };
-  rec.start(); var n = 8; btn.disabled = true; btn.textContent = 'Recording ' + n + '…';
+  rec.start(); sfx.rec(); var n = 8; btn.disabled = true; btn.textContent = 'Recording ' + n + '…';
   var iv = setInterval(function () { n--; if (n <= 0) { clearInterval(iv); rec.stop(); } else btn.textContent = 'Recording ' + n + '…'; }, 1000);
 }
 
@@ -557,7 +654,7 @@ function showMarket() {
   mode = 'market'; if (!market) { market = buildMarket(); buildPaintings(); } current = market.scene; U.uMul.value = 1;
   setCfg({ thMin: -9, thMax: 9, phMin: 0.5, phMax: 1.6, rMin: 1.4, rMax: 26, sway: 0.18 });
   function go(i) {
-    focus = i; applyFX();
+    focus = i; applyFX(); if (i >= 0) sfx.chime(i);
     if (i < 0) { goal.target.set(0, 1.3, -2); goal.r = 15 * NR(); goal.th = 0.45; goal.ph = 1.2; caption('The APPA exhibition', 'Seven stalls along a lamp-lit lane. Tap a painting, or a name below, to walk up to it. Then push the dots: tap for a shockwave, or switch Touch on and drag a finger through the paint. The last stall is empty. Add your own painting and it hangs there.', 'Six are stand-in paintings made for this demo; the real show would carry K. N. Ramachandran’s works. Your file stays on your phone. Nothing is uploaded.'); }
     else {
       var P = paints[i]; goal.target.copy(P.pos); goal.r = clamp(Math.max(P.G.H * P.s * 2.6, P.G.W * P.s * 2.0), 2.4, 4.4) * NR(); goal.th = P.yaw; goal.ph = 1.5;
@@ -601,7 +698,7 @@ function rebuildYours() {
   else { if (own.cloud) own.cloud.dm = yours.dm; if (paints[6] && paints[6].cl && yours.kind === 'video') paints[6].cl.dm = yours.dm; }
 }
 function afterAdd(msg) {
-  yours.has = true; var t = document.querySelector('.tab.add'); if (t) t.classList.remove('nudge');
+  sfx.add(); yours.has = true; var t = document.querySelector('.tab.add'); if (t) t.classList.remove('nudge');
   if (mode === 'fest') { if (festGo) festGo(6); toast('Your picture is on the big screen in the middle of the village.'); } else if (mode === 'own') { buildOwnChips(); viewFor(own.cloud); toast(msg[0]); } else { if (mode !== 'market') setMode('market'); marketChips(); marketGo(6); toast(msg[1]); }
 }
 function handleFile(f) {
@@ -860,7 +957,7 @@ function showFest() {
   mode = 'fest'; if (!fest) fest = buildFest(); current = fest.scene; U.uMul.value = 1;
   setCfg({ thMin: -9, thMax: 9, phMin: 0.45, phMax: 1.5, rMin: 1.8, rMax: 44, sway: 0.12 });
   function go(i) {
-    ffocus = i; applyFX(); var showC = i < 0 || i === 6; fest.posts.visible = showC; if (fest.centre.mesh) fest.centre.mesh.visible = showC;
+    ffocus = i; applyFX(); SND.want = i < 0 ? 'fest' : 'fest' + i; setAmbient(SND.want); if (i >= 0) sfx.chime(i + 2); var showC = i < 0 || i === 6; fest.posts.visible = showC; if (fest.centre.mesh) fest.centre.mesh.visible = showC;
     if (i < 0) { goal.target.set(0, 0.8, 0); goal.r = 21 * NR(); goal.th = 0.35; goal.ph = 1.05; caption('The festival village', 'Six festival pavilions around a village green, and the middle is yours. Tap a pavilion, or a name below, to walk up to it. Watch the crowd: people, kids, cyclists and a few pets.', 'These themes are ideas, not the confirmed programme. People and pets are drawn stand-ins. Your file stays on your phone.'); buildFxShare(); }
     else { var f = fest.foci[i]; goal.target.set(f.c[0], f.c[1], f.c[2]); goal.r = (i === 6 ? 9 : 7.2) * NR(); goal.th = f.yaw; goal.ph = i === 6 ? 1.34 : 1.22; caption(FESTS[i].name, FESTS[i].line, i === 6 ? 'Tap the screen for a shockwave. Effects and depth guesses work here too.' : 'A stand-in pavilion. The real programme will be in the timetable.'); if (i === 6) buildFx(); else buildFxShare(); }
     chipsEl.querySelectorAll('.chip').forEach(function (c) { if (c.dataset.i !== undefined) c.setAttribute('aria-pressed', +c.dataset.i === i ? 'true' : 'false'); });
@@ -893,6 +990,7 @@ function setMode(m) {
   tabsEl.querySelectorAll('.tab').forEach(function (t) { if (t.dataset.m) t.setAttribute('aria-selected', t.dataset.m === m ? 'true' : 'false'); });
   if (m === 'market') showMarket(); else if (m === 'own') showOwn(); else if (m === 'fest') showFest(); else { m = 'dhol'; showDhol(); }
   if (vid && (m === 'market' || m === 'own' || m === 'fest')) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
+  sfx.tab(); setAmbient(m === 'market' ? 'market' : m === 'own' ? 'own' : m === 'fest' ? 'fest' : 'dhol');
   try { history.replaceState(null, '', '#' + m); } catch (e) {}
 }
 (function () {
@@ -901,6 +999,7 @@ function setMode(m) {
   var cn = document.createElement('button'); cn.className = 'tab'; cn.type = 'button'; cn.textContent = 'Connect'; cn.id = 'tab-connect';
   function cc(on) { $('connect').classList.toggle('on', on); cn.setAttribute('aria-selected', on ? 'true' : 'false'); }
   cn.addEventListener('click', function () { cc(true); }); tabsEl.appendChild(cn); $('c-close').addEventListener('click', function () { cc(false); }); $('connect').addEventListener('click', function (e) { if (e.target === this) cc(false); });
+  if (!VIDEO_MODE) { var snb = $('snd'); snb.textContent = SND.on ? 'Sound: on' : 'Sound: off'; snb.addEventListener('click', function () { setSound(!SND.on); }); document.addEventListener('pointerdown', function () { if (SND.on && audio()) setAmbient(SND.want); }, { passive: true }); }
   $('file').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; handleFile(f); });
 })();
 $('fold').addEventListener('click', function () { var m = sheet.classList.toggle('min'); $('fold').textContent = m ? 'More' : 'Less'; });
@@ -917,7 +1016,7 @@ if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl); window.a
 
 var clock = new THREE.Clock();
 function tickScene() {
-  if (mode === 'dhol' && dhol) dhol.update(T);
+  if (mode === 'dhol' && dhol) { dhol.update(T); var bi = Math.floor(T * 3.4); if (bi !== SND.bi) { if (SND.ctx && SND.bi >= 0 && !VIDEO_MODE) dholSound(bi); SND.bi = bi; } }
   if (mode === 'fest' && fest) fest.update(FT);
   if (vid && vid.readyState >= 2) {
     if (mode === 'own' && own.cloud && T - own.cloud.last > 0.05) { refill(own.cloud, vid); own.cloud.last = T; }
@@ -926,7 +1025,7 @@ function tickScene() {
 }
 function frame() {
   var dt = Math.min(clock.getDelta(), 0.05); T += dt; U.uTime.value = T; FT += dt * festSpeed;
-  brush.k = lerp(brush.k, brush.down ? 1 : 0, 1 - Math.pow(0.0005, dt)); brushV.z = brush.k;
+  brush.k = lerp(brush.k, brush.down ? 1 : 0, 1 - Math.pow(0.0005, dt)); brushV.z = brush.k; if (brush.k > 0.5 && fxMode && T - SND.shim > 0.09) { SND.shim = T; sfx.shim(); }
   tickScene(); updateCamera(T, dt);
   if (current) renderer.render(current, camera);
   requestAnimationFrame(frame);
@@ -940,6 +1039,7 @@ window.__appa = {
   foci: function () { return mode === 'fest' ? (fest ? fest.foci : []) : (market ? market.foci : []); }, go: function (i) { if (mode === 'fest') { if (festGo) festGo(i); } else if (marketGo) marketGo(i); },
   fx: function (o) { for (var k in o) FX[k] = o[k]; applyFX(); }, glow: function (v) { U.uMul.value = v; },
   dhol: function (o) { if (dhol) for (var k in o) dhol.state[k] = o[k]; }, shock: function (x, y, t) { shocks[si % 4].set(x, y, t); si++; },
+  reveal: function (k) { if (!fest) return; k = Math.max(k, 0.001); fest.posts.visible = k > 0.002; fest.posts.scale.setScalar(k); var c = fest.centre; if (c.mesh) { c.mesh.visible = k > 0.002; c.mesh.scale.set(c.s * k, c.s * k, c.s * 0.5 * FX.depth * k); } },
   cam: function (o) { view.target.set(o.tx, o.ty, o.tz); view.r = o.r; view.th = o.th; view.ph = o.ph; goal.target.copy(view.target); goal.r = o.r; goal.th = o.th; goal.ph = o.ph; },
   tick: function (t, o) {
     T = t; FT = t; U.uTime.value = t; brushV.z = 0; tickScene(); placeCamera(0); renderer.render(current, camera);
