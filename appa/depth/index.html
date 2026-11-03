@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>APPA in Depth · APPA Art Fest 2027</title>
-<meta name="description" content="Turn any photo or video into glowing 3D light. Walk the APPA Art Fest 2027 painting exhibition, watch the dhol leave echoes, then add your own painting. 12 Feb to 19 Mar 2027, Kamshet.">
+<meta name="description" content="Turn any photo or video into glowing 3D light. Walk the APPA Art Fest 2027 painting exhibition and festival village, watch the dhol leave echoes, add your own painting, and get in touch to curate with us. 12 Feb to 19 Mar 2027, Kamshet.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="APPA Art Fest 2027">
 <meta property="og:title" content="APPA in depth: play with art as light">
 <meta property="og:description" content="Turn any photo or video into glowing 3D light. Push the dots, send a shockwave, save your picture.">
@@ -57,6 +57,14 @@ button{font:inherit;color:inherit}
 .chip.primary{background:var(--ver);border-color:var(--ver);color:#1a0d08;font-weight:600}
 .chip.on{border-color:var(--gold);color:var(--gold)}
 label.chip{display:inline-flex;align-items:center}
+#connect{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(8,6,5,.86);z-index:6}
+#connect.on{display:flex}
+#connect .cbox{max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+#connect h2{margin:0 0 8px;font:700 22px/1.2 var(--display)}
+#connect p{margin:0 0 14px;color:var(--mute)}
+.crow{display:flex;flex-wrap:wrap;gap:8px}
+.crow a.chip{text-decoration:none;color:var(--ink);display:inline-block}
+.crow a.chip.primary{color:#1a0d08}
 input[type=file].vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 label.tab{display:inline-block;cursor:pointer}
 .tab.add{background:var(--ver);border-color:var(--ver);color:#1a0d08;font-weight:600}
@@ -101,7 +109,8 @@ body.vid .vk{position:absolute;left:7%;top:7%;font:600 22px/1 var(--body);letter
   <div id="vo"><div class="vk"></div><div class="vt"></div><div class="vs"></div></div>
   <div id="toast" role="status"></div>
   <input type="file" id="file" class="vh" accept="image/*,video/*" aria-label="Add your painting">
-  <div id="modal"><div id="mbody"></div><p id="mnote"></p><div class="row" id="mrow"></div></div>
+  <div id="connect" role="dialog" aria-label="Connect with APPA Art Fest"><div class="cbox"><h2>Curate with us, or just ask</h2><p>Want a pavilion, a stall or a whole festival or exhibition of your own at APPA Art Fest 2027 (12 Feb – 19 Mar, Kamshet)? Or an enquiry about stays, tickets, sponsorship or press? Write to us and we will get back to you.</p><div class="crow"><a class="chip primary" id="c-mail" href="mailto:karthik@xtrathin.in?subject=APPA%20Art%20Fest%202027%20enquiry&amp;body=Hi%2C%0A%0AI%20am%20writing%20about%20(curating%20a%20festival%20or%20exhibition%20%2F%20stay%20%2F%20tickets%20%2F%20sponsorship%20%2F%20other)%3A%0A%0AName%3A%0APhone%3A%0A">Email karthik@xtrathin.in</a><a class="chip" id="c-wa" href="https://wa.me/918799938193?text=Hi%2C%20I%20have%20an%20enquiry%20about%20APPA%20Art%20Fest%202027." target="_blank" rel="noopener">WhatsApp +91 87999 38193</a><button class="chip" type="button" id="c-close">Close</button></div></div></div>
+<div id="modal"><div id="mbody"></div><p id="mnote"></p><div class="row" id="mrow"></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -190,11 +199,12 @@ var ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0,
 var inv = new THREE.Matrix4(), lray = new THREE.Ray(), lplane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hitL = new THREE.Vector3();
 /* where a finger lands on a picture, in the picture's own flat coordinates (the effects work in that space) */
 function hitOn(mesh, cx, cy) { var r = stage.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); mesh.updateMatrixWorld(true); inv.copy(mesh.matrixWorld).invert(); lray.copy(ray.ray).applyMatrix4(inv); return lray.intersectPlane(lplane, hitL) ? hitL : null; }
-function activePic() { if (mode === 'own') return own.cloud ? { mesh: own.cloud.points, G: own.cloud.G } : null; if (mode === 'market' && focus >= 0 && paints[focus] && paints[focus].mesh) return paints[focus]; return null; }
+function activePic() { if (mode === 'own') return own.cloud ? { mesh: own.cloud.points, G: own.cloud.G } : null; if (mode === 'market' && focus >= 0 && paints[focus] && paints[focus].mesh) return paints[focus]; if (mode === 'fest' && ffocus === 6 && fest && fest.centre.mesh) return fest.centre; return null; }
 function worldXY(cx, cy) { var P = activePic(); return P ? hitOn(P.mesh, cx, cy) : null; }
 function tapScene(cx, cy) {
   var P = activePic(), w = P && worldXY(cx, cy);
   if (w && Math.abs(w.x) < P.G.W / 2 + 0.2 && Math.abs(w.y) < P.G.H / 2 + 0.2) { shock(w.x, w.y); return; }
+  if (mode === 'fest' && fest) { var bi = -1, bd2 = 0.2, vv = new THREE.Vector3(), r0 = stage.getBoundingClientRect(), nx = ((cx - r0.left) / r0.width) * 2 - 1, ny = -((cy - r0.top) / r0.height) * 2 + 1, asp = r0.width / r0.height; fest.foci.forEach(function (f, i) { vv.set(f.c[0], f.c[1], f.c[2]).project(camera); if (vv.z > 1) return; var d = Math.hypot((vv.x - nx) * asp, vv.y - ny); if (d < bd2) { bd2 = d; bi = i; } }); if (bi >= 0 && bi !== ffocus) festGo(bi); return; }
   if (mode !== 'market') return;
   var best = -1, bd = 1e9;
   paints.forEach(function (Q, i) { if (!Q.mesh) return; var h = hitOn(Q.mesh, cx, cy); if (h && Math.abs(h.x) < Q.G.W / 2 + 0.2 && Math.abs(h.y) < Q.G.H / 2 + 0.2) { var d = camera.position.distanceTo(Q.pos); if (d < bd) { bd = d; best = i; } } });
@@ -217,7 +227,7 @@ stage.addEventListener('pointermove', function (e) {
   p.x = e.clientX; p.y = e.clientY; lastTouch = performance.now();
 });
 function up(e) {
-  if (tap && !tap.moved && performance.now() - tap.t < 380 && (mode === 'market' || mode === 'own')) tapScene(e.clientX, e.clientY);
+  if (tap && !tap.moved && performance.now() - tap.t < 380 && (mode === 'market' || mode === 'own' || mode === 'fest')) tapScene(e.clientX, e.clientY);
   tap = null; brush.down = false; delete ptrs[e.pointerId]; pinch0 = dist2();
 }
 stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', function (e) { tap = null; brush.down = false; delete ptrs[e.pointerId]; pinch0 = dist2(); });
@@ -247,17 +257,17 @@ var PAINTINGS = [
   { name: 'Ridge in mist', pal: ['#f0c9a0', '#8a5a6a', '#fff2dc', '#2d2a45'] },
   { name: 'Your painting', pal: null }
 ];
-function placeholder(c, g, w, h) {
+function placeholder(c, g, w, h, lab) {
   var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#2a1d15'); gr.addColorStop(1, '#120d0a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
   g.strokeStyle = '#e8b44f'; g.lineWidth = h * 0.016; g.setLineDash([h * 0.05, h * 0.035]); g.strokeRect(w * 0.06, h * 0.08, w * 0.88, h * 0.84); g.setLineDash([]);
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#f6d58a'; g.font = '700 ' + Math.round(h * 0.4) + 'px Georgia, serif'; g.fillText('+', w / 2, h * 0.42);
-  g.fillStyle = '#f4ebd9'; g.font = '700 ' + Math.round(h * 0.09) + 'px Georgia, serif'; g.fillText('Your painting here', w / 2, h * 0.74);
+  g.fillStyle = '#f4ebd9'; g.font = '700 ' + Math.round(h * 0.09) + 'px Georgia, serif'; g.fillText(lab || 'Your painting here', w / 2, h * 0.74);
   g.fillStyle = '#b3a893'; g.font = Math.round(h * 0.052) + 'px Georgia, serif'; g.fillText('tap + Add your painting', w / 2, h * 0.85);
   return c;
 }
-function makePainting(i, w, h) {
+function makePainting(i, w, h, lab) {
   var c = document.createElement('canvas'); c.width = w; c.height = h; var g = c.getContext('2d'); var R = rng(900 + i * 31); var P = PAINTINGS[i].pal;
-  if (i === 6) return placeholder(c, g, w, h);
+  if (i === 6) return placeholder(c, g, w, h, lab);
   var gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, P[0]); gr.addColorStop(1, P[1]); g.fillStyle = gr; g.fillRect(0, 0, w, h);
   var k;
   if (i === 0) {
@@ -439,7 +449,7 @@ var GRADES = ['Original', 'Mela night', 'Ink', 'Neon'];
 var yours = { dm: 'relief', kind: '', canvas: null, has: false, camera: false };
 var holder = { own: new THREE.Scene() };
 var tabsEl = $('tabs'), chipsEl = $('chips'), ctlEl = $('ctl'), fxEl = $('fxrow'), sheet = document.querySelector('.sheet');
-var TABS = [['market', 'Exhibition'], ['dhol', 'Dhol echo'], ['own', 'Your own']];
+var TABS = [['market', 'Exhibition'], ['dhol', 'Dhol echo'], ['own', 'Your own'], ['fest', 'Festivals']];
 var VIDEO_MODE = /[?&]video/.test(location.search);
 function NR() { var st = document.getElementById('stage'); return st.clientWidth / (st.clientHeight || 1) < 0.8 ? 1.45 : 1; }
 
@@ -463,9 +473,10 @@ function toast(msg) { var t = $('toast'); t.textContent = msg; t.style.display =
 
 /* playground: effects act on the paintings and on your own picture; the scenery and the dhol stay as drawn */
 function applyFX() {
-  var on = mode === 'market' || mode === 'own';
+  var on = mode === 'market' || mode === 'own' || mode === 'fest';
   UF.uWind.value = on ? FX.wind : 0; UF.uWave.value = on ? FX.wave : 0; UF.uMelt.value = on ? FX.melt : 0; UF.uScatter.value = on ? FX.scatter : 0; UF.uGrade.value = on ? FX.grade : 0;
-  fxMode = (mode === 'market' && focus >= 0) || mode === 'own';
+  fxMode = (mode === 'market' && focus >= 0) || mode === 'own' || (mode === 'fest' && ffocus === 6);
+  if (fest && fest.centre.mesh) fest.centre.mesh.scale.z = fest.centre.s * 0.5 * FX.depth;
   paints.forEach(function (P) { if (P.mesh) P.mesh.scale.z = P.s * 0.5 * FX.depth; });
   if (own.cloud) own.cloud.points.scale.z = FX.depth;
 }
@@ -525,15 +536,16 @@ function recordClip(btn) {
 
 
 /* ---- scene 1: the exhibition ---- */
+function ensureMarket() { if (!market) { market = buildMarket(); buildPaintings(); } }
 function setPainting(P, src, sw, sh, dm, key) {
-  if (P.mesh) { market.scene.remove(P.mesh); P.mesh.geometry.dispose(); }
-  var G = gridFor(sw, sh, 150), s = Math.min(1.6 / G.W, 1.2 / G.H), size = G.W / (G.w - 1) * s * 1.4;
+  if (P.mesh) { P.scene.remove(P.mesh); P.mesh.geometry.dispose(); }
+  var G = gridFor(sw, sh, 150), s = Math.min(1.6 / G.W, 1.2 / G.H) * (P.k || 1), size = G.W / (G.w - 1) * s * 1.4;
   var cl = buildCloud(src, sw, sh, dm, key, false, 150, size);
   P.cl = cl; P.mesh = cl.points; P.G = G; P.s = s; P.mesh.position.copy(P.pos); P.mesh.rotation.y = P.yaw; P.mesh.scale.set(s, s, s * 0.5 * FX.depth);
-  market.scene.add(P.mesh); return cl;
+  P.scene.add(P.mesh); return cl;
 }
 function buildPaintings() {
-  paints = market.foci.map(function (f, i) { var P = { yaw: f.yaw, pos: new THREE.Vector3(f.c[0], f.c[1], f.c[2]), mesh: null, G: null, s: 0.4, cl: null }; setPainting(P, makePainting(i, 300, 225), 300, 225, 'relief', 'p' + i); return P; });
+  paints = market.foci.map(function (f, i) { var P = { scene: market.scene, yaw: f.yaw, pos: new THREE.Vector3(f.c[0], f.c[1], f.c[2]), mesh: null, G: null, s: 0.4, cl: null }; setPainting(P, makePainting(i, 300, 225), 300, 225, 'relief', 'p' + i); return P; });
 }
 function marketChips() {
   chipsEl.innerHTML = ''; chipsEl.appendChild(addLabel('chip primary', '+ Add your painting'));
@@ -584,21 +596,23 @@ function stopVideo() {
 function setOwnCloud(cl) { var sc = holder.own; sc.children.slice().forEach(function (c) { sc.remove(c); }); if (own.cloud) own.cloud.points.geometry.dispose(); own.cloud = cl; sc.add(cl.points); applyFX(); }
 function ownFrom(src, w, h, flip) { var cl = buildCloud(src, w, h, yours.dm, 'own', flip); setOwnCloud(cl); viewFor(cl); return cl; }
 function rebuildYours() {
-  if (yours.kind === 'image' && yours.canvas) { var ss = stallSrc(yours.canvas); setPainting(paints[6], ss, ss.width, ss.height, yours.dm, 'yours'); ownFrom(yours.canvas, yours.canvas.width, yours.canvas.height, false); applyFX(); }
+  ensureMarket();
+  if (yours.kind === 'image' && yours.canvas) { var ss = stallSrc(yours.canvas); setPainting(paints[6], ss, ss.width, ss.height, yours.dm, 'yours'); if (fest) setPainting(fest.centre, ss, ss.width, ss.height, yours.dm, 'fest'); ownFrom(yours.canvas, yours.canvas.width, yours.canvas.height, false); applyFX(); }
   else { if (own.cloud) own.cloud.dm = yours.dm; if (paints[6] && paints[6].cl && yours.kind === 'video') paints[6].cl.dm = yours.dm; }
 }
 function afterAdd(msg) {
   yours.has = true; var t = document.querySelector('.tab.add'); if (t) t.classList.remove('nudge');
-  if (mode === 'own') { buildOwnChips(); viewFor(own.cloud); toast(msg[0]); } else { if (mode !== 'market') setMode('market'); marketChips(); marketGo(6); toast(msg[1]); }
+  if (mode === 'fest') { if (festGo) festGo(6); toast('Your picture is on the big screen in the middle of the village.'); } else if (mode === 'own') { buildOwnChips(); viewFor(own.cloud); toast(msg[0]); } else { if (mode !== 'market') setMode('market'); marketChips(); marketGo(6); toast(msg[1]); }
 }
 function handleFile(f) {
   if (!f) return;
+  ensureMarket();
   if (/^image\//.test(f.type)) {
     var u = URL.createObjectURL(f);
     loadImg(u).then(function (im) {
       stopVideo(); var m = Math.min(1, 1000 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * m); c.height = Math.round(im.naturalHeight * m);
       c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); yours.kind = 'image'; yours.canvas = c; yours.has = true;
-      var ss = stallSrc(c); setPainting(paints[6], ss, ss.width, ss.height, yours.dm, 'yours'); ownFrom(c, c.width, c.height, false);
+      var ss = stallSrc(c); setPainting(paints[6], ss, ss.width, ss.height, yours.dm, 'yours'); if (fest) setPainting(fest.centre, ss, ss.width, ss.height, yours.dm, 'fest'); ownFrom(c, c.width, c.height, false);
       afterAdd(['Done. Tap the picture, or turn on Touch to push the dots. It is also hanging in the Exhibition.', 'Your painting is hanging at the end of the lane. It is also in Your own.']);
     }, function () { toast('That picture could not be opened.'); });
   } else if (/^video\//.test(f.type)) {
@@ -626,6 +640,235 @@ function showOwn() {
   if (!own.cloud) { if (!paints.length) { market = market || buildMarket(); buildPaintings(); } var c = makePainting(0, 400, 300); ownFrom(c, 400, 300, false); }
   applyFX(); viewFor(own.cloud); snap();
 }
+/* ================= SCENE: the festival village ================= */
+var fest = null, ffocus = -1, festGo = null, FT = 0, festSpeed = 1, crowdFrac = 1;
+var FESTS = [
+  { name: 'Horror festival', line: 'A ghost on the lawn, candles in the dark, bats overhead. A night for things that go bump.', sign: '#c9a2ff', c1: [0.55, 0.25, 0.85], c2: [0.25, 0.8, 0.4] },
+  { name: 'Theatre festival', line: 'Red curtains, a spotlight and the two old masks, comedy and tragedy. Plays on the lawn.', sign: '#ff8a7a', c1: [0.85, 0.15, 0.18], c2: [0.95, 0.75, 0.3] },
+  { name: 'Anime festival', line: 'Cherry blossom falling on a big-eyed hero. Cosplay, screenings and sketch walls.', sign: '#ffa9d0', c1: [1, 0.45, 0.7], c2: [0.3, 0.85, 0.95] },
+  { name: 'Cymatics festival', line: 'Sound made visible: a plate that hums, and the pattern it draws changes with the note.', sign: '#7fe7f2', c1: [0.2, 0.75, 0.9], c2: [0.95, 0.95, 1] },
+  { name: 'Food festival', line: 'A wok on the boil, steam rising, sparks in the air. Village kitchens and street food.', sign: '#ffc05a', c1: [0.95, 0.5, 0.12], c2: [0.95, 0.8, 0.3] },
+  { name: 'Art festival', line: 'An easel, dripping colour and floating paint. Live painting, studios and open walls.', sign: '#ff9a72', c1: [0.93, 0.35, 0.18], c2: [0.25, 0.7, 0.65] },
+  { name: 'Your festival here', line: 'The middle of the village is yours. Add a picture and it lights up the big screen.', sign: '#f6d58a', c1: [0.95, 0.72, 0.3], c2: [0.95, 0.9, 0.78] }
+];
+var TONES = [[0.96, 0.78, 0.62], [0.8, 0.58, 0.4], [0.6, 0.4, 0.27], [0.42, 0.28, 0.2]];
+var CLOTHES = [[0.93, 0.35, 0.18], [0.95, 0.72, 0.3], [0.25, 0.7, 0.65], [0.95, 0.9, 0.78], [0.4, 0.45, 0.92], [1, 0.5, 0.7], [0.45, 0.8, 0.35], [0.8, 0.25, 0.4]];
+var PANTS = [[0.22, 0.28, 0.5], [0.5, 0.42, 0.28], [0.85, 0.85, 0.8], [0.18, 0.18, 0.22], [0.5, 0.2, 0.25]];
+var HAIRS = [[0.12, 0.09, 0.08], [0.3, 0.2, 0.12], [0.6, 0.45, 0.2], [0.85, 0.85, 0.85], [0.1, 0.1, 0.2]];
+function pick(R, a) { return a[Math.floor(R() * a.length) % a.length]; }
+function sph3(R, r) { var v = [R() - 0.5, R() - 0.5, R() - 0.5], L = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / L * r, v[1] / L * r, v[2] / L * r]; }
+/* body templates: flat arrays of [x, y, z, r, g, b, part, pivotY, pivotZ]; parts: 1,2 legs, 3,4 arms, 5 wheel, 6 tail */
+function tPerson(R, s) {
+  var p = [], tone = pick(R, TONES), shirt = pick(R, CLOTHES), pants = pick(R, PANTS), hair = pick(R, HAIRS), k, v, t, side;
+  for (k = 0; k < 16; k++) { v = sph3(R, 0.11); p.push([v[0], 1.62 + v[1], v[2]].concat(tone, [0, 0, 0])); }
+  for (k = 0; k < 9; k++) { v = sph3(R, 0.118); p.push([v[0], 1.65 + Math.abs(v[1]) * 0.9, v[2] - 0.01].concat(hair, [0, 0, 0])); }
+  for (k = 0; k < 26; k++) p.push([(R() - 0.5) * 0.36, 0.86 + R() * 0.58, (R() - 0.5) * 0.16].concat(shirt, [0, 0, 0]));
+  for (side = -1; side <= 1; side += 2) {
+    for (k = 0; k < 16; k++) { t = k / 15; p.push([side * (0.21 + 0.015 * t) + (R() - 0.5) * 0.06, 1.42 - t * 0.55, (R() - 0.5) * 0.06].concat(t < 0.3 ? shirt : tone, [side < 0 ? 3 : 4, 1.42, 0])); }
+    for (k = 0; k < 24; k++) { t = k / 23; p.push([side * 0.09 + (R() - 0.5) * 0.08, 0.86 - t * 0.86, (R() - 0.5) * 0.08].concat(t > 0.9 ? [0.12, 0.1, 0.1] : pants, [side < 0 ? 1 : 2, 0.86, 0])); }
+  }
+  return { p: p, s: s };
+}
+function tCyclist(R) {
+  var p = [], tone = pick(R, TONES), shirt = pick(R, CLOTHES), pants = pick(R, PANTS), hel = pick(R, CLOTHES), bike = pick(R, [[0.93, 0.35, 0.18], [0.25, 0.7, 0.65], [0.95, 0.72, 0.3], [0.9, 0.9, 0.95]]), k, v, t, side, a;
+  for (side = -1; side <= 1; side += 2) {
+    for (var w = -1; w <= 1; w += 2) {
+      for (k = 0; k < 30; k++) { a = k / 30 * 6.283; p.push([0, 0.34 + Math.sin(a) * 0.34, w * 0.55 + Math.cos(a) * 0.34, 0.8, 0.8, 0.85, 5, 0.34, w * 0.55]); }
+      if (side === -1) for (var sp = 0; sp < 4; sp++) for (k = 1; k < 5; k++) { a = sp * 0.785; p.push([0, 0.34 + Math.sin(a) * 0.07 * k, w * 0.55 + Math.cos(a) * 0.07 * k, 0.6, 0.6, 0.65, 5, 0.34, w * 0.55]); }
+    }
+    break;
+  }
+  [[-0.55, 0.34, -0.1, 0.62], [-0.1, 0.62, 0.5, 0.95], [0.55, 0.34, 0.5, 0.95], [-0.1, 0.62, -0.1, 0.8]].forEach(function (L) { for (k = 0; k < 10; k++) { t = k / 9; p.push([0, L[1] + (L[3] - L[1]) * t, L[0] + (L[2] - L[0]) * t].concat(bike, [0, 0, 0])); } });
+  for (k = 0; k < 16; k++) { v = sph3(R, 0.1); p.push([v[0], 1.5 + v[1], 0.22 + v[2]].concat(tone, [0, 0, 0])); }
+  for (k = 0; k < 9; k++) { v = sph3(R, 0.115); p.push([v[0], 1.54 + Math.abs(v[1]), 0.21 + v[2]].concat(hel, [0, 0, 0])); }
+  for (k = 0; k < 20; k++) { t = R(); p.push([(R() - 0.5) * 0.3, 0.84 + t * 0.46, -0.1 + t * 0.26].concat(shirt, [0, 0, 0])); }
+  for (side = -1; side <= 1; side += 2) {
+    for (k = 0; k < 8; k++) { t = k / 7; p.push([side * 0.18, 1.3 - t * 0.35, 0.12 + t * 0.4].concat(t < 0.4 ? shirt : tone, [0, 0, 0])); }
+    for (k = 0; k < 12; k++) { t = k / 11; p.push([side * 0.1, 0.82 - t * 0.55, -0.08 + t * 0.35].concat(pants, [side < 0 ? 1 : 2, 0.82, -0.08])); }
+  }
+  return { p: p, s: 1 };
+}
+function tDog(R, s) {
+  var p = [], c = pick(R, [[0.7, 0.45, 0.22], [0.95, 0.9, 0.8], [0.25, 0.2, 0.18], [0.85, 0.6, 0.3]]), c2 = [c[0] * 0.7, c[1] * 0.7, c[2] * 0.7], k, v, i;
+  for (k = 0; k < 30; k++) { v = sph3(R, 1); p.push([v[0] * 0.1, 0.34 + v[1] * 0.1, v[2] * 0.28].concat(c, [0, 0, 0])); }
+  for (k = 0; k < 11; k++) { v = sph3(R, 0.09); p.push([v[0], 0.5 + v[1], 0.34 + v[2]].concat(c, [0, 0, 0])); }
+  for (k = 0; k < 4; k++) p.push([(R() - 0.5) * 0.06, 0.46, 0.44 + R() * 0.06].concat(c2, [0, 0, 0]));
+  for (i = -1; i <= 1; i += 2) for (k = 0; k < 3; k++) p.push([i * 0.07, 0.6 - k * 0.03, 0.31].concat(c2, [0, 0, 0]));
+  [[0.07, 0.2, 1], [-0.07, 0.2, 2], [0.07, -0.2, 2], [-0.07, -0.2, 1]].forEach(function (L) { for (k = 0; k < 7; k++) p.push([L[0], 0.3 - k * 0.043, L[1]].concat(c2, [L[2], 0.3, L[1]])); });
+  for (k = 0; k < 8; k++) { var t = k / 7; p.push([0, 0.4 + t * 0.2, -0.28 - t * 0.18].concat(c, [6, 0.4, -0.28])); }
+  return { p: p, s: s };
+}
+function tCat(R) {
+  var p = [], c = pick(R, [[0.95, 0.6, 0.25], [0.2, 0.2, 0.25], [0.9, 0.9, 0.9]]), k, v;
+  for (k = 0; k < 20; k++) { v = sph3(R, 1); p.push([v[0] * 0.11, 0.17 + v[1] * 0.16, v[2] * 0.1 - 0.02].concat(c, [0, 0, 0])); }
+  for (k = 0; k < 9; k++) { v = sph3(R, 0.075); p.push([v[0], 0.4 + v[1], 0.07 + v[2]].concat(c, [0, 0, 0])); }
+  for (k = 0; k < 4; k++) p.push([(k < 2 ? -1 : 1) * 0.05, 0.5 + (k % 2) * 0.02, 0.06].concat(c, [0, 0, 0]));
+  p.push([-0.03, 0.42, 0.13, 0.4, 1, 0.5, 0, 0, 0]); p.push([0.03, 0.42, 0.13, 0.4, 1, 0.5, 0, 0, 0]);
+  for (k = 0; k < 9; k++) { var t = k / 8; p.push([0.1 + Math.sin(t * 3) * 0.12, 0.04 + t * 0.2, -0.08 - t * 0.04].concat(c, [6, 0.04, -0.08])); }
+  return { p: p, s: 1 };
+}
+function loopPath(cx, cz, rx, rz, w, ph0, rot) {
+  var cr = Math.cos(rot), sr = Math.sin(rot);
+  return function (t, o) { var a = w * t + ph0, ex = rx * Math.cos(a), ez = rz * Math.sin(a), dx = -rx * w * Math.sin(a), dz = rz * w * Math.cos(a), vx = dx * cr - dz * sr, vz = dx * sr + dz * cr; o.x = cx + ex * cr - ez * sr; o.z = cz + ex * sr + ez * cr; o.yaw = Math.atan2(vx, vz); o.sp = Math.hypot(vx, vz); };
+}
+function standPath(x, z, yaw) { return function (t, o) { o.x = x; o.z = z; o.yaw = yaw; o.sp = 0; }; }
+function followPath(base, lag, ox) { var tmp = { x: 0, z: 0, yaw: 0, sp: 0 }; return function (t, o) { base(t - lag, tmp); o.yaw = tmp.yaw; o.sp = tmp.sp; o.x = tmp.x + Math.cos(tmp.yaw) * ox; o.z = tmp.z - Math.sin(tmp.yaw) * ox; }; }
+function spriteTo(b, cv, W3, wsz, hsz, step, size, boost) {
+  var g = cv.getContext('2d'), w = cv.width, h = cv.height, d = g.getImageData(0, 0, w, h).data;
+  for (var j = 0; j < h; j += step) for (var i = 0; i < w; i += step) { var o = (j * w + i) * 4; if (d[o + 3] < 90) continue; var p = W3((i / (w - 1) - 0.5) * wsz, -(j / (h - 1) - 0.5) * hsz); b.add(p[0], p[1], p[2], d[o] / 255 * boost, d[o + 1] / 255 * boost, d[o + 2] / 255 * boost, size); }
+}
+function signCv(text, col) { var c = document.createElement('canvas'); c.width = 560; c.height = 90; var g = c.getContext('2d'); g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle'; var fs = 62; g.font = '700 ' + fs + 'px Georgia, serif'; while (g.measureText(text).width > 540 && fs > 20) { fs -= 3; g.font = '700 ' + fs + 'px Georgia, serif'; } g.fillText(text, 280, 48); return c; }
+function faceCv() {
+  var c = document.createElement('canvas'); c.width = 130; c.height = 130; var g = c.getContext('2d');
+  g.fillStyle = '#e0408c'; g.beginPath(); g.arc(65, 62, 54, 0, 7); g.fill(); g.fillRect(11, 62, 108, 58);
+  g.fillStyle = '#ffdcc4'; g.beginPath(); g.ellipse(65, 70, 40, 46, 0, 0, 7); g.fill();
+  g.fillStyle = '#ff6fb2'; g.beginPath(); g.moveTo(25, 52); g.lineTo(65, 22); g.lineTo(105, 52); g.lineTo(88, 44); g.lineTo(72, 56); g.lineTo(58, 44); g.lineTo(42, 58); g.fill();
+  [[44, 76], [86, 76]].forEach(function (e) { g.fillStyle = '#2fd1f2'; g.beginPath(); g.ellipse(e[0], e[1], 14, 18, 0, 0, 7); g.fill(); g.fillStyle = '#1b3fb5'; g.beginPath(); g.ellipse(e[0], e[1] + 3, 8, 12, 0, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(e[0] - 4, e[1] - 6, 4.5, 0, 7); g.fill(); g.beginPath(); g.arc(e[0] + 4, e[1] + 6, 2.2, 0, 7); g.fill(); });
+  g.fillStyle = '#ff8aa0'; g.beginPath(); g.ellipse(34, 96, 8, 4, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(96, 96, 8, 4, 0, 0, 7); g.fill();
+  g.strokeStyle = '#c0405a'; g.lineWidth = 3; g.beginPath(); g.arc(65, 98, 7, 0.2, 2.9); g.stroke(); return c;
+}
+function buildFest() {
+  var sc = new THREE.Scene(), b = new Buf(), dyn = new Buf(), R = rng(31), RR = 7.6, SC = 1.25, pv = [], acts = [], ents = [], i, k, n, q, cb = new Buf();
+  for (i = 0; i < 15000; i++) { var rg = Math.sqrt(R()) * 16, ag = R() * 6.283, vg = 0.07 + R() * 0.13; b.add(rg * Math.sin(ag), 0, rg * Math.cos(ag), vg * 1.1, vg * 0.8, vg * 0.45, 0.02); }
+  for (i = 0; i < 3400; i++) { var r2 = 9.1 + R() * 3.4, a2 = R() * 6.283, v2 = 0.2 + R() * 0.16; b.add(r2 * Math.sin(a2), 0.01, r2 * Math.cos(a2), v2 * 1.1, v2 * 0.85, v2 * 0.55, 0.022); }
+  for (i = 0; i < 1500; i++) { var r3 = Math.sqrt(R()) * 2.2, a3 = R() * 6.283, v3 = 0.35 + R() * 0.25; b.add(r3 * Math.sin(a3), 0.12, r3 * Math.cos(a3), v3, v3 * 0.72, v3 * 0.3, 0.025); }
+  for (i = 0; i <= 110; i++) { var a4 = i / 110 * 6.283; b.add(2.25 * Math.sin(a4), 0.14, 2.25 * Math.cos(a4), 0.95, 0.72, 0.3, 0.04, true); }
+  function dynGroup(n, c, size, tw) { var i0 = dyn.count(); for (var q = 0; q < n; q++) dyn.add(0, -50, 0, c[0], c[1], c[2], size, tw); return i0; }
+  function put(P, i0, q, p) { var o = (i0 + q) * 3; P[o] = p[0]; P[o + 1] = p[1]; P[o + 2] = p[2]; }
+  var festScreenP = null;
+  FESTS.slice(0, 6).forEach(function (F, i) {
+    var th = (i * 60 + 30) * Math.PI / 180, X = RR * Math.sin(th), Z = RR * Math.cos(th), Y = th + Math.PI, cy = Math.cos(Y), sy = Math.sin(Y), c1 = F.c1, c2 = F.c2;
+    function W(lx, ly, lz) { return [X + lx * cy + lz * sy, ly, Z - lx * sy + lz * cy]; }
+    function A(lx, ly, lz, c, sz, tw) { var p = W(lx, ly, lz); b.add(p[0], p[1], p[2], c[0], c[1], c[2], sz, tw); }
+    var wood = [0.62, 0.42, 0.22], cream = [0.95, 0.9, 0.78], n, hw = 1.8, hd = 1.0;
+    [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd]].forEach(function (pp) { for (n = 0; n <= 80; n++) A(pp[0], n / 80 * 2.9, pp[1], wood, 0.026); });
+    for (var gx = 0; gx < 80; gx++) for (var gz = 0; gz < 22; gz++) { var lx = (gx / 79 - 0.5) * (hw * 2 + 0.3), t = gz / 21, lz = lerp(hd + 0.15, -hd - 0.15, t), ly = lerp(2.85, 3.4, t), stripe = Math.floor((lx + hw) / 0.36) % 2; A(lx, ly, lz, stripe ? c1 : cream, 0.03); }
+    for (n = 0; n <= 50; n++) A((n / 50 - 0.5) * (hw * 2 + 0.3), 2.8 + (n % 2) * 0.05, hd + 0.17, cream, 0.024);
+    for (var tx = 0; tx < 60; tx++) for (var tz = 0; tz < 12; tz++) A((tx / 59 - 0.5) * 3.4, 0.95, 0.65 + tz / 11 * 0.5, c2, 0.026);
+    for (var dx = 0; dx < 60; dx++) for (var dy = 0; dy < 11; dy++) { var sh = 0.55 + 0.45 * Math.sin(dx * 0.8); A((dx / 59 - 0.5) * 3.4, 0.95 - dy * 0.085, 1.15, [c2[0] * sh, c2[1] * sh, c2[2] * sh], 0.024); }
+    spriteTo(b, signCv(F.name.toUpperCase(), F.sign), function (x, y) { return W(x, 3.95 + y, 0.3); }, 3.6, 0.58, 3, 0.036, 1.1);
+    for (n = 0; n < 5; n++) A(-1.4 + n * 0.7, 2.7, hd + 0.2, [1, 0.74, 0.32], 0.1, true);
+    var P0 = { W: W, X: X, Z: Z, Y: Y, th: th }; pv.push(P0);
+    if (i === 0) { // horror: ghost, bats, candles, green fog
+      var gs = [], gi = dynGroup(170, [0.7, 0.88, 1], 0.04, true); for (k = 0; k < 170; k++) gs.push({ th: R() * 6.283, h: R() });
+      acts.push(function (t, P, C) { for (var q = 0; q < 170; q++) { var g = gs[q], h = g.h, rad = h < 0.6 ? 0.34 : 0.34 * Math.sqrt(Math.max(0, 1 - Math.pow((h - 0.6) / 0.4, 2))), y = 1.25 + h * 0.85 + (h < 0.12 ? 0.06 * Math.sin(5 * g.th + 3 * t) : 0), wa = Math.abs(g.th > 3.1416 ? g.th - 6.2832 : g.th), hole = Math.abs(wa - 0.38) < 0.14 && Math.abs(h - 0.72) < 0.07; if (hole) { P[(gi + q) * 3 + 1] = -50; continue; } put(P, gi, q, W(rad * Math.sin(g.th) + 0.15 * Math.sin(0.9 * t), y + 0.12 * Math.sin(1.4 * t), 0.1 + rad * Math.cos(g.th))); var fl = 0.8 + 0.2 * Math.sin(t * 3 + q); C[(gi + q) * 3] = 0.65 * fl; C[(gi + q) * 3 + 1] = 0.85 * fl; C[(gi + q) * 3 + 2] = fl; } });
+      var bi = dynGroup(33, [0.6, 0.3, 0.9], 0.05, false);
+      acts.push(function (t, P) { for (var q = 0; q < 3; q++) { var a = t * 0.9 + q * 2.1, cx = 1.3 * Math.cos(a), cz = 0.5 + 0.9 * Math.sin(a), cyy = 2.55 + 0.25 * Math.sin(t * 1.3 + q); for (var s = 0; s < 11; s++) { var xx = (s - 5) / 5 * 0.26, wy = Math.abs(xx) * Math.sin(t * 10 + q) * 0.9; put(P, bi, q * 11 + s, W(cx + xx * Math.cos(a + 1.57), cyy + wy, cz + xx * Math.sin(a + 1.57))); } } });
+      var ci = dynGroup(18, [1, 0.6, 0.15], 0.05, true);
+      acts.push(function (t, P) { for (var q = 0; q < 3; q++) for (var s = 0; s < 6; s++) put(P, ci, q * 6 + s, W(-1.2 + q * 1.2 + 0.03 * Math.sin(t * 9 + q * 2 + s), 1.08 + s * 0.035 + 0.02 * Math.sin(t * 11 + s), 0.75)); });
+      for (var qq = 0; qq < 3; qq++) for (n = 0; n < 8; n++) A(-1.2 + qq * 1.2, 0.96 + n * 0.015, 0.75, [0.9, 0.9, 0.8], 0.03);
+      var fi = dynGroup(60, [0.1, 0.4, 0.18], 0.08, false), fs = []; for (k = 0; k < 60; k++) fs.push([R(), R(), R()]);
+      acts.push(function (t, P) { for (var q = 0; q < 60; q++) { var f = fs[q]; put(P, fi, q, W((f[0] - 0.5) * 3.2 + 0.2 * Math.sin(t * 0.5 + q), 1.0 + 0.1 * f[1] + 0.06 * Math.sin(t + q), 0.3 + f[2] * 0.8)); } });
+    }
+    if (i === 1) { // theatre: curtains, two masks, spotlight
+      for (var side = -1; side <= 1; side += 2) for (var cx2 = 0; cx2 < 18; cx2++) for (var cyy2 = 0; cyy2 < 40; cyy2++) { var xx2 = side * (1.0 + cx2 / 17 * 0.7), fold = Math.sin(cx2 * 1.4) * 0.07; A(xx2, 0.95 + cyy2 / 39 * 1.8, -0.6 + fold, [0.7 + 0.25 * Math.sin(cx2 * 1.4), 0.08, 0.1], 0.03); }
+      var mi = dynGroup(160, [1, 0.8, 0.35], 0.032, false);
+      acts.push(function (t, P, C) { for (var m = 0; m < 2; m++) { var cxm = m ? 0.5 : -0.5, cym = 1.9 + 0.05 * Math.sin(t * 1.2 + m * 2), q0 = m * 80; for (var q = 0; q < 80; q++) { var u = q / 80 * 6.283, px, py; if (q < 40) { px = 0.3 * Math.cos(u * 2); py = 0.3 * Math.sin(u * 2); } else if (q < 48) { px = (q % 2 ? 1 : -1) * 0.11; py = 0.07 + 0.03 * ((q - 40) >> 1); } else { var s2 = (q - 48) / 31 * 2 - 1; px = s2 * 0.15; py = -0.13 + (m ? -1 : 1) * 0.09 * (s2 * s2 - 0.5) * 2 * -1; } put(P, mi, q0 + q, W(cxm + px, cym + py, 0.05)); var o = (mi + q0 + q) * 3; if (m) { C[o] = 0.55; C[o + 1] = 0.7; C[o + 2] = 1; } else { C[o] = 1; C[o + 1] = 0.8; C[o + 2] = 0.3; } } } });
+      var si2 = dynGroup(110, [1, 0.95, 0.7], 0.03, false), sr = []; for (k = 0; k < 110; k++) sr.push([R(), R() * 6.283]);
+      acts.push(function (t, P, C) { var fl = 0.7 + 0.3 * Math.sin(t * 2.3); for (var q = 0; q < 110; q++) { var u = sr[q][0], a = sr[q][1], rr = u * 0.55; put(P, si2, q, W(rr * Math.cos(a), 3.0 - u * 2.95, 1.0 + rr * Math.sin(a))); var o = (si2 + q) * 3, e = (1 - u * 0.5) * fl * 0.55; C[o] = e; C[o + 1] = e * 0.95; C[o + 2] = e * 0.75; } });
+    }
+    if (i === 2) { // anime: hero face and falling blossom
+      spriteTo(b, faceCv(), function (x, y) { return W(x, 1.75 + y, -0.2); }, 1.25, 1.25, 2, 0.03, 1.1);
+      var pi2 = dynGroup(70, [1, 0.62, 0.78], 0.05, true), pp2 = []; for (k = 0; k < 70; k++) pp2.push([R(), R(), R(), R()]);
+      acts.push(function (t, P) { for (var q = 0; q < 70; q++) { var p = pp2[q], u = (t * (0.07 + p[2] * 0.06) + p[0]) % 1; put(P, pi2, q, W((p[1] - 0.5) * 3.2 + 0.25 * Math.sin(t * 0.9 + q), 3.2 - u * 3.1, 0.2 + p[3] * 1.0 + 0.1 * Math.cos(t + q))); } });
+      var ki = dynGroup(14, [1, 1, 0.8], 0.06, true);
+      acts.push(function (t, P, C) { for (var q = 0; q < 14; q++) { var a = q / 14 * 6.283 + t * 0.3, rr = 0.85 + 0.15 * Math.sin(t * 2 + q); put(P, ki, q, W(Math.cos(a) * rr, 1.75 + Math.sin(a) * rr * 0.8, -0.1)); var e = 0.5 + 0.5 * Math.sin(t * 4 + q * 1.7); C[(ki + q) * 3] = e; C[(ki + q) * 3 + 1] = e * 0.95; C[(ki + q) * 3 + 2] = e * 0.7; } });
+    }
+    if (i === 3) { // cymatics: a humming plate
+      var NP = 46, cp = dynGroup(NP * NP, [0.3, 0.85, 0.95], 0.03, false);
+      acts.push(function (t, P, C) { var n1 = 2.5 + 2 * Math.sin(t * 0.37), m1 = 3.5 + 2.5 * Math.sin(t * 0.23 + 1); for (var jj = 0; jj < NP; jj++) for (var ii = 0; ii < NP; ii++) { var u = ii / (NP - 1), v = jj / (NP - 1), amp = Math.cos(n1 * Math.PI * u) * Math.cos(m1 * Math.PI * v) - Math.cos(m1 * Math.PI * u) * Math.cos(n1 * Math.PI * v), q = jj * NP + ii; put(P, cp, q, W((u - 0.5) * 1.9, 1.0 + v * 1.7, 0.15 + amp * 0.12 * Math.sin(t * 9))); var node = Math.exp(-amp * amp * 14), o = (cp + q) * 3; C[o] = 0.1 + node * 0.9; C[o + 1] = 0.4 + node * 0.6; C[o + 2] = 0.6 + node * 0.4; } });
+    }
+    if (i === 4) { // food: wok, steam, sparks
+      for (k = 0; k < 90; k++) { var u5 = R() * 6.283, v5 = R() * 1.57; A(0.5 * Math.sin(v5) * Math.cos(u5), 1.28 - 0.3 * Math.cos(v5), 0.3 + 0.5 * Math.sin(v5) * Math.sin(u5) * 0.8, [0.75, 0.3, 0.12], 0.03); }
+      for (k = 0; k < 40; k++) A((R() - 0.5) * 0.7, 1.3, 0.3 + (R() - 0.5) * 0.5, pick(R, [[0.9, 0.2, 0.1], [0.4, 0.8, 0.3], [0.95, 0.8, 0.3]]), 0.035);
+      for (k = 0; k < 60; k++) A(-1.5 + (k % 12) * 0.27, 2.55 - (k / 12 | 0) * 0.05, 0.9, k % 2 ? [0.9, 0.15, 0.1] : [0.95, 0.9, 0.7], 0.05);
+      var st = dynGroup(80, [0.95, 0.9, 0.8], 0.09, false), stp = []; for (k = 0; k < 80; k++) stp.push([R(), R() * 6.283]);
+      acts.push(function (t, P, C) { for (var q = 0; q < 80; q++) { var p = stp[q], u = (t * 0.28 + p[0]) % 1; put(P, st, q, W(0.2 * Math.sin(u * 7 + p[1]) * (0.5 + u), 1.45 + u * 1.3, 0.3 + 0.15 * Math.cos(u * 6 + p[1]))); var e = (1 - u) * 0.55; C[(st + q) * 3] = e; C[(st + q) * 3 + 1] = e * 0.92; C[(st + q) * 3 + 2] = e * 0.8; } });
+      var sk = dynGroup(30, [1, 0.8, 0.25], 0.04, true), skp = []; for (k = 0; k < 30; k++) skp.push([R(), R() * 6.283, R()]);
+      acts.push(function (t, P) { for (var q = 0; q < 30; q++) { var p = skp[q], u = (t * 1.3 + p[0]) % 1; put(P, sk, q, W(Math.cos(p[1]) * u * 0.7, 1.35 + u * 0.7 - u * u * 0.9 + p[2] * 0.2, 0.3 + Math.sin(p[1]) * u * 0.5)); } });
+    }
+    if (i === 5) { // art: easel painting, drips, floating paint
+      var cvp = makePainting(1, 80, 60), gp = cvp.getContext('2d'), dp = gp.getImageData(0, 0, 80, 60).data;
+      for (var jy = 0; jy < 60; jy++) for (var ix = 0; ix < 80; ix++) { var o5 = (jy * 80 + ix) * 4; A((ix / 79 - 0.5) * 1.6, 2.4 - jy / 59 * 1.2, -0.1 + (dp[o5] + dp[o5 + 1]) / 510 * 0.1, [dp[o5] / 255 * 1.15, dp[o5 + 1] / 255 * 1.15, dp[o5 + 2] / 255 * 1.15], 0.03); }
+      for (n = 0; n <= 60; n++) { A(-0.82 + n / 60 * 1.64, 2.42, -0.08, [0.95, 0.72, 0.3], 0.03); A(-0.82 + n / 60 * 1.64, 1.18, -0.08, [0.95, 0.72, 0.3], 0.03); }
+      for (n = 0; n <= 40; n++) { A(-0.82, 1.18 + n / 40 * 1.24, -0.08, [0.95, 0.72, 0.3], 0.03); A(0.82, 1.18 + n / 40 * 1.24, -0.08, [0.95, 0.72, 0.3], 0.03); }
+      for (n = 0; n <= 40; n++) { A(-0.6 + n / 40 * 0.15, 0.95 + n / 40 * 0.25, -0.35 + n / 40 * 0.3, wood, 0.03); A(0.6 - n / 40 * 0.15, 0.95 + n / 40 * 0.25, -0.35 + n / 40 * 0.3, wood, 0.03); }
+      var dr = dynGroup(36, [0.93, 0.35, 0.18], 0.045, false), drp = []; for (k = 0; k < 36; k++) drp.push([R(), R()]);
+      acts.push(function (t, P, C) { for (var q = 0; q < 36; q++) { var p = drp[q], u = (t * 0.22 + p[0]) % 1, o = (dr + q) * 3, cc = CLOTHES[q % 8]; put(P, dr, q, W((p[1] - 0.5) * 1.5, 1.2 - u * 0.2 - u * u * 1.0, 0.05)); C[o] = cc[0]; C[o + 1] = cc[1]; C[o + 2] = cc[2]; } });
+      var ob = dynGroup(42, [0.25, 0.7, 0.65], 0.05, false);
+      acts.push(function (t, P, C) { for (var q = 0; q < 7; q++) { var a = t * (0.5 + q * 0.07) + q * 0.9, cx = Math.cos(a) * (1.3 + q * 0.05), cyo = 2.0 + Math.sin(a * 1.3) * 0.5, cc = CLOTHES[q]; for (var s = 0; s < 6; s++) { var v = sph3(rng(q * 9 + s), 0.09); put(P, ob, q * 6 + s, W(cx + v[0], cyo + v[1], 0.3 + Math.sin(a) * 0.5 + v[2])); var o = (ob + q * 6 + s) * 3; C[o] = cc[0]; C[o + 1] = cc[1]; C[o + 2] = cc[2]; } } });
+    }
+  });
+  // lamp strings between the pavilions, and lanterns in the air
+  for (i = 0; i < 6; i++) { var tha = (i * 60 + 30) * Math.PI / 180, thb = tha + 1.0472; for (k = 0; k <= 70; k++) { var u6 = k / 70, an = lerp(tha, thb, u6); b.add(RR * Math.sin(an), 3.9 - 0.7 * Math.sin(u6 * Math.PI), RR * Math.cos(an), 0.5, 0.4, 0.2, 0.016); } for (k = 1; k < 12; k++) { var u7 = k / 12, an2 = lerp(tha, thb, u7); b.add(RR * Math.sin(an2), 3.85 - 0.7 * Math.sin(u7 * Math.PI), RR * Math.cos(an2), 1, 0.72, 0.3, 0.1, true); } }
+  for (i = 0; i < 40; i++) { var ra = 3 + R() * 11, aa = R() * 6.283; b.add(ra * Math.sin(aa), 4.5 + R() * 3, ra * Math.cos(aa), 1, 0.72 + R() * 0.2, 0.3, 0.12, true); }
+  // the middle: a big screen on two posts, pulsing rings
+  for (n = 0; n <= 60; n++) { cb.add(-1.9, 0.12 + n / 60 * 2.2, 0, 0.62, 0.42, 0.22, 0.03); cb.add(1.9, 0.12 + n / 60 * 2.2, 0, 0.62, 0.42, 0.22, 0.03); }
+  var ri = dynGroup(3 * 100, [0.95, 0.72, 0.3], 0.035, false);
+  acts.push(function (t, P, C) { for (var q = 0; q < 3; q++) { var u = (t * 0.25 + q / 3) % 1, rr = 0.6 + u * 1.9; for (var s = 0; s < 100; s++) { var a = s / 100 * 6.283; put(P, ri, q * 100 + s, [rr * Math.sin(a), 0.16, rr * Math.cos(a)]); var o = (ri + q * 100 + s) * 3, e = (1 - u) * 0.9; C[o] = e; C[o + 1] = e * 0.75; C[o + 2] = e * 0.3; } } });
+  // the crowd
+  function addEnt(tp, path, opt) { var E = { tp: tp, path: path, st: { x: 0, z: 0, yaw: 0, sp: 0 }, s: tp.s, amp: opt.amp == null ? 0.6 : opt.amp, gait: opt.gait || 3.2, mean: opt.mean || 0, wheel: !!opt.wheel, ph0: R() * 6.283, i0: 0, rank: 0 }; E.i0 = dyn.count(); tp.p.forEach(function (q) { dyn.add(0, -50, 0, q[3], q[4], q[5], 0.07 * Math.max(0.55, tp.s * (opt.dot || 1))); }); ents.push(E); return E; }
+  var ad = function (s) { return tPerson(R, s || (0.94 + R() * 0.12)); };
+  for (i = 0; i < 12; i++) { var aw = R() * 6.283, rw = 2.8 + R() * 0.9, xw = rw * Math.sin(aw), zw = rw * Math.cos(aw); addEnt(ad(i % 4 === 0 ? 0.62 : 0), standPath(xw, zw, Math.atan2(-xw, -zw)), { amp: 0 }); }
+  var browsers = [];
+  pv.forEach(function (P, pi) {
+    var F = P.W(0, 0, 3.0);
+    for (var q = 0; q < 5; q++) { var rx = 0.7 + R() * 0.8, rz = 0.4 + R() * 0.35, sp = 0.35 + R() * 0.3, w = (R() < 0.5 ? -1 : 1) * sp / ((rx + rz) / 2), pa = loopPath(F[0], F[2], rx, rz, w, R() * 6.283, P.Y); browsers.push(pa); addEnt(ad(), pa, { mean: sp, gait: 3.4 }); }
+    var kp = loopPath(F[0], F[2], 1.0, 0.7, 1.3 / 0.85, R() * 6.283, P.Y + 0.6); addEnt(ad(0.6), kp, { mean: 1.3, gait: 2.6, amp: 0.8 });
+  });
+  for (i = 0; i < 10; i++) { var ro = 10.9 + R() * 0.9, sp2 = 0.7 + R() * 0.3, wo = (i % 2 ? -1 : 1) * sp2 / ro, po = loopPath(0, 0, ro, ro, wo, i / 10 * 6.283, 0); browsers.push(po); addEnt(ad(), po, { mean: sp2 }); if (i % 3 === 0) addEnt(ad(0.62), followPath(po, 0.9, 0.5), { mean: sp2, gait: 3 }); }
+  for (i = 0; i < 8; i++) { var rc = i % 2 ? 9.0 : 9.6, spc = 2.6 + R() * 0.5, wc = (i % 2 ? 1 : -1) * spc / rc; addEnt(tCyclist(R), loopPath(0, 0, rc, rc, wc, i / 8 * 6.283, 0), { mean: spc, wheel: true, amp: 0.7, gait: 1.6, dot: 0.9 }); }
+  [0, 2, 3, 5, 8, 20].forEach(function (bi2, q) { var base = browsers[bi2 % browsers.length]; addEnt(tDog(R, 0.9 + R() * 0.3), followPath(base, 0.7, q % 2 ? 0.45 : -0.45), { mean: 0.55, gait: 7, amp: 0.8, dot: 1.1 }); });
+  addEnt(tDog(R, 1), loopPath(0, 0, 3.3, 3.3, 0.22, 1, 0), { mean: 0.73, gait: 6, amp: 0.8, dot: 1.1 });
+  [[3, -2.0, 1.6], [4, 2.0, 1.6]].forEach(function (cp2) { var P = pv[cp2[0]], pp = P.W(cp2[1], 0, cp2[2]); addEnt(tCat(R), standPath(pp[0], pp[2], P.Y + 0.4), { amp: 0, dot: 1.2 }); });
+  var order = ents.map(function (e, q) { return q; }); for (i = order.length - 1; i > 0; i--) { var j2 = Math.floor(R() * (i + 1)), tm = order[i]; order[i] = order[j2]; order[j2] = tm; } order.forEach(function (q, rank) { ents[q].rank = rank; });
+  sc.add(b.points()); var posts = cb.points(); sc.add(posts); var dynPts = dyn.points(true); sc.add(dynPts);
+  var Pa = dynPts.geometry.attributes.position, Ca = dynPts.geometry.attributes.aCol;
+  var centre = { yaw: 0, pos: new THREE.Vector3(0, 2.55, 0), mesh: null, G: null, s: 0.4, cl: null, scene: sc, k: 1.65 };
+  var src = makePainting(6, 300, 225, 'Your festival here'); if (yours.has && yours.kind === 'image' && yours.canvas) src = stallSrc(yours.canvas);
+  setPainting(centre, src, src.width, src.height, yours.dm, 'fest');
+  var foci = pv.map(function (P) { var c = P.W(0, 2.1, 0); return { c: c, yaw: P.Y }; }); foci.push({ c: [0, 2.2, 0], yaw: 0 });
+  var N = ents.length;
+  function update(t) {
+    var P = Pa.array, C = Ca.array, q, e, p, nAct = Math.ceil(crowdFrac * N);
+    for (q = 0; q < acts.length; q++) acts[q](t, P, C);
+    for (q = 0; q < N; q++) {
+      e = ents[q]; var T0 = e.tp.p, n0 = T0.length, o;
+      if (e.rank >= nAct) { for (p = 0; p < n0; p++) P[(e.i0 + p) * 3 + 1] = -50; continue; }
+      e.path(t, e.st); var st = e.st, cY = Math.cos(st.yaw), sY = Math.sin(st.yaw), ph = t * e.mean * e.gait + e.ph0, a = Math.sin(ph) * e.amp * Math.min(1, st.sp / 0.6), bob = st.sp > 0.05 ? Math.abs(Math.sin(ph)) * 0.035 * e.s : Math.sin(t * 1.5 + e.ph0) * 0.006, wa = t * e.mean / 0.34, tw = Math.sin(t * 9 + e.ph0), s = e.s;
+      for (p = 0; p < n0; p++) {
+        var Q = T0[p], x = Q[0] * s, y = Q[1] * s, z = Q[2] * s, part = Q[6];
+        if (part) {
+          var ang = part === 1 ? a : part === 2 ? -a : part === 3 ? -a * 0.8 : part === 4 ? a * 0.8 : part === 5 ? wa : 0;
+          if (part === 6) { x += tw * 0.5 * Math.abs(z - Q[8] * s) * 0.6; }
+          else { var py = Q[7] * s, pz = Q[8] * s, dy = y - py, dz = z - pz, cA = Math.cos(ang), sA = Math.sin(ang); y = py + dy * cA - dz * sA; z = pz + dy * sA + dz * cA; }
+        }
+        o = (e.i0 + p) * 3; P[o] = st.x + x * cY + z * sY; P[o + 1] = y + bob; P[o + 2] = st.z - x * sY + z * cY;
+      }
+    }
+    Pa.needsUpdate = true; Ca.needsUpdate = true;
+  }
+  return { scene: sc, update: update, foci: foci, centre: centre, pv: pv, posts: posts };
+}
+function buildFxShare() {
+  fxEl.innerHTML = ''; var sv = mkChip('Save picture', false, savePicture); sv.classList.add('primary'); sv.removeAttribute('aria-pressed'); fxEl.appendChild(sv);
+  if (window.MediaRecorder && renderer.domElement.captureStream) { var rc = mkChip('Record 8 s', false, function () { recordClip(rc); }); rc.removeAttribute('aria-pressed'); fxEl.appendChild(rc); }
+}
+function showFest() {
+  mode = 'fest'; if (!fest) fest = buildFest(); current = fest.scene; U.uMul.value = 1;
+  setCfg({ thMin: -9, thMax: 9, phMin: 0.45, phMax: 1.5, rMin: 1.8, rMax: 44, sway: 0.12 });
+  function go(i) {
+    ffocus = i; applyFX(); var showC = i < 0 || i === 6; fest.posts.visible = showC; if (fest.centre.mesh) fest.centre.mesh.visible = showC;
+    if (i < 0) { goal.target.set(0, 0.8, 0); goal.r = 21 * NR(); goal.th = 0.35; goal.ph = 1.05; caption('The festival village', 'Six festival pavilions around a village green, and the middle is yours. Tap a pavilion, or a name below, to walk up to it. Watch the crowd: people, kids, cyclists and a few pets.', 'These themes are ideas, not the confirmed programme. People and pets are drawn stand-ins. Your file stays on your phone.'); buildFxShare(); }
+    else { var f = fest.foci[i]; goal.target.set(f.c[0], f.c[1], f.c[2]); goal.r = (i === 6 ? 9 : 7.2) * NR(); goal.th = f.yaw; goal.ph = i === 6 ? 1.34 : 1.22; caption(FESTS[i].name, FESTS[i].line, i === 6 ? 'Tap the screen for a shockwave. Effects and depth guesses work here too.' : 'A stand-in pavilion. The real programme will be in the timetable.'); if (i === 6) buildFx(); else buildFxShare(); }
+    chipsEl.querySelectorAll('.chip').forEach(function (c) { if (c.dataset.i !== undefined) c.setAttribute('aria-pressed', +c.dataset.i === i ? 'true' : 'false'); });
+  }
+  festGo = go; chipsEl.innerHTML = ''; chipsEl.appendChild(addLabel('chip primary', '+ Add your picture'));
+  var w0 = mkChip('Whole village', true, function () { go(-1); }); w0.dataset.i = -1; chipsEl.appendChild(w0);
+  FESTS.forEach(function (F, i) { var c = mkChip(F.name.replace(' festival', ''), false, function () { go(i); }); c.dataset.i = i; chipsEl.appendChild(c); });
+  ctlEl.innerHTML = ''; ctlEl.appendChild(mkRange('Crowd', 0, 1, 0.05, crowdFrac, function (v) { crowdFrac = v; })); ctlEl.appendChild(mkRange('Speed', 0, 2.5, 0.1, festSpeed, function (v) { festSpeed = v; })); ctlEl.appendChild(glowControl(1)); ctlEl.appendChild(mkReset(function () { go(-1); }));
+  go(-1); snap(); view.r = 24 * NR();
+}
 /* ---- scene 3: dhol ---- */
 function showDhol() {
   mode = 'dhol'; if (!dhol) dhol = buildDhol(); current = dhol.scene; U.uMul.value = 1; applyFX();
@@ -646,13 +889,16 @@ function setMode(m) {
   if (m === 'base') m = 'market';
   if (vid && !yours.camera && m === 'dhol') { try { vid.pause(); } catch (e) {} }
   tabsEl.querySelectorAll('.tab').forEach(function (t) { if (t.dataset.m) t.setAttribute('aria-selected', t.dataset.m === m ? 'true' : 'false'); });
-  if (m === 'market') showMarket(); else if (m === 'own') showOwn(); else { m = 'dhol'; showDhol(); }
-  if (vid && (m === 'market' || m === 'own')) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
+  if (m === 'market') showMarket(); else if (m === 'own') showOwn(); else if (m === 'fest') showFest(); else { m = 'dhol'; showDhol(); }
+  if (vid && (m === 'market' || m === 'own' || m === 'fest')) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
   try { history.replaceState(null, '', '#' + m); } catch (e) {}
 }
 (function () {
   var a = addLabel('tab add nudge', ''); a.innerHTML = '+ Add <span class="opt">your </span>painting'; tabsEl.appendChild(a);
   TABS.forEach(function (t) { var b = document.createElement('button'); b.className = 'tab'; b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.m = t[0]; b.textContent = t[1]; b.addEventListener('click', function () { setMode(t[0]); }); tabsEl.appendChild(b); });
+  var cn = document.createElement('button'); cn.className = 'tab'; cn.type = 'button'; cn.textContent = 'Connect'; cn.id = 'tab-connect';
+  function cc(on) { $('connect').classList.toggle('on', on); cn.setAttribute('aria-selected', on ? 'true' : 'false'); }
+  cn.addEventListener('click', function () { cc(true); }); tabsEl.appendChild(cn); $('c-close').addEventListener('click', function () { cc(false); }); $('connect').addEventListener('click', function (e) { if (e.target === this) cc(false); });
   $('file').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; handleFile(f); });
 })();
 $('fold').addEventListener('click', function () { var m = sheet.classList.toggle('min'); $('fold').textContent = m ? 'More' : 'Less'; });
@@ -670,30 +916,31 @@ if (window.ResizeObserver) new ResizeObserver(resize).observe(stageEl); window.a
 var clock = new THREE.Clock();
 function tickScene() {
   if (mode === 'dhol' && dhol) dhol.update(T);
+  if (mode === 'fest' && fest) fest.update(FT);
   if (vid && vid.readyState >= 2) {
     if (mode === 'own' && own.cloud && T - own.cloud.last > 0.05) { refill(own.cloud, vid); own.cloud.last = T; }
     else if (mode === 'market' && !yours.camera && paints[6] && paints[6].cl && T - paints[6].cl.last > 0.05) { refill(paints[6].cl, vid); paints[6].cl.last = T; }
   }
 }
 function frame() {
-  var dt = Math.min(clock.getDelta(), 0.05); T += dt; U.uTime.value = T;
+  var dt = Math.min(clock.getDelta(), 0.05); T += dt; U.uTime.value = T; FT += dt * festSpeed;
   brush.k = lerp(brush.k, brush.down ? 1 : 0, 1 - Math.pow(0.0005, dt)); brushV.z = brush.k;
   tickScene(); updateCamera(T, dt);
   if (current) renderer.render(current, camera);
   requestAnimationFrame(frame);
 }
-var start = (location.hash || '').replace('#', ''); setMode(['market', 'dhol', 'own'].indexOf(start) >= 0 ? start : 'market');
+var start = (location.hash || '').replace('#', ''); setMode(['market', 'dhol', 'own', 'fest'].indexOf(start) >= 0 ? start : 'market');
 
 /* a small hook for filming the scenes frame by frame (used for the Reels and Shorts) */
 window.__appa = {
   setMode: setMode, mode: function () { return mode; },
-  ready: function () { return (mode === 'market' && paints.length === 7) || (mode === 'dhol' && !!dhol) || (mode === 'own' && !!own.cloud); },
-  foci: function () { return market ? market.foci : []; }, go: function (i) { if (marketGo) marketGo(i); },
+  ready: function () { return (mode === 'market' && paints.length === 7) || (mode === 'dhol' && !!dhol) || (mode === 'own' && !!own.cloud) || (mode === 'fest' && !!fest); },
+  foci: function () { return mode === 'fest' ? (fest ? fest.foci : []) : (market ? market.foci : []); }, go: function (i) { if (mode === 'fest') { if (festGo) festGo(i); } else if (marketGo) marketGo(i); },
   fx: function (o) { for (var k in o) FX[k] = o[k]; applyFX(); }, glow: function (v) { U.uMul.value = v; },
   dhol: function (o) { if (dhol) for (var k in o) dhol.state[k] = o[k]; }, shock: function (x, y, t) { shocks[si % 4].set(x, y, t); si++; },
   cam: function (o) { view.target.set(o.tx, o.ty, o.tz); view.r = o.r; view.th = o.th; view.ph = o.ph; goal.target.copy(view.target); goal.r = o.r; goal.th = o.th; goal.ph = o.ph; },
   tick: function (t, o) {
-    T = t; U.uTime.value = t; brushV.z = 0; tickScene(); placeCamera(0); renderer.render(current, camera);
+    T = t; FT = t; U.uTime.value = t; brushV.z = 0; tickScene(); placeCamera(0); renderer.render(current, camera);
     var vo = $('vo'); if (o) { vo.querySelector('.vk').textContent = o.k || ''; vo.querySelector('.vt').textContent = o.t || ''; vo.querySelector('.vs').textContent = o.s || ''; vo.style.opacity = o.o == null ? 1 : o.o; }
   }
 };
