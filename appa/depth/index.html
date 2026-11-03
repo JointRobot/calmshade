@@ -597,7 +597,7 @@ var GRADES = ['Original', 'Mela night', 'Ink', 'Neon'];
 var yours = { dm: 'relief', kind: '', canvas: null, has: false, camera: false };
 var holder = { own: new THREE.Scene() };
 var tabsEl = $('tabs'), chipsEl = $('chips'), ctlEl = $('ctl'), fxEl = $('fxrow'), sheet = document.querySelector('.sheet');
-var TABS = [['fest', 'Festivals'], ['dhol', 'Dhol echo'], ['own', 'Your own']];
+var TABS = [['fest', 'Festivals'], ['market', 'Exhibition'], ['dhol', 'Dhol echo'], ['own', 'Your own']];
 var VIDEO_MODE = /[?&]video/.test(location.search);
 function NR() { var st = document.getElementById('stage'); return st.clientWidth / (st.clientHeight || 1) < 0.8 ? 1.45 : 1; }
 
@@ -1043,10 +1043,8 @@ function setMode(m) {
   if (m === 'market') showMarket(); else if (m === 'own') showOwn(); else if (m === 'fest') showFest(); else { m = 'dhol'; showDhol(); }
   if (vid && (m === 'market' || m === 'own' || m === 'fest')) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
   sfx.tab(); setAmbient(m === 'market' ? 'market' : m === 'own' ? 'own' : m === 'fest' ? 'fest' : 'dhol');
-  try { history.replaceState(null, '', '#' + m); } catch (e) {}
 }
 (function () {
-  var a = addLabel('tab add nudge', ''); a.innerHTML = '+ Add <span class="opt">your </span>painting'; a.addEventListener('click', function () { if (mode === 'fest' || mode === 'dhol') setMode('market'); }); tabsEl.appendChild(a);
   TABS.forEach(function (t) { var b = document.createElement('button'); b.className = 'tab'; b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.m = t[0]; b.textContent = t[1]; b.addEventListener('click', function () { setMode(t[0]); }); tabsEl.appendChild(b); });
   var cn = document.createElement('button'); cn.className = 'tab'; cn.type = 'button'; cn.textContent = 'Connect'; cn.id = 'tab-connect';
   function cc(on) { $('connect').classList.toggle('on', on); cn.setAttribute('aria-selected', on ? 'true' : 'false'); }
