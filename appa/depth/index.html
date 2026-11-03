@@ -326,6 +326,32 @@ function buildMarket() {
     for (n = 0; n < 4; n++) A(-1.0 + n * 0.66, 2.12, 0.8, [1, 0.74, 0.32], 0.1, true);
     var cc = W(0, cy0, -0.15); foci.push({ c: cc, yaw: Y });
   });
+
+  // art lovers at the stalls
+  function viewer(X0, Z0, fx, fz, h, col, pose, hair) {
+    var rx = -fz, rz = fx, k, a, y, sk = [0.86, 0.66, 0.5], dark = [0.12, 0.09, 0.08];
+    function P(side, fwd, yy, c, sz, tw) { b.add(X0 + rx * side + fx * fwd, yy, Z0 + rz * side + fz * fwd, c[0], c[1], c[2], sz * 1.35, tw); }
+    var lw = 0.075 * h / 1.7, tr = 0.15 * h / 1.7;
+    for (y = 0; y < 0.52 * h; y += 0.035 * h / 1.7) { P(-lw, 0, y, dark, 0.034); P(lw, 0, y, dark, 0.034); P(-lw, 0.02, y, dark, 0.03); P(lw, 0.02, y, dark, 0.03); }
+    for (y = 0.52 * h; y < 0.84 * h; y += 0.03 * h / 1.7) for (a = 0; a < 6.28; a += 0.55) P(Math.cos(a) * tr, Math.sin(a) * tr * 0.62, y, col, 0.036);
+    for (k = 0; k < 40; k++) { var th = k * 2.399, ph = Math.acos(1 - 2 * ((k + 0.5) / 40)), hr = 0.075 * h / 1.7; P(Math.sin(ph) * Math.cos(th) * hr, Math.sin(ph) * Math.sin(th) * hr + 0.02, 0.93 * h + Math.cos(ph) * hr, ph > 1.9 || (Math.sin(th) < -0.2 && ph < 1.6) ? hair : sk, 0.03); }
+    function arm(side, pts) { pts.forEach(function (q) { P(side * tr * 1.05 + (q[0] || 0), q[1], q[2] * h, q[3] || col, 0.027); }); }
+    function line(side, a0, a1, n, c) { var o = []; for (var i = 0; i <= n; i++) { var u = i / n; o.push([a0[0] + (a1[0] - a0[0]) * u, a0[1] + (a1[1] - a0[1]) * u, a0[2] + (a1[2] - a0[2]) * u, i > n * 0.8 ? sk : c]); } arm(side, o); }
+    line(-1, [0, 0, 0.8], [0, 0.0, 0.48], 8, col);
+    if (pose === 'phone') { line(1, [0, 0, 0.8], [0.0, 0.3, 0.98], 9, col); for (var i = 0; i < 6; i++) for (var j = 0; j < 4; j++) P(tr + i * 0.012, 0.32, 0.98 * h + j * 0.015 - 0.02, [0.7, 0.85, 1], 0.02, true); }
+    else if (pose === 'chin') { line(1, [0, 0, 0.8], [0.0, 0.1, 0.62], 4, col); line(1, [0.0, 0.1, 0.62], [-0.04, 0.12, 0.91], 6, col); }
+    else if (pose === 'point') { line(1, [0, 0, 0.8], [0.12, 0.45, 0.93], 10, col); }
+    else if (pose === 'sketch') { line(1, [0, 0, 0.8], [-0.1, 0.22, 0.66], 6, col); line(-1, [0, 0, 0.8], [0.1, 0.22, 0.62], 6, col); for (var u = 0; u < 7; u++) for (var v = 0; v < 5; v++) P(-0.1 + u * 0.028, 0.24, 0.6 * h + v * 0.026, [0.96, 0.93, 0.84], 0.02); }
+    else line(1, [0, 0, 0.8], [0, 0.0, 0.48], 8, col);
+    if (pose === 'hands') { line(1, [0, 0, 0.8], [-0.07, -0.12, 0.55], 5, col); line(-1, [0, 0, 0.8], [0.07, -0.12, 0.55], 5, col); }
+  }
+  var VW = [[0, 1.75, 1.7, 1.68, [0.2, 0.5, 0.55], 'phone', [0.1, 0.07, 0.05]], [0, -1.9, 2.1, 1.55, [0.75, 0.3, 0.4], 'chin', [0.85, 0.85, 0.85]],
+    [1, -1.7, 1.6, 1.7, [0.9, 0.8, 0.5], 'sketch', [0.1, 0.07, 0.05]], [1, 2.0, 2.0, 1.2, [0.95, 0.55, 0.15], 'point', [0.08, 0.05, 0.04]], [1, 2.5, 2.0, 1.72, [0.25, 0.3, 0.6], 'rest', [0.12, 0.08, 0.05]],
+    [2, 1.8, 1.8, 1.65, [0.55, 0.2, 0.2], 'hands', [0.6, 0.6, 0.6]], [2, -1.9, 2.0, 1.62, [0.3, 0.55, 0.35], 'phone', [0.12, 0.08, 0.05]],
+    [3, -1.8, 1.7, 1.62, [0.85, 0.85, 0.8], 'chin', [0.12, 0.08, 0.05]], [3, 1.9, 2.0, 1.75, [0.7, 0.35, 0.15], 'phone', [0.2, 0.12, 0.08]],
+    [4, 1.7, 1.6, 1.7, [0.4, 0.3, 0.6], 'sketch', [0.12, 0.08, 0.05]], [4, -2.0, 2.1, 1.6, [0.15, 0.4, 0.45], 'rest', [0.8, 0.8, 0.8]],
+    [5, -1.8, 1.8, 1.66, [0.8, 0.25, 0.25], 'point', [0.1, 0.07, 0.05]], [5, 1.9, 1.9, 1.15, [0.2, 0.6, 0.7], 'rest', [0.08, 0.05, 0.04]]];
+  VW.forEach(function (w) { var S = STALLS[w[0]], cy = Math.cos(S[2]), sy = Math.sin(S[2]); viewer(S[0] + w[1] * cy + w[2] * sy, S[1] - w[1] * sy + w[2] * cy, -sy, -cy, w[3], w[4], w[5], w[6]); });
   sc.add(b.points());
   return { scene: sc, foci: foci };
 }
@@ -570,7 +596,7 @@ var GRADES = ['Original', 'Mela night', 'Ink', 'Neon'];
 var yours = { dm: 'relief', kind: '', canvas: null, has: false, camera: false };
 var holder = { own: new THREE.Scene() };
 var tabsEl = $('tabs'), chipsEl = $('chips'), ctlEl = $('ctl'), fxEl = $('fxrow'), sheet = document.querySelector('.sheet');
-var TABS = [['market', 'Exhibition'], ['dhol', 'Dhol echo'], ['own', 'Your own'], ['fest', 'Festivals']];
+var TABS = [['fest', 'Festivals'], ['dhol', 'Dhol echo'], ['market', 'Exhibition'], ['own', 'Your own']];
 var VIDEO_MODE = /[?&]video/.test(location.search);
 function NR() { var st = document.getElementById('stage'); return st.clientWidth / (st.clientHeight || 1) < 0.8 ? 1.45 : 1; }
 
@@ -1074,5 +1100,3 @@ window.__appa = {
 if (VIDEO_MODE) document.body.classList.add('vid'); else requestAnimationFrame(frame);
 })();
 </script>
-
-</body></html>
