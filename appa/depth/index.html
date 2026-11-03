@@ -597,7 +597,7 @@ var GRADES = ['Original', 'Mela night', 'Ink', 'Neon'];
 var yours = { dm: 'relief', kind: '', canvas: null, has: false, camera: false };
 var holder = { own: new THREE.Scene() };
 var tabsEl = $('tabs'), chipsEl = $('chips'), ctlEl = $('ctl'), fxEl = $('fxrow'), sheet = document.querySelector('.sheet');
-var TABS = [['fest', 'Festivals'], ['dhol', 'Dhol echo'], ['market', 'Exhibition'], ['own', 'Your own']];
+var TABS = [['fest', 'Festivals'], ['dhol', 'Dhol echo'], ['own', 'Your own']];
 var VIDEO_MODE = /[?&]video/.test(location.search);
 function NR() { var st = document.getElementById('stage'); return st.clientWidth / (st.clientHeight || 1) < 0.8 ? 1.45 : 1; }
 
@@ -666,7 +666,7 @@ function savePicture() {
   g.drawImage(src, 0, 0);
   var bh = Math.round(h * 0.075), gr = g.createLinearGradient(0, h - bh * 1.8, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.85)'); g.fillStyle = gr; g.fillRect(0, h - bh * 1.8, w, bh * 1.8);
   g.fillStyle = '#f4ebd9'; g.font = '700 ' + Math.round(bh * 0.4) + 'px Fraunces, Georgia, serif'; g.fillText('APPA Art Fest 2027', w * 0.04, h - bh * 0.55);
-  g.fillStyle = '#e8b44f'; g.font = '400 ' + Math.round(bh * 0.28) + 'px Mukta, system-ui, sans-serif'; g.fillText('Kamshet · calmshade.in/appa/depth', w * 0.04, h - bh * 0.16);
+  g.fillStyle = '#e8b44f'; g.font = '400 ' + Math.round(bh * 0.28) + 'px Mukta, system-ui, sans-serif'; g.fillText('12 Feb – 19 Mar · Kamshet · calmshade.in/appa/depth', w * 0.04, h - bh * 0.16);
   c.toBlob(function (blob) { if (!blob) { toast('The picture could not be made.'); return; } showMedia('img', URL.createObjectURL(blob), blob, 'appa-in-depth.png', 'Press and hold the picture to save it, or tap Share. Tag #APPAArtFest so we can find it.'); }, 'image/png');
 }
 function recordClip(btn) {
@@ -750,7 +750,7 @@ function rebuildYours() {
 }
 function afterAdd(msg) {
   sfx.add(); yours.has = true; var t = document.querySelector('.tab.add'); if (t) t.classList.remove('nudge');
-  if (mode === 'fest') { if (festGo) festGo(6); toast('Your picture is on the big screen in the middle of the village.'); } else if (mode === 'own') { buildOwnChips(); viewFor(own.cloud); toast(msg[0]); } else { if (mode !== 'market') setMode('market'); marketChips(); marketGo(6); toast(msg[1]); }
+  if (mode === 'own') { buildOwnChips(); viewFor(own.cloud); toast(msg[0]); } else { if (mode !== 'market') setMode('market'); marketChips(); marketGo(6); toast(msg[1]); }
 }
 function handleFile(f) {
   if (!f) return;
@@ -1009,7 +1009,7 @@ function showFest() {
   setCfg({ thMin: -9, thMax: 9, phMin: 0.45, phMax: 1.5, rMin: 1.8, rMax: 44, sway: 0.12 });
   function go(i) {
     ffocus = i; applyFX(); SND.want = i < 0 ? 'fest' : 'fest' + i; setAmbient(SND.want); if (i >= 0) sfx.chime(i + 2); var showC = i < 0 || i === 6; fest.posts.visible = showC; if (fest.centre.mesh) fest.centre.mesh.visible = showC;
-    if (i < 0) { goal.target.set(0, 0.8, 0); goal.r = 21 * NR(); goal.th = 0.35; goal.ph = 1.05; caption('The festival village', 'Six festival pavilions around a village green, and the middle is yours. Tap a pavilion, or a name below, to walk up to it. Watch the crowd: people, kids, cyclists and a few pets.', 'These themes are ideas, not the confirmed programme. People and pets are drawn stand-ins. Your file stays on your phone.'); buildFxShare(); }
+    if (i < 0) { goal.target.set(0, 0.8, 0); goal.r = 26 * NR(); goal.th = 0.35; goal.ph = 1.05; caption('The festival village', 'Six festival pavilions around a village green, and the middle is yours. Tap a pavilion, or a name below, to walk up to it. Watch the crowd: people, kids, cyclists and a few pets.', 'These themes are ideas, not the confirmed programme. People and pets are drawn stand-ins. Your file stays on your phone.'); buildFxShare(); }
     else { var f = fest.foci[i]; goal.target.set(f.c[0], f.c[1], f.c[2]); goal.r = (i === 6 ? 9 : 7.2) * NR(); goal.th = f.yaw; goal.ph = i === 6 ? 1.34 : 1.22; caption(FESTS[i].name, FESTS[i].line, i === 6 ? 'Tap the screen for a shockwave. Effects and depth guesses work here too.' : 'A stand-in pavilion. The real programme will be in the timetable.'); if (i === 6) buildFx(); else buildFxShare(); }
     chipsEl.querySelectorAll('.chip').forEach(function (c) { if (c.dataset.i !== undefined) c.setAttribute('aria-pressed', +c.dataset.i === i ? 'true' : 'false'); });
   }
@@ -1039,13 +1039,14 @@ function setMode(m) {
   if (m === 'base') m = 'market';
   if (vid && !yours.camera && m === 'dhol') { try { vid.pause(); } catch (e) {} }
   tabsEl.querySelectorAll('.tab').forEach(function (t) { if (t.dataset.m) t.setAttribute('aria-selected', t.dataset.m === m ? 'true' : 'false'); });
+  var adl = tabsEl.querySelector('.tab.add'); if (adl) adl.setAttribute('aria-selected', m === 'market' || m === 'base' ? 'true' : 'false');
   if (m === 'market') showMarket(); else if (m === 'own') showOwn(); else if (m === 'fest') showFest(); else { m = 'dhol'; showDhol(); }
   if (vid && (m === 'market' || m === 'own' || m === 'fest')) { var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {}); }
   sfx.tab(); setAmbient(m === 'market' ? 'market' : m === 'own' ? 'own' : m === 'fest' ? 'fest' : 'dhol');
   try { history.replaceState(null, '', '#' + m); } catch (e) {}
 }
 (function () {
-  var a = addLabel('tab add nudge', ''); a.innerHTML = '+ Add <span class="opt">your </span>painting'; tabsEl.appendChild(a);
+  var a = addLabel('tab add nudge', ''); a.innerHTML = '+ Add <span class="opt">your </span>painting'; a.addEventListener('click', function () { if (mode === 'fest' || mode === 'dhol') setMode('market'); }); tabsEl.appendChild(a);
   TABS.forEach(function (t) { var b = document.createElement('button'); b.className = 'tab'; b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.m = t[0]; b.textContent = t[1]; b.addEventListener('click', function () { setMode(t[0]); }); tabsEl.appendChild(b); });
   var cn = document.createElement('button'); cn.className = 'tab'; cn.type = 'button'; cn.textContent = 'Connect'; cn.id = 'tab-connect';
   function cc(on) { $('connect').classList.toggle('on', on); cn.setAttribute('aria-selected', on ? 'true' : 'false'); }
@@ -1081,7 +1082,7 @@ function frame() {
   if (current) renderer.render(current, camera);
   requestAnimationFrame(frame);
 }
-var start = (location.hash || '').replace('#', ''); setMode(['market', 'dhol', 'own', 'fest'].indexOf(start) >= 0 ? start : 'market');
+var start = (location.hash || '').replace('#', ''); setMode(['market', 'dhol', 'own', 'fest'].indexOf(start) >= 0 ? start : 'fest');
 
 /* a small hook for filming the scenes frame by frame (used for the Reels and Shorts) */
 window.__appa = {
