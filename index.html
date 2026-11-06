@@ -2474,6 +2474,19 @@ ${kb()}`;}
   function deskPayHTML(b,table){if(!twoStep(b))return '';
     return `<div class="fx-note" style="text-align:left;margin-top:4px">1 · Calm Shade ${inr(b.pay.calm)}${b.pay.hosts.map(h=>`<br>2 · ${esc(h.name)} ${inr(h.amount)}${h.utr?' · ref '+esc(h.utr):''} ${h.paid?'<b>✓ received</b>':(b.status==='part'||b.status==='confirmed'?`<button class="fx-x" onclick="CS.fx('hostPaid','${table}|${esc(b.ref)}','${esc(h.place)}')">mark received</button>`:'')}`).join('')}</div>`;}
   /* desk: places & rooms — owner UPI, room counts and prices, words and photos for calmshade.in */
+  /* ---- calendar sync (Airbnb / Booking.com / Google .ics in, a Calm Shade feed out) ---- */
+  const IC={data:{},busy:''};
+  function icAgo(t){if(!t)return 'never';const m=Math.max(0,Math.round((Date.now()/1000-t)/60));return m<2?'just now':m<90?m+' min ago':Math.round(m/60)+' h ago';}
+  function icBox(unit,host){const c=IC.data[unit];if(!c)return '';const on=c.urls.length>0;
+    const st=!on?'Not connected yet.':(c.err&&!c.okAt)?`<b style="color:#b3261e">Not working: ${esc(c.err)}</b>`:`Synced ${icAgo(c.okAt)} · ${c.blocked} night${c.blocked===1?'':'s'} blocked${c.err?` · <b style="color:#b3261e">${esc(c.err)}</b>`:''}`;
+    const id=esc(unit);
+    return `<div class="fx-panel" style="gap:8px;margin:8px 0"><b style="font-size:14px">Calendar sync · stops double bookings</b>
+      <div class="fx-note">${st}</div>
+      <div class="fx-field"><label for="ic-in-${id}">1 · Your Airbnb / Booking.com / Google calendar link (ends in .ics). One per line if you have several.</label><textarea id="ic-in-${id}" rows="2" placeholder="https://www.airbnb.co.in/calendar/ical/…ics">${esc(c.urls.join('\n'))}</textarea></div>
+      <div class="fx-row"><button type="button" class="fx-btn small" ${IC.busy===unit?'disabled':''} onclick="CS.fx('icSave','${id}',${host?1:0})">${IC.busy===unit?'Checking…':on?'Save &amp; sync now':'Connect'}</button></div>
+      <div class="fx-field"><label for="ic-out-${id}">2 · Give this link to Airbnb (Calendar → Availability → Connect calendars → Import), so nights booked here are blocked there too.</label><input id="ic-out-${id}" readonly value="${esc(c.export)}" onclick="this.select()"></div>
+      <div class="fx-row"><button type="button" class="fx-btn ghost small" onclick="CS.fx('copy',document.getElementById('ic-out-${id}').value)">Copy this link</button></div>
+      <p class="fx-note">Airbnb and others refresh imported calendars only every few hours, so a booking made in the last hours can still slip through there. Calm Shade re-reads yours before every booking.</p></div>`;}
   const PL={data:null,extras:null,open:''};
   function plDeskHTML(){
     if(!PL.data)return `<div class="pan"><div class="ph2"><h3>Places &amp; rooms</h3></div><div class="pb"><p class="fx-note">Loading…</p></div></div>`;
@@ -2485,7 +2498,7 @@ ${kb()}`;}
           ${pl.own?'':`<div class="fx-grid2">${T(pl,'owner','Owner / contact name')}${T(pl,'upi','Owner UPI ID (printed under their GPay QR)','name@okhdfcbank')}${T(pl,'payee','Name on that UPI account')}</div>`}
           <div class="fx-grid2">${T(pl,'area','Area shown to guests')}${T(pl,'amen','Amenities (separate with ·)')}</div>
           <div class="fx-field"><label>About this place</label><textarea rows="3" data-plf="${esc(pl.id)}|desc">${esc(pl.desc||'')}</textarea></div>
-          ${pl.rooms_list.map(r=>`<div><b style="font-size:14px">${esc(r.name)}</b>${r.festBlock?' <span class="fx-note">· closed during the festival (artist stay)</span>':''}<div class="fx-grid2">${N(pl,r,'count','How many')}${N(pl,r,'max','Max adults')}${N(pl,r,'rate',r.base===1?'Price for one, weeknight (₹)':'Price for 2, weeknight (₹)')}${N(pl,r,'rateWe',r.base===1?'Price for one, Fri/Sat (₹)':'Price for 2, Fri/Sat (₹)')}${N(pl,r,'extra','Extra adult, weeknight (₹)')}${N(pl,r,'extraWe','Extra adult, Fri/Sat (₹)')}</div></div>`).join('')}
+          ${pl.rooms_list.map(r=>`<div><b style="font-size:14px">${esc(r.name)}</b>${r.festBlock?' <span class="fx-note">· closed during the festival (artist stay)</span>':''}<div class="fx-grid2">${N(pl,r,'count','How many')}${N(pl,r,'max','Max adults')}${N(pl,r,'rate',r.base===1?'Price for one, weeknight (₹)':'Price for 2, weeknight (₹)')}${N(pl,r,'rateWe',r.base===1?'Price for one, Fri/Sat (₹)':'Price for 2, Fri/Sat (₹)')}${N(pl,r,'extra','Extra adult, weeknight (₹)')}${N(pl,r,'extraWe','Extra adult, Fri/Sat (₹)')}</div>${icBox(r.id)}</div>`).join('')}
           <div><b style="font-size:14px">Photos</b><div class="hf-mini">${(pl.photos||[]).map((x,i)=>`<span style="position:relative;display:inline-block"><img src="${esc(x.src)}" alt=""><button type="button" class="fx-x" onclick="CS.fx('plPhotoRm','${esc(pl.id)}',${i})">remove</button></span>`).join('')}</div><input type="file" accept="image/*" multiple onchange="CS.fx('plPhoto','${esc(pl.id)}',this.files)">
             <div class="fx-field" style="margin-top:8px"><label>Or photo links (one per line: a page, or a photo address). Leave empty to use ${pl.web?esc(pl.web):'the website'}</label><textarea rows="2" id="pli-${esc(pl.id)}" placeholder="https://…"></textarea></div>
             <button type="button" class="fx-btn ghost small" ${PL.busy?'disabled':''} onclick="CS.fx('plImport','${esc(pl.id)}')">${PL.busy===pl.id?'Getting photos…':'Get photos from the website'}</button></div>
@@ -2498,7 +2511,7 @@ ${kb()}`;}
       <div class="pan"><div class="ph2"><h3>Extras guests can add</h3></div><div class="pb"><form style="display:flex;flex-direction:column;gap:8px" onsubmit="event.preventDefault();CS.fx('exSave')">
         ${ex.map((x,i)=>`<div class="fx-grid2"><div class="fx-field"><label>Extra</label><input data-ex="${i}|name" value="${esc(x.name)}"></div><div class="fx-field"><label>Price each (₹)</label><input type="number" min="0" data-ex="${i}|price" value="${esc(x.price)}"></div></div><label class="fx-note"><input type="checkbox" data-ex="${i}|on" ${x.on?'checked':''}> Offered</label>`).join('')}
         <div class="eacts"><button type="button" class="fx-btn ghost small" onclick="CS.fx('exAdd')">Add an extra</button><button class="b-save" type="submit">Save extras</button></div></form></div></div>`;}
-  async function plLoad(){try{const j=await fxCall('places_admin',null,true);PL.data=j.places;PL.extras=j.extras;}catch(e){PL.data=null;}}
+  async function plLoad(){try{const j=await fxCall('places_admin',null,true);PL.data=j.places;PL.extras=j.extras;try{IC.data=(await fxCall('ical_list',null,true)).cals||{};}catch(e){}}catch(e){PL.data=null;}}
   async function fxDeskLoad(){const D=FX.desk;if(!D.key){D.err='Enter the desk key.';render();return;}
     D.busy=true;D.err='';render();
     try{D.data=await fxCall('admin',null,true);await plLoad();fxLS('desk',D.key);await fxLoad();csAdminLoad(true);}catch(e){D.data=null;D.err=e.message;}
@@ -2601,6 +2614,10 @@ ${kb()}`;}
         FX.arm=null;fxCall('status',{ref:x,status:y},true).then(()=>{toast(y==='confirmed'?x+' confirmed':x+' cancelled');fxDeskLoad();},e=>toast(e.message));return;
       case 'hostPaid':{const [tb,ref]=x.split('|');fxCall('host_paid',{table:tb,ref,place:y,paid:true},true).then(r=>{toast(r.status==='confirmed'?ref+' is fully paid and confirmed':'Marked received');fxDeskLoad();csAdminLoad(true).then(render);},e=>toast(e.message));return;}
       case 'plOpen':PL.open=PL.open===x?'':x;break;
+      case 'icSave':{const el=document.getElementById('ic-in-'+x);if(!el)return;IC.busy=x;render();
+        const call=y?hsCall('ical_set',{unit:x,urls:el.value}):fxCall('ical_set',{unit:x,urls:el.value},true);
+        call.then(async j=>{IC.busy='';IC.data[x]=j.cal;if(j.ok===false)toast(j.error);else toast(j.cal.urls.length?'Connected · '+j.cal.blocked+' night(s) blocked':'Calendar disconnected');
+          if(!y){await fxLoad();hsLoadProps();}else{await hsLoadProps();}render();},e=>{IC.busy='';toast(e.message);render();});return;}
       case 'plSave':{const pl=PL.data.find(q=>q.id===x);if(!pl)return;const place={rooms:{}};
         root.querySelectorAll(`[data-plf^="${x}|"]`).forEach(i=>{const k=i.dataset.plf.split('|')[1];place[k]=i.type==='checkbox'?i.checked:i.value;});
         root.querySelectorAll(`[data-plr^="${x}|"]`).forEach(i=>{const [,rid,k]=i.dataset.plr.split('|');(place.rooms[rid]=place.rooms[rid]||{})[k]=i.value;});
@@ -3125,7 +3142,7 @@ ${kb()}`;}
       BOOKINGS=[];j.csBookings.forEach(b=>(b.items||[]).forEach((it,i)=>BOOKINGS.push({id:b.ref,leg:(it.room?String(it.name).split(' · ').pop()+(it.rooms>1?' × '+it.rooms:'')+(b.items.length>1?' · ':''):'')+(b.items.length>1?'leg '+(i+1)+' of '+b.items.length:''),prop:listingOf(it),
         guest:(b.guest.name||'Guest')+' · '+(b.guest.phone||''),dates:csDates(it.nights),head:it.heads,amt:it.total,meals:it.meals,utr:b.utr,onlyMine:b.onlyMine,
         status:b.status==='cancelled'?'rejected':b.status})));
-      HS.fest=j.festBookings||[];csLoad();return true;}
+      HS.fest=j.festBookings||[];try{IC.data=(await hsCall('ical_list')).cals||{};}catch(x){}csLoad();return true;}
     catch(e){if(e.status===401){try{localStorage.removeItem('cs-host-key');}catch(x){}HS.key='';if(!quiet)toast(e.message);}return false;}
   }
   function hsHostPanels(){
@@ -3136,7 +3153,8 @@ ${kb()}`;}
       <div class="eacts" style="margin-top:0"><button class="b-save" onclick="CS.editL('${HS.me.prop.id}')">Edit listing &amp; photos</button>${p&&!p.festivalOnly?`<button class="b-lt" onclick="CS.open('${HS.me.prop.id}')">See it as guests do</button>`:''}<button class="b-lt" onclick="CS.hsRefresh()">Refresh bookings</button></div></div></div>
       <div class="pan"><div class="ph2"><h3>APPA Art Fest bookings · your rooms</h3></div><div class="pb">
       ${fr?`<div class="fx-tbl"><table><thead><tr><th>Ref</th><th>Guest</th><th>Nights</th><th>Your payout</th><th>Status</th></tr></thead><tbody>${fr}</tbody></table></div><p class="nt2" style="margin-top:10px">The festival team collects these payments and settles your full nightly rate. Guest phone numbers show once paid.</p>`:'<div class="empty">No festival bookings yet. They appear here the moment a guest holds your rooms.</div>'}
-      </div></div>`;
+      </div></div>
+      <div class="pan"><div class="ph2"><h3>Calendar sync</h3></div><div class="pb">${icBox('L-'+HS.me.listing.id,1)||'<p class="nt2">Loading…</p>'}</div></div>`;
   }
   function hsLinkBox(){const e=HS.enrolled;if(!e)return '';
     const msg=`Hi ${e.hostName||''}! ${e.name} is now on Calm Shade for APPA Art Fest 2027 🎉\n\nYour private host link (it signs you straight in, keep it to yourself):\n${e.link}\n\nEdit your listing and photos, and confirm bookings from there.`;

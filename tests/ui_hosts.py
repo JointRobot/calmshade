@@ -61,6 +61,21 @@ async def main():
         await hp.set_input_files('.editor .uptile input[type=file]',SP+'ph0.jpg'); await hp.wait_for_timeout(400)
         await hp.click('text=Save changes'); await hp.wait_for_function("[...document.querySelectorAll('.toast')].some(t=>t.textContent.startsWith('Saved'))",timeout=15000); await hp.wait_for_timeout(800)
         t=await hp.inner_text('#cs-app'); check('host edit saved','Pawna Lakeside Camp & Cottage' in t,t[:500])
+        # calendar sync from the host's own page
+        import threading,http.server,datetime
+        _d=(datetime.date.today()+datetime.timedelta(days=150)).strftime('%Y%m%d'); _e=(datetime.date.today()+datetime.timedelta(days=153)).strftime('%Y%m%d')
+        class _H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200); self.send_header('Content-Type','text/calendar'); self.end_headers()
+                self.wfile.write(('BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:'+_d+'\r\nDTEND;VALUE=DATE:'+_e+'\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n').encode())
+            def log_message(self,*a): pass
+        _srv=http.server.ThreadingHTTPServer(('127.0.0.1',8098),_H); threading.Thread(target=_srv.serve_forever,daemon=True).start()
+        t=await hp.inner_text('#cs-app'); check('host sees Calendar sync','CALENDAR SYNC' in t.upper() and 'GIVE THIS LINK TO AIRBNB' in t.upper(),t[-600:])
+        await hp.fill('textarea[id^="ic-in-L-"]','http://127.0.0.1:8098/airbnb.ics'); await hp.click('button:has-text("Connect")'); await hp.wait_for_timeout(2500)
+        t=await hp.inner_text('#cs-app'); check('host calendar connected','3 nights blocked' in t,t[-700:])
+        occ=await hp.evaluate("fetch('/fest.php?a=cs_state').then(r=>r.json()).then(j=>Object.entries(j.occ).filter(([k])=>k.startsWith('L-')).map(([k,v])=>Object.keys(v).length))")
+        check('host feed blocks the listing',any(n>=3 for n in occ),occ)
+        _srv.shutdown(); _srv.server_close()
         await h.goto(B+'?h=2'); await h.wait_for_timeout(2000)
         t=await h.inner_text('.grid'); check('edit public',' & Cottage' in t)
         n=await h.evaluate("(()=>{const p=document.querySelector('.pcard:has(h3)');return 0})()")

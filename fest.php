@@ -565,6 +565,9 @@ function cs_scan() {
       $raw[$it['prop']][$d] = ($firm || $cur === 'bk') ? 'bk' : 'tn';
     }
   }
+  foreach (ext_all_nights() as $unit => $nights) foreach ($nights as $d => $n) {
+    if (room_by_id($unit)) $rooms[$unit][$d] = ($rooms[$unit][$d] ?? 0) + (int)$n; else $raw[$unit][$d] = 'bk';
+  }
   return $c = [$raw, $rooms];
 }
 function cs_raw_occ() { return cs_scan()[0]; }
@@ -829,17 +832,18 @@ function after_step1($pay) { foreach ($pay['hosts'] ?? [] as $h) if (empty($h['p
    The server fetches the venue's own web page, finds its photos and keeps copies in uploads/, so listings don't
    depend on the venue's site staying up. Public http(s) addresses only; size and count are capped. */
 function public_host($host) {
+  if (defined('FEST_ALLOW_LOCAL_FEEDS') && FEST_ALLOW_LOCAL_FEEDS) return preg_match('/^[a-z0-9.-]{1,253}$/i', $host) === 1; /* tests only */
   if (!preg_match('/^[a-z0-9.-]{1,253}$/i', $host)) return false;
   $ips = @gethostbynamel($host); if (!$ips) return false;
   foreach ($ips as $ip) if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return false;
   return true;
 }
-function web_get($url, $max) {
+function web_get($url, $max, $timeout = 20) {
   for ($hop = 0; $hop < 4; $hop++) {
     $u = parse_url($url);
     if (!$u || !in_array(strtolower($u['scheme'] ?? ''), ['http','https'], true) || empty($u['host']) || !public_host($u['host'])) return [null, ''];
     $ch = curl_init($url); $buf = '';
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>false, CURLOPT_FOLLOWLOCATION=>false, CURLOPT_TIMEOUT=>20, CURLOPT_CONNECTTIMEOUT=>8,
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>false, CURLOPT_FOLLOWLOCATION=>false, CURLOPT_TIMEOUT=>$timeout, CURLOPT_CONNECTTIMEOUT=>min(8, $timeout),
       CURLOPT_USERAGENT=>'Mozilla/5.0 (compatible; CalmShadeBot/1.0; +https://calmshade.in)', CURLOPT_HEADER=>false,
       CURLOPT_PROTOCOLS=>CURLPROTO_HTTP|CURLPROTO_HTTPS,
       CURLOPT_WRITEFUNCTION=>function ($c, $d) use (&$buf, $max) { $buf .= $d; return strlen($buf) > $max ? 0 : strlen($d); }]);
@@ -848,6 +852,106 @@ function web_get($url, $max) {
     return [$code === 200 && strlen($buf) <= $max ? $buf : null, $type];
   }
   return [null, ''];
+}
+
+/* ---- calendar sync: read Airbnb / Booking.com / Google calendars (.ics links) and give every stay a feed of its own ---- */
+function ext_init() { db()->exec('CREATE TABLE IF NOT EXISTS cs_ext (unit VARCHAR(40) PRIMARY KEY, urls TEXT, nights TEXT, fetched BIGINT NOT NULL DEFAULT 0, ok_at BIGINT NOT NULL DEFAULT 0, err TEXT)'); }
+function ics_unfold($t) { return preg_split('/\r\n|\n|\r/', preg_replace('/(\r\n|\n|\r)[ \t]/', '', $t)); }
+/* nights blocked by a calendar file: date => how many events cover that night (last night = the day before check-out) */
+function ics_nights($txt) {
+  $out = []; $in = false; $ev = []; $today = ist_today(); $cap = addDays($today, 800);
+  foreach (ics_unfold($txt) as $ln) {
+    if ($ln === 'BEGIN:VEVENT') { $in = true; $ev = []; continue; }
+    if ($ln === 'END:VEVENT') {
+      $in = false; if (!empty($ev['cancel']) || empty($ev['s'])) continue;
+      $a = $ev['s']; $b = $ev['e'] ?? ''; if ($b === '' || $b <= $a) $b = addDays($a, 1);
+      if ($b <= addDays($today, -1)) continue;
+      $n = 0; for ($d = $a; $d < $b && $d < $cap && $n < 800; $d = addDays($d, 1), $n++) if ($d >= $today) $out[$d] = ($out[$d] ?? 0) + 1;
+      continue;
+    }
+    if (!$in) continue;
+    if (preg_match('/^(DTSTART|DTEND)[^:]*:(\d{4})(\d{2})(\d{2})/', $ln, $m)) { $d = $m[2].'-'.$m[3].'-'.$m[4]; if (valid_date($d)) $ev[$m[1] === 'DTSTART' ? 's' : 'e'] = $d; }
+    elseif (preg_match('/^STATUS:CANCELLED/i', $ln)) $ev['cancel'] = 1;
+  }
+  ksort($out); return $out;
+}
+function ext_urls_clean($raw) {
+  $out = [];
+  foreach (preg_split('/[\s,]+/', (string)$raw) as $u) {
+    $u = trim($u); if ($u === '') continue;
+    $u = preg_replace('#^webcal://#i', 'https://', $u);
+    if (!preg_match('#^https?://[^\s]{4,500}$#i', $u)) fail('"'.clean($u, 40).'" is not a calendar link. It should start with https:// and usually ends in .ics');
+    $out[] = $u;
+  }
+  return array_slice(array_values(array_unique($out)), 0, 6);
+}
+function ext_row($unit) { ext_init(); $st = db()->prepare('SELECT * FROM cs_ext WHERE unit=?'); $st->execute([$unit]); return $st->fetch() ?: null; }
+/* fetch every link of a unit. A failed fetch keeps the last good nights (never frees dates because a feed hiccupped). */
+function ext_refresh($unit) {
+  $r = ext_row($unit); if (!$r) return null;
+  $urls = array_values(array_filter(explode("\n", (string)$r['urls']))); $all = []; $errs = []; $good = 0;
+  foreach ($urls as $u) {
+    [$body] = web_get($u, 2 * 1024 * 1024, 10);
+    if (!$body || stripos($body, 'BEGIN:VCALENDAR') === false) { $errs[] = 'Could not read '.preg_replace('#^https?://([^/]+).*#i', '$1', $u).' (check the link)'; continue; }
+    $good++; foreach (ics_nights($body) as $d => $n) $all[$d] = ($all[$d] ?? 0) + $n;
+  }
+  $now = time(); $keep = $good > 0 ? json_encode((object)$all) : $r['nights'];
+  db()->prepare('UPDATE cs_ext SET nights=?, fetched=?, ok_at=?, err=? WHERE unit=?')->execute([$keep, $now, $good ? $now : (int)$r['ok_at'], $errs ? implode('; ', $errs) : '', $unit]);
+  return ext_row($unit);
+}
+/* refresh calendars that haven't been read lately (a few per request, so a slow site never stalls booking) */
+function ext_lazy($maxAge, $limit) {
+  static $ran = false; if ($ran) return; $ran = true; ext_init();
+  $st = db()->prepare("SELECT unit FROM cs_ext WHERE urls<>'' AND fetched < ? ORDER BY fetched LIMIT ".(int)$limit); $st->execute([time() - $maxAge]);
+  foreach ($st->fetchAll() as $r) { try { ext_refresh($r['unit']); } catch (Throwable $e) {} }
+}
+function ext_all_nights() {
+  ext_init(); $o = [];
+  foreach (db()->query("SELECT unit, nights FROM cs_ext WHERE urls<>''") as $r) { $j = json_decode((string)$r['nights'], true); if (is_array($j) && $j) $o[$r['unit']] = $j; }
+  return $o;
+}
+function ical_secret() { $k = kv_get('ical_secret'); if (!$k) { $k = bin2hex(random_bytes(16)); kv_set('ical_secret', $k); } return $k; }
+function ical_token($unit) { return substr(hash_hmac('sha256', $unit, ical_secret()), 0, 24); }
+function ical_link($unit) { return site_base().'fest.php?a=ical&unit='.rawurlencode($unit).'&t='.ical_token($unit); }
+/* keys that mean the same calendar: a room, its old Calm Shade listing id, or a partner listing */
+function ical_keys($unit) {
+  if ($m = room_by_id($unit)) return array_values(array_filter([$m[1]['id'], $m[1]['cs']]));
+  if ($m = room_by_cs($unit)) return [$m[1]['id'], $unit];
+  return [$unit];
+}
+function ical_valid_unit($unit) {
+  if (room_by_id($unit)) return true;
+  if (strpos($unit, 'L-') === 0) { $st = db()->prepare('SELECT status FROM fest_listings WHERE id=?'); $st->execute([substr($unit, 2)]); $r = $st->fetch(); return $r && $r['status'] === 'approved'; }
+  return false;
+}
+function ical_unit_name($unit) {
+  if ($m = room_by_id($unit)) return $m[0]['name'].' · '.$m[1]['name'];
+  if (strpos($unit, 'L-') === 0) { $st = db()->prepare('SELECT data FROM fest_listings WHERE id=?'); $st->execute([substr($unit, 2)]); $r = $st->fetch(); return (string)((json_decode($r['data'] ?? '[]', true) ?: [])['name'] ?? $unit); }
+  return $unit;
+}
+function ical_status($unit) {
+  $r = ext_row($unit);
+  $days = 0; if ($r) { $j = json_decode((string)$r['nights'], true); $days = is_array($j) ? count($j) : 0; }
+  return ['unit'=>$unit,'name'=>ical_unit_name($unit),'urls'=>$r ? array_values(array_filter(explode("\n", (string)$r['urls']))) : [],'blocked'=>$days,'checked'=>$r ? (int)$r['fetched'] : 0,'okAt'=>$r ? (int)$r['ok_at'] : 0,'err'=>$r ? (string)$r['err'] : '','export'=>ical_link($unit)];
+}
+function ical_feed($unit) {
+  $keys = ical_keys($unit); $S = settings(); $ev = []; $now = gmdate('Ymd\THis\Z');
+  $add = function ($ref, $nights) use (&$ev) {
+    sort($nights); $i = 0; $n = count($nights);
+    while ($i < $n) { $j = $i; while ($j + 1 < $n && $nights[$j + 1] === addDays($nights[$j], 1)) $j++;
+      $ev[] = [$ref.'-'.$nights[$i], $nights[$i], addDays($nights[$j], 1)]; $i = $j + 1; }
+  };
+  foreach (db()->query("SELECT ref, status, created_at, items FROM cs_bookings WHERE status IN ".LIVE) as $b) {
+    if (!active_booking($b, $S)) continue;
+    foreach (json_decode($b['items'], true) ?: [] as $it) if (in_array($it['prop'] ?? '', $keys, true)) $add($b['ref'], (array)$it['nights']);
+  }
+  foreach (db()->query("SELECT ref, status, created_at, items FROM fest_bookings WHERE status IN ".LIVE) as $b) {
+    if (!active_booking($b, $S)) continue;
+    foreach (json_decode($b['items'], true) ?: [] as $it) if (($it['kind'] ?? '') === 'stay' && in_array($it['unit'] ?? '', $keys, true)) $add($b['ref'], (array)$it['nights']);
+  }
+  $o = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Calm Shade//Bookings//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Calm Shade bookings"];
+  foreach ($ev as [$uid, $a, $b]) { array_push($o, "BEGIN:VEVENT", "UID:".preg_replace('/[^A-Za-z0-9-]/', '', $uid)."@calmshade.in", "DTSTAMP:".$now, "DTSTART;VALUE=DATE:".str_replace('-', '', $a), "DTEND;VALUE=DATE:".str_replace('-', '', $b), "SUMMARY:Booked on Calm Shade", "TRANSP:OPAQUE", "END:VEVENT"); }
+  $o[] = "END:VCALENDAR"; return implode("\r\n", $o)."\r\n";
 }
 function abs_url($base, $rel) {
   $rel = trim(html_entity_decode($rel, ENT_QUOTES)); if ($rel === '' || strpos($rel, 'data:') === 0) return '';
@@ -892,11 +996,13 @@ if ($m !== 'GET' && $m !== 'POST') fail('Method not allowed', 405);
 try {
 switch ($a) {
   case 'state':
+    ext_lazy(1800, 2);
     out(['ok'=>true,'settings'=>settings(),'listings'=>public_listings(),'occ'=>(object)occupancy(),'now'=>time(),
          'store'=>is_mysql() ? 'mysql' : 'sqlite','deskReady'=>defined('FEST_ADMIN_KEY') && strlen(FEST_ADMIN_KEY) >= 12,'aiReady'=>ai_key() !== '','schedule'=>schedule(),'logos'=>logos(),'adv'=>ADV,'advOcc'=>(object)adv_occ(),
          'units'=>public_units(),'places'=>public_places(),'tentSpots'=>TENT_SPOTS,'feePct'=>FEE_PCT,'extras'=>array_values(array_filter(extras_def(), fn($x)=>!empty($x['on'])))]);
 
   case 'book': {
+    ext_lazy(300, 3);
     if ($m !== 'POST') fail('Use POST');
     $b = body(); $g = $b['guest'] ?? [];
     $name = clean($g['name'] ?? '', 80); $phone = preg_replace('/[^\d+]/', '', (string)($g['phone'] ?? '')); $email = clean($g['email'] ?? '', 120); $note = clean($g['note'] ?? '', 300);
@@ -1121,10 +1227,45 @@ switch ($a) {
   }
 
   /* ---- Calm Shade homestays ---- */
+  /* ---- calendar sync routes ---- */
+  case 'ical': { /* public feed for Airbnb / Booking.com / Google to import; the link carries a private token */
+    $u = (string)($_GET['unit'] ?? ''); $t = (string)($_GET['t'] ?? '');
+    if ($u === '' || !hash_equals(ical_token($u), $t) || !ical_valid_unit($u)) { http_response_code(404); header('Content-Type: text/plain'); echo "Not found\n"; exit; }
+    header('Content-Type: text/calendar; charset=utf-8'); header('Cache-Control: max-age=300'); header('Content-Disposition: inline; filename="calmshade-'.preg_replace('/[^a-z0-9]+/i', '-', $u).'.ics"');
+    echo ical_feed($u); exit;
+  }
+  case 'ical_list': { /* desk: every room and partner stay; host: their own stay */
+    $o = [];
+    if (is_admin_req()) { foreach (places() as $pl) foreach ($pl['rooms'] as $r) $o[$r['id']] = ical_status($r['id']);
+      foreach (listings_all() as $l) if ($l['status'] === 'approved') $o['L-'.$l['id']] = ical_status('L-'.$l['id']); }
+    else { $h = need_host(); $o['L-'.$h['listing_id']] = ical_status('L-'.$h['listing_id']); }
+    out(['ok'=>true,'cals'=>(object)$o]);
+  }
+  case 'ical_set': {
+    if ($m !== 'POST') fail('Use POST');
+    $b = body(); $unit = (string)($b['unit'] ?? '');
+    if (is_admin_req()) {} else { $h = need_host(); if ($unit !== 'L-'.$h['listing_id']) fail('That is not your stay.', 403); }
+    if (!ical_valid_unit($unit)) fail('Unknown stay.', 404);
+    $urls = ext_urls_clean($b['urls'] ?? ''); ext_init();
+    db()->prepare('DELETE FROM cs_ext WHERE unit=?')->execute([$unit]);
+    if ($urls) {
+      db()->prepare('INSERT INTO cs_ext (unit,urls,nights,fetched,ok_at,err) VALUES (?,?,?,?,?,?)')->execute([$unit, implode("\n", $urls), '{}', 0, 0, '']);
+      $r = ext_refresh($unit);
+      if ($r && $r['err'] !== '' && (int)$r['ok_at'] === 0) { out(['ok'=>false,'saved'=>true,'error'=>$r['err'].'. The link is saved; we will keep trying.','cal'=>ical_status($unit)]); }
+    }
+    out(['ok'=>true,'cal'=>ical_status($unit)]);
+  }
+  case 'ical_sync': { /* optional cron: ?a=ical_sync with the desk key header */
+    need_admin(); ext_init(); $n = 0; foreach (db()->query("SELECT unit FROM cs_ext WHERE urls<>''")->fetchAll() as $r) { ext_refresh($r['unit']); $n++; }
+    out(['ok'=>true,'synced'=>$n]);
+  }
+
   case 'cs_state':
+    ext_lazy(1800, 2);
     out(['ok'=>true,'occ'=>(object)cs_occ(),'today'=>ist_today(),'holdHours'=>settings()['holdHours'],'ai'=>ai_key()!=='','fest'=>['from'=>settings()['firstNight'],'to'=>settings()['lastNight']]]);
 
   case 'cs_book': {
+    ext_lazy(300, 3);
     if ($m !== 'POST') fail('Use POST');
     cs_init(); $b = body(); $g = $b['guest'] ?? [];
     $name = clean($g['name'] ?? '', 80); $phone = preg_replace('/[^\d+]/', '', (string)($g['phone'] ?? '')); $email = clean($g['email'] ?? '', 120); $note = clean($g['note'] ?? '', 300);
@@ -1312,7 +1453,7 @@ switch ($a) {
 
   /* ---- Host accounts ---- */
   case 'host_me': {
-    $h = need_host(); cs_init(); $S = settings();
+    $h = need_host(); ext_lazy(600, 2); cs_init(); $S = settings();
     $st = db()->prepare('SELECT * FROM fest_listings WHERE id=?'); $st->execute([$h['listing_id']]); $l = $st->fetch();
     if (!$l) fail('Your listing was removed. Write to the festival team.', 404);
     $pid = 'L-'.$l['id']; $cs = []; $fest = [];
