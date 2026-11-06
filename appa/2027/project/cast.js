@@ -65,6 +65,7 @@ CAST.stations = [
   { id: 'st-company-painter', at: [65.8, 13.3], face: [65.8, 11.7], faceZ: 1.1, kind: 'man', look: { h: 1.72, shirt: '#F2E6CF' }, acts: brush([65.8, 11.7, 1.25], [65.9, 11.7, 0.9]) },
   { id: 'st-calmshet-sculptor', at: [13.1, 47.3], face: [11.5, 46], faceZ: 1.2, kind: 'man', look: { h: 1.72, shirt: '#8A7A60' }, acts: brush([11.5, 46, 1.4], [11.5, 46, 0.9]) },
   { id: 'st-calmshet-potter1', at: [32.3, 52.2], face: [32.3, 50], faceZ: 0.8, kind: 'woman', acts: brush([32.3, 50.4, 0.8], [32.3, 50.2, 0.75]) },
+  { id: 'st-calmshet-wheel', at: [33.9, 54.75], face: [33.9, 53.9], faceZ: 0.65, kind: 'woman', look: { h: 1.6, shirt: '#8A7A60' }, acts: [[0.5, 89.5, 'wheel']] },
   { id: 'st-calmshet-potter2', at: [35.7, 52.2], face: [35.7, 50], faceZ: 0.8, kind: 'man', acts: brush([35.7, 50.4, 0.8], [35.7, 50.2, 0.75]) },
   { id: 'st-lefarm-wood1', at: [56.3, 108.5], face: [57.5, 108.5], faceZ: 0.9, kind: 'man', acts: brush([57.2, 108.5, 0.9], [57.0, 108.5, 0.8]) },
   { id: 'st-lefarm-wood2', at: [58.7, 108.5], face: [57.5, 108.5], faceZ: 0.9, kind: 'woman', acts: brush([57.8, 108.5, 0.9], [58.0, 108.5, 0.8]) },

@@ -354,6 +354,22 @@ export const KIT = {
     add(ctx.g.sphere(0, 0, r * 0.9, r * 0.6, bloom, { seg: 8, seg2: 6 })); addCircle(s.x, s.y, r, 'bush');
     return { group: grp };
   },
+  // a potter's wheel: wooden frame, a spinning disc with a pot being shaped, and a low stool behind it (local +y = the potter's side is -y).
+  // s.stool = false leaves the stool out.
+  wheel(ctx, s) {
+    const { grp, add, W } = place(s); const wood = ctx.mat('#6B4A2E'), disc = ctx.mat('#B9B2A4'), clay = ctx.mat('#B5603A'), dark = ctx.mat('#4A3626');
+    for (const u of [-0.3, 0.3]) for (const v of [-0.26, 0.26]) add(box(ctx, u - 0.03, v - 0.03, u + 0.03, v + 0.03, 0, 0.5, wood, { round: 0 }));
+    add(box(ctx, -0.34, -0.3, 0.34, 0.3, 0.5, 0.55, wood, { round: 0 }));
+    add(ctx.g.cyl(0, 0, 0.5, 0, 0.02, dark, { seg: 10 })); // splash tray rim sits under the disc
+    const spin = new THREE.Group(); spin.position.copy(P(0, 0, 0.58)); grp.add(spin);
+    const d = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 20), disc); d.castShadow = true; spin.add(d);
+    const belly = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.16, 14), clay); belly.position.y = 0.105; belly.castShadow = true; spin.add(belly);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 0.1, 14), clay); neck.position.y = 0.23; neck.castShadow = true; spin.add(neck);
+    const mark = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.03), dark); mark.position.set(0.17, 0.031, 0); spin.add(mark);
+    if (s.stool !== false) { add(ctx.g.cyl(0, -0.85, 0.2, 0.28, 0.32, wood, { seg: 12 })); for (const a of [0.5, 2.6, 4.7]) add(ctx.g.cyl(Math.cos(a) * 0.12, -0.85 + Math.sin(a) * 0.12, 0.03, 0, 0.28, wood, { seg: 5 })); }
+    const [cx, cy] = W(0, 0); addCircle(cx, cy, 0.42, `${s.id || 'wheel'} wheel`);
+    return { group: grp, dyn: true, update: t => { spin.rotation.y = t * 4.2; } };
+  },
   // flea or food stall: table, posts and a striped canopy
   stall(ctx, s) {
     const { grp, add, W, rot } = place(s); const w = s.w || 2.2, d = s.d || 1.4; const wood = ctx.mat('#7A5433');
