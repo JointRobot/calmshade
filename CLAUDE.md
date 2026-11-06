@@ -154,3 +154,8 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 - Extras (kv `extras`, desk editor) are bookable with any festival booking; tent spot preference (Le Farm/Theeya/The Company Theatre).
 - Still to build: server-stored invite links (any approved host, 3 per place per year) + one join form with rooms;
   replace browser-only Grove codes. Homepage and emails now say hosts keep their full price, guests pay 3% on top; per-head partner listings (L-) also charge 3% on top (25 Oct).
+
+## 10. Calendar sync (7 Nov 2026)
+- Table `cs_ext` (unit → up to 6 `.ics` links, blocked nights, last read, error). Routes `ical_set`/`ical_list` (desk key, or a host for their own `L-<id>`), `ical_sync` (optional cron), public `ical` feed (`?unit=&t=` HMAC token) that Airbnb/Booking.com import. Units = room ids (`calmshet.room1`…) and approved partner `L-<id>`.
+- External nights are merged inside `cs_scan()`, so Calm Shade, the festival board and quotes all see them. A failed read keeps the last good nights. Feeds refresh lazily (`ext_lazy`: 30 min on state, 5 min before a booking); Airbnb itself refreshes imports only every few hours, so a tiny double-booking window remains on their side.
+- The export feed never includes imported blocks (no loop) and no guest details. Tests: `tests/api_ical.py`; `FEST_ALLOW_LOCAL_FEEDS` (tests only) lets feeds come from 127.0.0.1.
