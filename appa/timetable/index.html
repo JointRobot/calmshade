@@ -5,9 +5,9 @@
 <script>/* relative links need the trailing slash (…/timetable becomes …/timetable/) */ if (!/\/$|\.html$/.test(location.pathname)) location.replace(location.pathname + '/' + location.search + location.hash);</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Timetable · APPA Art Fest 2027</title>
-<meta name="description" content="APPA Art Fest 2027 timetable: 12 Feb – 19 Mar 2027 at Kamshet. 36 days, six venues, a big night every third day.">
+<meta name="description" content="APPA Art Fest 2027 timetable: 12 Feb – 19 Mar 2027 at Kamshet. 36 days, seven venues, a big night every third day.">
 <meta property="og:title" content="APPA Art Fest 2027 · Timetable">
-<meta property="og:description" content="36 days, six venues around one lake at Kamshet. A big night every 3rd, 6th and 9th day.">
+<meta property="og:description" content="36 days, seven venues around one lake at Kamshet. A big night every 3rd, 6th and 9th day.">
 <link rel="icon" href="../2027/assets/nolabel_logo_black.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,6 +52,10 @@
   .vcard ul { margin: 0; padding-left: 18px; font-size: 14px; }
   .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: 6px; padding: 1px 6px; margin-right: 4px; vertical-align: 1px; }
   .allv { margin: 0 0 10px; font-size: 15px; }
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 14px; max-width: 640px; }
+  .nums div { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 8px 10px; text-align: center; }
+  .nums b { display: block; font-family: 'Fraunces', Georgia, serif; font-size: 30px; font-weight: 600; color: var(--accent); line-height: 1.1; }
+  .nums span { font-size: 13px; color: var(--muted); }
   .tag.fest { background: #E6F0EE; color: var(--accent2); }
   .tag.ex { background: #F7E7C8; color: #8A5A10; }
   /* chapter */
@@ -119,7 +123,7 @@
   <div class="sponsors" id="sponsors"></div>
   <section class="hero">
     <div class="eyebrow">Timetable · 12 Feb – 19 Mar 2027 · Kamshet</div>
-    <h1>36 days. Six venues. One lake.</h1>
+    <h1>36 days. Seven venues. One lake.</h1>
     <p class="lead">Four chapters of nine days each, with art, music, film, theatre, workshops and nature running all the way through. Every third day is a big night.</p>
     <div class="rhythm">
       <div class="rh"><span class="d">3</span><span><b>Day 3</b><br>Intimate and acoustic</span></div>
@@ -152,7 +156,8 @@
     { id: 'ctheatre', n: 3, name: 'The Company Theatre', short: 'Company Theatre' },
     { id: 'theeya', n: 4, name: 'Theeya Creation Village', short: 'Theeya' },
     { id: 'lefarm', n: 5, name: 'Le Farm', short: 'Le Farm' },
-    { id: 'shambhala', n: 6, name: 'Shambhala by the Lake', short: 'Shambhala' }
+    { id: 'shambhala', n: 6, name: 'Shambhala by the Lake', short: 'Shambhala' },
+    { id: 'cloudbase', n: 7, name: 'Cloud Base', short: 'Cloud Base' }
   ];
   const OTHER = { square: 'Festival Square', island: 'Island Cinema', '': 'Across the lake' };
   const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -181,12 +186,11 @@
   }
   function renderRuns() {
     const runs = ST.items.filter(fullRun);
-    if (!runs.length) { $('runs').innerHTML = ''; return; }
-    const every = [...new Set(runs.map(i => i.title))].filter(t => VEN.every(v => runs.some(i => i.spot === v.id && i.title === t)));
+    const withRuns = VEN.filter(v => runs.some(i => i.spot === v.id)); const every = withRuns.length > 1 ? [...new Set(runs.map(i => i.title))].filter(t => withRuns.every(v => runs.some(i => i.spot === v.id && i.title === t))) : [];
     const cards = VEN.map(v => { const mine = runs.filter(i => i.spot === v.id && !every.includes(i.title)); if (!mine.length) return '';
       return `<div class="vcard"><h3><span class="num">${v.n}</span>${esc(v.name)}</h3><ul>${mine.map(i => `<li><span class="tag ${i.kind === 'fest' ? 'fest' : 'ex'}">${i.kind === 'fest' ? 'Festival' : 'Exhibit'}</span>${esc(i.title)}</li>`).join('')}</ul></div>`; }).join('');
     const lake = runs.filter(i => !VEN.some(v => v.id === i.spot));
-    $('runs').innerHTML = `<h2>Running all 36 days</h2>${every.map(t => `<p class="allv"><span class="tag ex">At every venue</span>${esc(t)}</p>`).join('')}<div class="vgrid">${cards}${lake.length ? `<div class="vcard"><h3>Around the lake</h3><ul>${lake.map(i => `<li>${esc(i.title)}</li>`).join('')}</ul></div>` : ''}</div>`;
+    $('runs').innerHTML = `<h2>Running all 36 days</h2><div class="nums"><div><b>18</b><span>exhibits</span></div><div><b>108</b><span>artists</span></div><div><b>9</b><span>workshops</span></div><div><b>Many</b><span>art forms</span></div></div>${every.map(t => `<p class="allv"><span class="tag ex">At every venue</span>${esc(t)}</p>`).join('')}<div class="vgrid">${cards}${lake.length ? `<div class="vcard"><h3>Around the lake</h3><ul>${lake.map(i => `<li>${esc(i.title)}</li>`).join('')}</ul></div>` : ''}</div>`;
   }
   function dayLabel(d) {
     const dt = D(d.date);
@@ -205,7 +209,7 @@
       const cards = `<div class="cards phone">${ds.map(d => { const its = dayItems(d); const lake = its.filter(i => !VEN.some(v => v.id === i.spot));
         return `<div class="dcard${d.big ? ' big' : ''}">${dayLabel(d)}${lake.map(i => `<div class="lake">${itemHTML(i)}<small class="note">${esc(OTHER[i.spot] ?? '')}</small></div>`).join('')}
           ${VEN.filter(v => its.some(i => i.spot === v.id)).map(v => { const mine = its.filter(i => i.spot === v.id); return `<div class="row"><span class="vn">${v.n} · ${esc(v.short)}</span><span>${mine.map(itemHTML).join('')}</span></div>`; }).join('')}
-          <div class="tba">${its.some(i => VEN.some(v => v.id === i.spot)) ? 'Other venues' : 'All six venues'}: ${esc(c.theme)} programme · acts announced soon</div></div>`; }).join('')}</div>`;
+          <div class="tba">${its.some(i => VEN.some(v => v.id === i.spot)) ? 'Other venues' : 'All seven venues'}: ${esc(c.theme)} programme · acts announced soon</div></div>`; }).join('')}</div>`;
       html += `<section class="chap" id="chapter-${c.n}">${head}${table}${cards}</section>`;
     }
     $('tt').innerHTML = html;

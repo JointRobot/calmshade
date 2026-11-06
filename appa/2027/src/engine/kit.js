@@ -538,5 +538,24 @@ export const KIT = {
       spots.forEach((p, i) => { const on = p[2] < k; Q.setFromAxisAngle(up, Math.atan2(s.x - p[0], s.y - p[1])); const bob = on ? Math.max(0, Math.sin(t * 6 + i * 1.7)) * 0.12 * ex : 0; Vp.set(p[0], bob, p[1]); const sc = on ? 0.95 + p[2] * 0.12 : 0; Sc.set(sc, sc, sc); M.compose(Vp, Q, Sc); m.setMatrixAt(i, M); });
       m.instanceMatrix.needsUpdate = true; } };
   },
+  // a tall poured-concrete retaining wall along plan points s.pts, one height per segment (s.hs): Cloud Base's giant wall.
+  // Formwork panel seams, tie holes and a coping; at night a soft wash lights it like a projection screen.
+  wall(ctx, s) {
+    const grp = new THREE.Group(); const pts = s.pts, hs = s.hs || [], th = s.th || 0.6;
+    const conc = ctx.mat(s.color || '#B7B5AE'), seam = ctx.mat('#9C9A93'), hole = ctx.mat('#5E5C57');
+    const wash = ctx.glow(`wall:${s.id || 'w'}`, { on: s.glow || '#FFD9A8', off: '#B7B5AE', channel: 'night', day: 0 });
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[i + 1], L = Math.hypot(bx - ax, by - ay), H = hs[i] ?? hs[hs.length - 1] ?? 3;
+      const sg = new THREE.Group(); sg.position.set((ax + bx) / 2, 0, (ay + by) / 2); sg.rotation.y = -Math.atan2(by - ay, bx - ax);
+      sg.add(box(ctx, -L / 2, -th / 2, L / 2, th / 2, 0, H, conc));
+      sg.add(box(ctx, -L / 2 - 0.05, -th / 2 - 0.08, L / 2 + 0.05, th / 2 + 0.08, H, H + 0.14, seam, { round: 0 }));
+      const n = Math.max(1, Math.round(L / 2.4));
+      for (let k = 1; k < n; k++) { const u = -L / 2 + k * L / n; sg.add(box(ctx, u - 0.03, th / 2, u + 0.03, th / 2 + 0.03, 0.1, H - 0.05, seam, { round: 0 })); }
+      for (let k = 0; k < n; k++) for (let r = 1; r < Math.max(2, Math.floor(H / 1.2)); r++) { const u = -L / 2 + (k + 0.5) * L / n; sg.add(box(ctx, u - 0.07, th / 2, u + 0.07, th / 2 + 0.04, r * 1.2 - 0.07, r * 1.2 + 0.07, hole, { round: 0 })); }
+      if (H >= 3.5) sg.add(box(ctx, -L / 2 + 0.6, th / 2 + 0.04, L / 2 - 0.6, th / 2 + 0.07, 0.8, H - 0.5, wash, { round: 0 }));
+      grp.add(sg); addORect((ax + bx) / 2, (ay + by) / 2, L + 0.2, th + 0.4, Math.atan2(by - ay, bx - ax), `${s.id || 'wall'} wall`);
+    }
+    return { group: grp };
+  },
   bench(ctx, s) { const { grp, add, W, rot } = place(s); const w = s.w || 1.8; const wood = ctx.mat('#7A5433'); add(box(ctx, -w / 2, -0.2, w / 2, 0.2, 0.35, 0.45, wood)); for (const u of [-w / 2 + 0.15, w / 2 - 0.15]) add(box(ctx, u - 0.05, -0.18, u + 0.05, 0.18, 0, 0.35, wood)); const [cx, cy] = W(0, 0); addORect(cx, cy, w + 0.1, 0.5, rot, 'bench'); return { group: grp }; },
 };

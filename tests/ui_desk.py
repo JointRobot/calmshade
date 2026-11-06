@@ -58,7 +58,7 @@ async def main():
                 check('public: workshop 3 days',tt.count('Carpentry workshop')==3,tt.count('Carpentry workshop'))
                 check('public: runs all festival','running all 36 days' in tt.lower() and 'Dashavatar exhibit' in tt and 'at every venue' in tt.lower(),'')
                 check('public: sponsor beside logo',await tp.evaluate("!!document.querySelector('#sponsors.on img.logo')"),'')
-                check('public: logo panel','KRUNK' in tt and 'curators & collectives' in tt.lower(),'')
+                check('public: logo panel','Sangoma Records' in tt and 'KRUNK' not in tt and 'curators & collectives' in tt.lower(),'')
                 check('public: 12 big nights',await tp.evaluate("document.querySelectorAll('tr.big').length")==12,'')
                 await tp.click('text=Big nights only'); await tp.wait_for_timeout(200)
                 check('public: big nights filter',await tp.evaluate("document.querySelectorAll('.tt tbody tr').length")==12,'')
