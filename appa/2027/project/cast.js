@@ -104,4 +104,22 @@ CAST.stations.push(
   // Purrom
   at2('st-purrom-p1', 46.2, 20.5, 46.0, 18.8, 'woman', brush([46, 18.8, 1.2], [46, 18.8, 0.9]), 1.1, { h: 1.6, shirt: '#3E6AA0' })
 );
+// the Green Corner: a crew lashing a giant bamboo installation, shoppers at the sustainable flea, and three musicians scattered around the café
+CAST.stations.push(
+  at2('st-green-crew1', 74.9, 110.2, 75.6, 111.8, 'woman', [...every('tap', [75.6, 111.8, 1.7], [2, 30, 58], 7), ...every('point', [75.6, 113.3, 4.2], [14, 44, 72], 4)], 1.5, { h: 1.62, shirt: '#E2A33A' }),
+  at2('st-green-crew2', 77.6, 110.1, 76.8, 111.8, 'man', [...every('tap', [76.8, 111.8, 1.9], [6, 34, 62], 7), ...every('photo', [76.8, 113.3, 3.8], [20, 70], 4)], 1.6, { h: 1.75, shirt: '#2F7F7A' }),
+  at2('st-green-crew3', 77.4, 117.6, 77.0, 115.5, 'man', every('tap', [77.0, 115.5, 1.4], [4, 32, 60], 8), 1.4, { h: 1.7, shirt: '#B5523B', hat: 'cap' }),
+  at2('st-green-crew4', 79.8, 117.4, 79.2, 115.4, 'woman', every('tap', [79.2, 115.4, 0.8], [10, 38, 66], 8), 1.0, { h: 1.6, shirt: '#3E6AA0' }),
+  at2('st-green-crew5', 74.9, 118.6, 74.9, 117.6, 'man', every('crouch', null, [6, 36, 66], 9), 0.5, { h: 1.72, shirt: '#8A7A60' }),
+  // shoppers and coffee
+  at2('st-green-shop1', 84.6, 109.4, 84.6, 107.9, 'woman', every('point', [84.6, 107.9, 1.0], [8, 48], 5), 1.0, { bag: true }),
+  at2('st-green-shop2', 90.6, 112.2, 92.0, 112.2, 'man', every('point', [92.0, 112.2, 1.0], [20, 62], 5), 1.0),
+  at2('st-green-shop3', 85.2, 116.9, 85.2, 118.4, 'girl', every('point', [85.2, 118.4, 1.0], [30, 74], 5), 1.0, { h: 1.3 }),
+  at2('st-green-cup1', 90.5, 113.8, 89.5, 113.8, 'woman', every('raise', null, [6, 40, 70], 4), 1.1),
+  at2('st-green-cup2', 84.4, 111.4, 85.6, 111.6, 'man', every('raise', null, [16, 50, 80], 4), 1.1),
+  // the musicians
+  { id: 'st-green-violin', at: [81.6, 119.2], face: [83.4, 117.6], faceZ: 1.3, kind: 'woman', look: { h: 1.62, shirt: '#7A4A8C' }, prop: 'violin', acts: [[0.5, 89.5, 'violin']] },
+  { id: 'st-green-flute', at: [79.8, 108.5], face: [81.0, 110.0], faceZ: 1.4, kind: 'man', look: { h: 1.74, shirt: '#F2E6CF' }, prop: 'flute', acts: [[0.5, 89.5, 'flute']] },
+  { id: 'st-green-hang', at: [87.0, 121.2], face: [87.0, 119.4], faceZ: 0.5, kind: 'man', look: { h: 1.7, shirt: '#2F6A7A' }, prop: 'hang', acts: [[0.5, 89.5, 'hang']] }
+);
 CAST.performers.push({ area: 'theeya', stage: 1, count: 2, colors: ['#E8C8FF', '#F2E6CF'] });
