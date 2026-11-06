@@ -310,7 +310,19 @@ function extras_def() { $j = json_decode((string)kv_get('extras'), true); if (is
   return [['id'=>'pickup','name'=>'Pickup from Lonavala station (per car, one way)','price'=>1000,'on'=>true]]; }
 
 /* Price and validate a trip against the live inventory. Returns [quote, errors]. */
-function quote($stays, $passes, $occ, $advs = [], $extras = []) {
+/* festival nights this guest (by phone) already holds in other live bookings: they count towards VIP / VVIP */
+function prior_prem($phone) {
+  $ph = digits($phone); if (strlen($ph) < 10) return []; $S = settings(); $o = [];
+  foreach (db()->query("SELECT status, created_at, guest, items FROM fest_bookings WHERE status IN ".LIVE) as $r) {
+    if (!active_booking($r, $S) || digits((json_decode($r['guest'], true) ?: [])['phone'] ?? '') !== $ph) continue;
+    foreach (json_decode($r['items'], true) ?: [] as $it) {
+      if (($it['kind'] ?? '') !== 'stay' || ($it['unitKind'] ?? '') === 'partner' || strpos((string)($it['unit'] ?? ''), 'L-') === 0) continue;
+      foreach ((array)$it['nights'] as $d) $o[$d] = 1;
+    }
+  }
+  return array_keys($o);
+}
+function quote($stays, $passes, $occ, $advs = [], $extras = [], $prior = []) {
   $S = settings(); $U = units(); $err = []; $lines = []; $prem = []; $want = []; $ownerBy = [];
   if (!is_array($advs)) $advs = []; if (!is_array($extras)) $extras = [];
   if (!is_array($stays) || !is_array($passes) || count($stays) + count($passes) + count($advs) + count($extras) === 0) return [null, ['Your trip is empty.']];
@@ -360,7 +372,7 @@ function quote($stays, $passes, $occ, $advs = [], $extras = []) {
     if (!$X || $q < 1 || $q > 50) { $err[] = 'One of the extras in your trip is no longer offered. Remove it.'; continue; }
     $lines[] = ['kind'=>'extra','extra'=>$id,'name'=>$X['name'],'qty'=>$q,'price'=>(int)$X['price'],'total'=>(int)$X['price'] * $q]; $xt += (int)$X['price'] * $q;
   }
-  $pn = count($prem);
+  $pn = count($prem + array_fill_keys(array_map('strval', (array)$prior), 1)); $pnPrior = $pn - count($prem);
   $tier = $pn >= $S['vvipNights'] ? 'vvip' : ($pn >= $S['vipNights'] ? 'vip' : '');
   $stayT = array_sum(array_map(fn($l)=>$l['kind']==='stay'?$l['total']:0, $lines));
   $payout = array_sum($ownerBy);
@@ -369,7 +381,7 @@ function quote($stays, $passes, $occ, $advs = [], $extras = []) {
   $disc = min((int)round(($stayT + $pt) * $pct / 100), max(0, $stayT + $pt - $payout));
   $total = max(0,$stayT+$pt-$disc)+$at+$xt;
   return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'advs'=>$at,'extras'=>$xt,'balance'=>array_sum(array_map(fn($l)=>$l['balance']??0, $lines)),'discount'=>$disc,'total'=>$total,'payout'=>$payout,
-    'owner'=>$sum['owner'],'fee'=>$sum['fee'],'tickets'=>$sum['tickets'],'surge'=>$sum['surge'],'tier'=>$tier,'premiumNights'=>$pn,'pay'=>pay_split($ownerBy, $total)], array_values(array_unique($err))];
+    'owner'=>$sum['owner'],'fee'=>$sum['fee'],'tickets'=>$sum['tickets'],'surge'=>$sum['surge'],'tier'=>$tier,'premiumNights'=>$pn,'priorNights'=>$pnPrior,'pay'=>pay_split($ownerBy, $total)], array_values(array_unique($err))];
 }
 
 /* ---------- helpers ---------- */
@@ -1053,7 +1065,7 @@ switch ($a) {
     if ($mineOpen >= 3) fail('You already have 3 unpaid bookings on hold. Pay or cancel one of them first.', 429);
     lock_start(); $ok = false;
     try {
-      [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? [], $b['extras'] ?? []);
+      [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? [], $b['extras'] ?? [], prior_prem($phone));
       if ($err) { lock_end(false); out(['error'=>$err[0],'errors'=>$err], 409); }
       if (isset($b['expectTotal']) && (int)$b['expectTotal'] !== $q['total']) { lock_end(false); out(['error'=>'Prices changed while you were booking. Your trip now costs ₹'.number_format($q['total']).'. Review it and book again.','priceChanged'=>true], 409); }
       do { $ref = new_ref(); $st = db()->prepare('SELECT 1 FROM fest_bookings WHERE ref=?'); $st->execute([$ref]); } while ($st->fetch());
@@ -1075,7 +1087,7 @@ switch ($a) {
   }
 
   case 'quote': {
-    $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? [], $b['extras'] ?? []);
+    $b = body(); [$q, $err] = quote($b['stays'] ?? [], $b['passes'] ?? [], occupancy(), $b['advs'] ?? [], $b['extras'] ?? [], prior_prem($b['phone'] ?? ($b['guest']['phone'] ?? '')));
     out(['ok'=>!$err,'quote'=>$q,'errors'=>$err]);
   }
 

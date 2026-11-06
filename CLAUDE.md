@@ -122,9 +122,7 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 5. Payment is manual UPI confirmation; a payment gateway would automate it.
 7. Audit 5 Oct 2026 (guest walkthrough) fixed: curate plan editing (add venue, ±night, reorder, remove), homestay
    month paging (`BM` is now `let`, `bmGo()`, `CSB.occ` + `csFill()`), offline UPI ref no longer faked, pass cap
-   30/day, Encore day passes hidden in Passport, tour buttons. Still open: VIP/VVIP is counted per booking, not
-   across a guest's bookings (two separate 7-night bookings each get −₹7,000; 7 booked + 3 more later gets no VIP)
-   — needs Karthik's call before changing `quote()`. Curate plan isn't kept across a page refresh.
+   30/day, Encore day passes hidden in Passport, tour buttons. VIP/VVIP now counts a guest's nights across all their live bookings (7 Nov 2026, Karthik's call; matched by phone, `prior_prem()`; the discount applies to the new booking only, earlier bookings are not repriced). Curate plan isn't kept across a page refresh.
    (Fixed 14 Oct: concierge status now honest — `cs_state` returns `ai`; shows "usually replies within the hour" when off.)
 8. Audit 14 Oct 2026: six Calmshet/Appa listings corrected from Airbnb (names, Kamshet, beds/baths, capacity, ratings,
    `revs`); demo Grove stays p7–p9 hidden + unbookable; stock logos removed. Calmshet p1–p4 now ₹4,000/head with meals

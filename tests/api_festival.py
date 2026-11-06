@@ -170,4 +170,12 @@ c,j=call('cs_props'); v=[p for p in j['props'] if p['id']=='v-shambhala']; check
 c,j=call('places_import',{'id':'theeya'},True); check('photo import: no website, clear message',c==400 and 'no website' in j['error'],(c,j))
 c,j=call('places_import',{'id':'lefarm','links':['http://127.0.0.1:8099/index.html']},True); check('photo import refuses local addresses',c==404,(c,j))
 c,j=call('places_import',{'id':'lefarm'}); check('photo import needs desk',c==403,(c,j))
+# VIP / VVIP counts a guest's nights across all their live bookings (matched by phone)
+clear_hits(); VU='purrom.chickoo'
+c,a=call('book',{'stays':[st(VU,'2027-03-10',4,1,1)],'passes':[],'guest':g('9877700001')}); check('vip: first booking, 4 nights, no tier',c==200 and a['tier']=='',(c,a))
+c,q=call('quote',{'stays':[st(VU,'2027-03-14',3,1,1)],'passes':[],'phone':'9877700001'}); check('vip: 4 + 3 nights = VIP',c==200 and q['quote']['tier']=='vip' and q['quote']['discount']>0 and q['quote']['priorNights']==4,(c,q))
+c,q2=call('quote',{'stays':[st(VU,'2027-03-14',3,1,1)],'passes':[],'phone':'9877700002'}); check('vip: another phone gets no credit',q2['quote']['tier']=='' and q2['quote']['discount']==0,q2['quote'])
+c,b=call('book',{'stays':[st(VU,'2027-03-14',3,1,1)],'passes':[],'guest':g('9877700001'),'expectTotal':q['quote']['total']}); check('vip: second booking priced with VIP',c==200 and b['tier']=='vip' and b['total']==q['quote']['total'],(c,b))
+c,q3=call('quote',{'stays':[st(VU,'2027-03-12',3,1,1)],'passes':[],'phone':'9877700001'}); check('vip: same nights are not counted twice',q3['quote']['priorNights']==4 and q3['quote']['premiumNights']==7,q3['quote'])
+c,x=call('cancel',{'ref':a['ref'],'token':a['token']}); c,q4=call('quote',{'stays':[st(VU,'2027-03-17',2,1,1)],'passes':[],'phone':'9877700001'}); check('vip: cancelled booking no longer counts',q4['quote']['priorNights']==3,q4['quote'])
 print(f'PASS {ok}  FAIL {len(bad)}'); [print(' -',b) for b in bad]

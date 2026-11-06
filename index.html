@@ -2150,11 +2150,13 @@ ${kb()}`;}
     const sum=k=>parts.reduce((a,x)=>a+x[k],0)*s.rooms;
     return {u,nights,per,total:per.reduce((a,b)=>a+b,0)*s.rooms,owner:sum('owner'),surge:sum('surge'),tickets:sum('tickets'),fee:sum('fee')};}
   const fxExtra=id=>FX.extras.find(e=>e.id===id);
+  /* festival nights already held in this guest's other live bookings: they count towards VIP / VVIP */
+  function fxPrior(){const o=new Set();(FX.mine||[]).filter(b=>['pending','part','confirmed'].includes(b.status)).forEach(b=>(b.items||[]).forEach(it=>{if(it.kind==='stay'&&it.unitKind!=='partner'&&!String(it.unit||'').startsWith('L-'))(it.nights||[]).forEach(d=>o.add(d));}));return o;}
   function fxTrip(){const prem=new Set();let stays=0;const lines=[];const sum={owner:0,surge:0,tickets:0,fee:0};const ownerBy={};
     FX.cart.stays.forEach(s=>{const p=fxPriceStay(s);if(!p)return;lines.push({s,p});stays+=p.total;['owner','surge','tickets','fee'].forEach(k=>sum[k]+=p[k]);
       if(!p.u.own){const o=ownerBy[p.u.place]||(ownerBy[p.u.place]={name:p.u.placeName||p.u.name,amount:0,upi:!!p.u.upiReady});o.amount+=p.owner;}
       if(fxPrem(p.u))p.nights.forEach(d=>prem.add(d));});
-    const passes=FX.cart.passes.reduce((a,p)=>a+p.qty*FX.S.dayPass,0);const pn=prem.size;
+    const passes=FX.cart.passes.reduce((a,p)=>a+p.qty*FX.S.dayPass,0);const prior=[...fxPrior()].filter(d=>!prem.has(d)).length;const pn=prem.size+prior;
     const advs=FX.cart.advs.reduce((a,x)=>a+x.qty*fxAdvDep(x.adv),0),balance=FX.cart.advs.reduce((a,x)=>a+x.qty*(fxAdvPrice(x.adv)-fxAdvDep(x.adv)),0);
     const extras=FX.cart.extras.reduce((a,x)=>a+x.qty*(+(fxExtra(x.id)||{}).price||0),0);
     const tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
@@ -2162,7 +2164,7 @@ ${kb()}`;}
     const discount=Math.min(Math.round((stays+passes)*fxPct(tier)/100),Math.max(0,stays+passes-payout));
     const total=Math.max(0,stays+passes-discount)+advs+extras;
     const hosts=Object.values(ownerBy).filter(o=>o.upi&&o.amount>0);
-    return {lines,stays,passes,advs,extras,balance,discount,total,tier,pn,sum,payout,pay:{calm:Math.max(0,total-hosts.reduce((a,o)=>a+o.amount,0)),hosts}};}
+    return {lines,stays,passes,advs,extras,balance,discount,total,tier,pn,prior,sum,payout,pay:{calm:Math.max(0,total-hosts.reduce((a,o)=>a+o.amount,0)),hosts}};}
   const fxAdvPrice=id=>+FX.S['adv_'+id]||0,fxAdvDep=id=>Math.min(fxAdvPrice(id),+FX.S.advDeposit||0),fxAdvCap=id=>+FX.S['advCap_'+id]||0;
   const fxAdvLeft=(id,d,sl,skip)=>fxAdvCap(id)-(FX.advOcc[id+'|'+d+'|'+sl]||0)-FX.cart.advs.filter((x,i)=>i!==skip&&x.adv===id&&x.date===d&&x.slot===sl).reduce((a,x)=>a+x.qty,0);
   const fxSlotLbl=sl=>sl==='wind'?'Time set by the wind':sl==='00:15'?'12:15 am':(([h,m])=>((+h%12)||12)+':'+m+(+h<12?' am':' pm'))(sl.split(':'));
@@ -2341,7 +2343,7 @@ ${kb()}`;}
       +FX.cart.extras.map(x=>{const e=fxExtra(x.id)||{name:x.id,price:0};return `<div class="fx-item"><div><div class="what">${esc(e.name)}</div><div class="when">× ${x.qty}</div></div><div style="text-align:right"><div class="fx-money">${inr(x.qty*e.price)}</div><button class="fx-x" onclick="CS.fx('rmExtra','${esc(x.id)}')">Remove</button></div></div>`;}).join('');
     const {w,e}=fxIssues(t);
     const toV=Math.max(0,FX.S.vipNights-t.pn),toVV=Math.max(0,FX.S.vvipNights-t.pn);
-    const tier=t.tier?`<span class="fx-tier ${t.tier}">${t.tier.toUpperCase()} · ${t.pn} nights inside</span>`:`<span class="fx-tier">${t.pn} of ${FX.S.vipNights} nights to VIP</span>`;
+    const tier=(t.tier?`<span class="fx-tier ${t.tier}">${t.tier.toUpperCase()} · ${t.pn} nights inside</span>`:`<span class="fx-tier">${t.pn} of ${FX.S.vipNights} nights to VIP</span>`)+(t.prior?` <span class="fx-note">(${t.prior} from your earlier bookings)</span>`:'');
     const goal=t.tier==='vvip'?'':t.tier==='vip'?`${toVV} more nights inside the festival for VVIP: ${FX.S.vvipPct}% off, priority seating on the big nights and an artist studio visit.`:`${toV} more night${toV===1?'':'s'} inside the festival for VIP: ${FX.S.vipPct}% off and every show.`;
     const meter=Math.min(1,t.pn/(t.tier?FX.S.vvipNights:FX.S.vipNights));
     const f=FX.form;const FF=(k,l,ty,ex)=>`<div class="fx-field"><label for="fxg-${k}">${l}</label><input id="fxg-${k}" type="${ty}" value="${esc(f[k])}" oninput="CS.fx('guestF','${k}',this.value)" ${ex||''}></div>`;
@@ -3017,7 +3019,7 @@ ${kb()}`;}
     CU.plan=plan;CU.route=route.slice();CU.auto=false;CU.err='';return true;}
   function cuQuote(){if(!CU.plan)return null;const prem=new Set();let total=0;
     CU.plan.forEach(p=>{const u=fxU(p.unit);total+=fxPrice(u,p.date,fxG(u,CU.guests))*CU.rooms;prem.add(p.date);});
-    const t=fxTrip();const all=new Set([...prem]);t.lines.forEach(({p})=>{if(fxPrem(p.u))p.nights.forEach(d=>all.add(d));});
+    const t=fxTrip();const all=new Set([...prem,...fxPrior()]);t.lines.forEach(({p})=>{if(fxPrem(p.u))p.nights.forEach(d=>all.add(d));});
     const pn=all.size,tier=pn>=FX.S.vvipNights?'vvip':pn>=FX.S.vipNights?'vip':'';
     const full=fxPct(tier);
     return {total,tier,pn,discount:Math.max(0,full-t.discount),had:t.discount};}
