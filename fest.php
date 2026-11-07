@@ -961,7 +961,7 @@ function ext_all_nights() {
 }
 function ical_secret() { $k = kv_get('ical_secret'); if (!$k) { $k = bin2hex(random_bytes(16)); kv_set('ical_secret', $k); } return $k; }
 function ical_token($unit) { return substr(hash_hmac('sha256', $unit, ical_secret()), 0, 24); }
-function ical_link($unit) { return site_base().'fest.php?a=ical&unit='.rawurlencode($unit).'&t='.ical_token($unit); }
+function ical_link($unit) { return site_base().'fest.php?a=ical&unit='.rawurlencode($unit).'&t='.ical_token($unit).'&f=calmshade.ics'; } /* ends in .ics: Airbnb only accepts links that do */
 /* keys that mean the same calendar: a room, its old Calm Shade listing id, or a partner listing */
 function ical_keys($unit) {
   if ($m = room_by_id($unit)) return array_values(array_filter([$m[1]['id'], $m[1]['cs']]));

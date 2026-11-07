@@ -40,7 +40,7 @@ c,j=call('cs_book',{'legs':[{'prop':ROOM,'nights':[D(1)],'rooms':1,'guests':2}],
 c,j=call('state'); check('festival board sees it too',(j['occ'].get(ROOM,{}).get(D(0)) or 0)>=1,j['occ'].get(ROOM))
 c,b=call('cs_book',{'legs':[{'prop':ROOM,'nights':[D(2),D(3)],'rooms':1,'guests':2}],'guest':{'name':'Asha','phone':'9811112222'}}); check('free nights still bookable',c==200,(c,b))
 # the Calm Shade feed that Airbnb imports
-c,j=call('ical_list',None,True); link=j['cals'][ROOM]['export']; check('export link given',ROOM in j['cals'] and '&t=' in link,j['cals'].get(ROOM))
+c,j=call('ical_list',None,True); link=j['cals'][ROOM]['export']; check('export link given and ends in .ics',ROOM in j['cals'] and '&t=' in link and link.endswith('.ics'),j['cals'].get(ROOM))
 def fetch(url):
     try:
         with urllib.request.urlopen(url) as f: return f.status,f.headers.get('Content-Type',''),f.read().decode()
@@ -48,7 +48,8 @@ def fetch(url):
 c,t,txt=fetch(link); check('feed is a calendar with the booking',c==200 and 'text/calendar' in t and 'DTSTART;VALUE=DATE:'+C(2) in txt and 'DTEND;VALUE=DATE:'+C(4) in txt,(c,t,txt[:300]))
 check('feed does not echo Airbnb blocks (no loop)',C(0) not in txt and C(20) not in txt,txt)
 check('feed shows no guest details','Asha' not in txt and '9811112222' not in txt,txt)
-c,t,txt=fetch(link[:-3]+'abc'); check('wrong token = 404',c==404,c)
+import re as _re
+c,t,txt=fetch(_re.sub(r'(&t=)[0-9a-f]{24}',r'\g<1>000000000000000000000000',link)); check('wrong token = 404',c==404,c)
 # a flaky feed never frees dates
 STATE['code']=500
 c,j=call('ical_sync',{},True); check('sync reports',c==200,(c,j))
