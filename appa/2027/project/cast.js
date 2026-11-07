@@ -65,6 +65,7 @@ CAST.stations = [
   { id: 'st-company-painter', at: [65.8, 13.3], face: [65.8, 11.7], faceZ: 1.1, kind: 'man', look: { h: 1.72, shirt: '#F2E6CF' }, acts: brush([65.8, 11.7, 1.25], [65.9, 11.7, 0.9]) },
   { id: 'st-calmshet-sculptor', at: [13.1, 47.3], face: [11.5, 46], faceZ: 1.2, kind: 'man', look: { h: 1.72, shirt: '#8A7A60' }, acts: brush([11.5, 46, 1.4], [11.5, 46, 0.9]) },
   { id: 'st-calmshet-potter1', at: [32.3, 52.2], face: [32.3, 50], faceZ: 0.8, kind: 'woman', acts: brush([32.3, 50.4, 0.8], [32.3, 50.2, 0.75]) },
+  { id: 'st-calmshet-wheel', at: [33.9, 54.75], face: [33.9, 53.9], faceZ: 0.65, kind: 'woman', look: { h: 1.6, shirt: '#8A7A60' }, acts: [[0.5, 89.5, 'wheel']] },
   { id: 'st-calmshet-potter2', at: [35.7, 52.2], face: [35.7, 50], faceZ: 0.8, kind: 'man', acts: brush([35.7, 50.4, 0.8], [35.7, 50.2, 0.75]) },
   { id: 'st-lefarm-wood1', at: [56.3, 108.5], face: [57.5, 108.5], faceZ: 0.9, kind: 'man', acts: brush([57.2, 108.5, 0.9], [57.0, 108.5, 0.8]) },
   { id: 'st-lefarm-wood2', at: [58.7, 108.5], face: [57.5, 108.5], faceZ: 0.9, kind: 'woman', acts: brush([57.8, 108.5, 0.9], [58.0, 108.5, 0.8]) },
@@ -102,5 +103,23 @@ CAST.stations.push(
   at2('st-company-sculptor', 63.3, 21.0, 64, 19.8, 'man', brush([64, 19.8, 1.4], [64, 19.8, 0.9]), 1.2, { h: 1.72, shirt: '#8A7A60' }), at2('st-company-v2', 65.4, 22.6, 64, 19.8, 'woman', study([64, 19.8, 1.4], 10)),
   // Purrom
   at2('st-purrom-p1', 46.2, 20.5, 46.0, 18.8, 'woman', brush([46, 18.8, 1.2], [46, 18.8, 0.9]), 1.1, { h: 1.6, shirt: '#3E6AA0' })
+);
+// the Green Corner: a crew lashing a giant bamboo installation, shoppers at the sustainable flea, and three musicians scattered around the café
+CAST.stations.push(
+  at2('st-green-crew1', 74.9, 110.2, 75.6, 111.8, 'woman', [...every('tap', [75.6, 111.8, 1.7], [2, 30, 58], 7), ...every('point', [75.6, 113.3, 4.2], [14, 44, 72], 4)], 1.5, { h: 1.62, shirt: '#E2A33A' }),
+  at2('st-green-crew2', 77.6, 110.1, 76.8, 111.8, 'man', [...every('tap', [76.8, 111.8, 1.9], [6, 34, 62], 7), ...every('photo', [76.8, 113.3, 3.8], [20, 70], 4)], 1.6, { h: 1.75, shirt: '#2F7F7A' }),
+  at2('st-green-crew3', 77.4, 117.6, 77.0, 115.5, 'man', every('tap', [77.0, 115.5, 1.4], [4, 32, 60], 8), 1.4, { h: 1.7, shirt: '#B5523B', hat: 'cap' }),
+  at2('st-green-crew4', 79.8, 117.4, 79.2, 115.4, 'woman', every('tap', [79.2, 115.4, 0.8], [10, 38, 66], 8), 1.0, { h: 1.6, shirt: '#3E6AA0' }),
+  at2('st-green-crew5', 74.9, 118.6, 74.9, 117.6, 'man', every('crouch', null, [6, 36, 66], 9), 0.5, { h: 1.72, shirt: '#8A7A60' }),
+  // shoppers and coffee
+  at2('st-green-shop1', 84.6, 109.4, 84.6, 107.9, 'woman', every('point', [84.6, 107.9, 1.0], [8, 48], 5), 1.0, { bag: true }),
+  at2('st-green-shop2', 90.6, 112.2, 92.0, 112.2, 'man', every('point', [92.0, 112.2, 1.0], [20, 62], 5), 1.0),
+  at2('st-green-shop3', 85.2, 116.9, 85.2, 118.4, 'girl', every('point', [85.2, 118.4, 1.0], [30, 74], 5), 1.0, { h: 1.3 }),
+  at2('st-green-cup1', 90.5, 113.8, 89.5, 113.8, 'woman', every('raise', null, [6, 40, 70], 4), 1.1),
+  at2('st-green-cup2', 84.4, 111.4, 85.6, 111.6, 'man', every('raise', null, [16, 50, 80], 4), 1.1),
+  // the musicians
+  { id: 'st-green-violin', at: [81.6, 119.2], face: [83.4, 117.6], faceZ: 1.3, kind: 'woman', look: { h: 1.62, shirt: '#7A4A8C' }, prop: 'violin', acts: [[0.5, 89.5, 'violin']] },
+  { id: 'st-green-flute', at: [79.8, 108.5], face: [81.0, 110.0], faceZ: 1.4, kind: 'man', look: { h: 1.74, shirt: '#F2E6CF' }, prop: 'flute', acts: [[0.5, 89.5, 'flute']] },
+  { id: 'st-green-hang', at: [87.0, 121.2], face: [87.0, 119.4], faceZ: 0.5, kind: 'man', look: { h: 1.7, shirt: '#2F6A7A' }, prop: 'hang', acts: [[0.5, 89.5, 'hang']] }
 );
 CAST.performers.push({ area: 'theeya', stage: 1, count: 2, colors: ['#E8C8FF', '#F2E6CF'] });

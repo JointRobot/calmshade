@@ -12,7 +12,7 @@ const A = (x, y, o) => ({ x, y, ...o });   // absolute plan position
 // venue centres
 const C = {
   shambhala: [20, 64], lefarm: [60, 108], calmshet: [24, 40], purrom: [48, 18], company: [73, 17],
-  theeya: [111, 68], cloudbase: [117, 37], checkin: [89, 91], island: [75, 59], camp: [34, 86], hidden: [118, 114]
+  theeya: [111, 68], cloudbase: [117, 37], checkin: [89, 91], island: [75, 59], camp: [34, 86], hidden: [118, 114], green: [84, 114]
 };
 
 export const SITE = {
@@ -39,6 +39,7 @@ export const SITE = {
     { id: 's-purrom', width: 1.8, pts: [[55, 34], [50, 31]] }, { id: 's-company', width: 1.8, pts: [[74, 28.5], [73, 26]] },
     { id: 's-theeya', width: 1.8, pts: [[102, 59], [108, 57.5]] }, { id: 's-cloudbase', width: 1.8, pts: [[104.6, 40], [110, 39]] },
     { id: 's-camp', width: 1.6, pts: [[52, 81], [46, 85], [40, 87]] },
+    { id: 's-green', width: 1.8, pts: [[89, 102], [86.8, 107]] },
     { id: 'trail-hidden', width: 1.2, color: '#CDB889', pts: [[104, 100], [110, 106], [115, 110]] }
   ],
   trees: { count: 330, seed: 21, pineShare: 0.28,
@@ -80,7 +81,7 @@ export const SITE = {
       A(33, 33, { type: 'audience', area: 'fashion', face: Math.PI / 2, r0: 1.5, r1: 3.5, count: 12 }),
       A(34, 50, { type: 'pavilion', w: 5, d: 3.4, tables: 3, roof: '#B8643A' }),
       A(28, 49, { type: 'dome', r: 2.2, glow: '#9ADFFF', color: '#EDE4D0' }),
-      A(18.7, 33.9, { type: 'sign', w: 3.4, text: 'K. N. RAMACHANDRAN\nPAINTINGS · THE ARCHIVE', neon: '#FFB45A', size: 52 }), A(11.8, 27.2, { type: 'pavilion', w: 4.4, d: 2.8, roof: '#8A6A3A' }), A(11.8, 27.5, { type: 'easels', count: 3, gap: 1.2, seed: 3 }), A(28, 46.5, { type: 'sign', w: 2.8, text: 'COMICS × AI\nIMMERSIVE', neon: '#5FE3FF' }), A(34, 47.3, { type: 'sign', w: 2.8, text: 'POTTERY\nWORKSHOP' }), A(12.4, 50.8, { type: 'screen', w: 3.6, h: 2.1, rows: 2, glow: '#FFD2A0', show: 'calmshet' }), A(36.4, 26.6, { type: 'mats', count: 5, r: 1.5, seed: 1 }), A(36.3, 29.0, { type: 'sign', w: 2.6, text: 'SUNSET\nMEDITATION' }), A(37.2, 36, { type: 'sculpture', kind: 'crystal', h: 2.6, glow: '#9ADFFF' }), A(11.5, 46, { type: 'sculpture', kind: 'ring', h: 3.2 }),
+      A(18.7, 33.9, { type: 'sign', w: 3.4, text: 'K. N. RAMACHANDRAN\nPAINTINGS · THE ARCHIVE', neon: '#FFB45A', size: 52 }), A(11.8, 27.2, { type: 'pavilion', w: 4.4, d: 2.8, roof: '#8A6A3A' }), A(11.8, 27.5, { type: 'easels', count: 3, gap: 1.2, seed: 3 }), A(28, 46.5, { type: 'sign', w: 2.8, text: 'COMICS × AI\nIMMERSIVE', neon: '#5FE3FF' }), A(34, 47.3, { type: 'sign', w: 2.8, text: 'POTTERY\nWORKSHOP' }), A(33.9, 53.9, { type: 'wheel', rot: Math.PI }), A(12.4, 50.8, { type: 'screen', w: 3.6, h: 2.1, rows: 2, glow: '#FFD2A0', show: 'calmshet' }), A(36.4, 26.6, { type: 'mats', count: 5, r: 1.5, seed: 1 }), A(36.3, 29.0, { type: 'sign', w: 2.6, text: 'SUNSET\nMEDITATION' }), A(37.2, 36, { type: 'sculpture', kind: 'crystal', h: 2.6, glow: '#9ADFFF' }), A(11.5, 46, { type: 'sculpture', kind: 'ring', h: 3.2 }),
       ...[0, 1, 2].map(i => A(35.5, 39 + i * 2.8, { type: 'stall', rot: -Math.PI / 2, color: ['#B5523B', '#D9953F', '#3E6AA0'][i], seed: i + 1 })) ] },
     // 5 · PURROM: an eco retreat facing the Sahyadri. Square clay huts with red pyramid roofs, clay pots, white canopies,
     // and the Glass House. The horror film festival.
@@ -152,7 +153,17 @@ export const SITE = {
       at(C.camp, -4, 4, { type: 'tent', color: '#E8D7B6' }), at(C.camp, 3, 5, { type: 'tent' }), at(C.camp, 0, 0, { type: 'fire' }) ] },
     { id: 'hidden', n: 0, name: 'Hidden APPA', center: C.hidden, rect: [110, 106, 128, 124], floor: '#C2B485', hidden: true, structures: [
       at(C.hidden, -2, -3, { type: 'stage', w: 4, d: 2.6, h: 0.5, truss: 3, glow: '#B6FF9A', beam: '#D8FFC8' }),
-      at(C.hidden, 4, 4, { type: 'sculpture', kind: 'totem', h: 2.8 }), at(C.hidden, -4, 5, { type: 'fire' }) ] }
+      at(C.hidden, 4, 4, { type: 'sculpture', kind: 'totem', h: 2.8 }), at(C.hidden, -4, 5, { type: 'fire' }) ] },
+    // THE GREEN CORNER: a crew building a giant bamboo installation, and a small flea market of sustainable products around a café.
+    { id: 'green', n: 0, name: 'The Green Corner', center: C.green, rect: [74, 105, 94, 123], floor: '#D8C8A2', structures: [
+      A(78.6, 113.6, { type: 'bamboo', arches: 8, span: 8.4, R: 2.6, h: 4.8, open: 2 }),
+      A(87.5, 111.6, { type: 'house', w: 3.6, d: 2.6, h: 2.4, color: '#E8D2A8', roof: '#6E8A45' }),
+      A(87.5, 115, { type: 'pergola', w: 4.4, d: 2.6, h: 2.4, raised: 0.1, tables: 2, roof: '#8A6A3A' }),
+      A(87.5, 108.9, { type: 'sign', w: 2.8, text: 'SUSTAINABLE FLEA\nCAFÉ · COFFEE & TEA', size: 56 }),
+      A(84.6, 107.8, { type: 'stall', color: '#6E9A4B', seed: 1 }), A(90.4, 107.8, { type: 'stall', color: '#B5763E', seed: 2 }),
+      A(92, 112.2, { type: 'stall', rot: Math.PI / 2, color: '#2F7F7A', seed: 3 }), A(92, 115.4, { type: 'stall', rot: Math.PI / 2, color: '#C9A23F', seed: 4 }),
+      A(85.2, 118.4, { type: 'stall', rot: Math.PI, color: '#8A5A3A', seed: 5 }), A(89.8, 118.4, { type: 'stall', rot: Math.PI, color: '#3E7A5A', seed: 6 }),
+      A(84.2, 115.6, { type: 'bench', rot: Math.PI / 2 }), A(84, 121.4, { type: 'bush', r: 1, color: '#5E8A3A' }), A(92.5, 120.5, { type: 'bush', r: 1, color: '#5E8A3A' }) ] }
   ],
   // parts that belong to the whole site
   structures: [
