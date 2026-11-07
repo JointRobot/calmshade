@@ -37,11 +37,11 @@ async def main():
         await pg.evaluate(f"CS.fsSet('from','{fd}');CS.fsSet('n','2');CS.fsSet('adults','5')"); await pg.wait_for_timeout(400)
         t=await pg.inner_text('.curated'); check('find a stay lists free places','Calmshet' in t and 'Triangle' in t and '2 nights' in t,t[:600])
         await pg.click('.fs-row:has-text("Calmshet")'); await pg.wait_for_timeout(800)
-        check('opens Calmshet with Triangle picked',await pg.evaluate("document.querySelector('.det h1').textContent.includes('Calmshet') && document.querySelector('.book-card').innerText.includes('Triangle')"))
+        check('opens Calmshet with Triangle picked',await pg.evaluate("document.querySelector('.det h1').textContent.includes('Calmshet') && document.querySelector('.rmcard.on').innerText.includes('Triangle')"))
         await pg.evaluate("CS.csOpen()"); await pg.wait_for_timeout(200)
         await pg.fill('#csh-name','Trip Tester'); await pg.dispatch_event('#csh-name','input'); await pg.fill('#csh-phone','9123409876'); await pg.dispatch_event('#csh-phone','input')
         await pg.click('text=Hold my nights'); await pg.wait_for_timeout(2000)
-        t=await pg.inner_text('.book-card'); cref=(re.search(r'CS-[A-Z0-9]{5}',t) or [None])[0]
+        t=await pg.inner_text('.rmcard.on'); cref=(re.search(r'CS-[A-Z0-9]{5}',t) or [None])[0]
         check('find-a-stay hold',cref and 'held' in t.lower(),t[:400])
         # host approval
         await pg.evaluate("CS.go('login')"); await pg.wait_for_timeout(300)
