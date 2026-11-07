@@ -39,9 +39,7 @@ this file is the current state and the rules. Read both before changing anything
   password was pasted into the wrong place; that password was exposed in a chat, so **set a fresh one** if MySQL is
   ever enabled. Switching later: uncomment the three lines with a working password, then copy any existing SQLite rows
   across (no migration script exists yet — write one, and test it on a copy first).
-- **Desk key** (`FEST_ADMIN_KEY`) is still the example phrase from the setup instructions. Ask Karthik to change it to
-  something private (it unlocks bookings, approvals, prices and host links).
-- **Concierge: off** (no `ANTHROPIC_KEY`); chat falls back to sample replies. Booking does not depend on it.
+- **Concierge: ON** since 8 Nov 2026 (`ANTHROPIC_KEY` in fest-config.php, model `claude-haiku-5-5`, cap 1,500 replies/day; Karthik pasted the key himself). Booking does not depend on it. Desk key was changed by Karthik (no longer the example phrase).
 - No real bookings yet (only a tiny test image in `uploads/202610/`).
 - Emails use PHP `mail()`; delivery not verified (may land in spam).
 
