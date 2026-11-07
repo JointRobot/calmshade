@@ -1202,16 +1202,42 @@ body{background:var(--bg);}
     return null;}
 
   /* ═════════ AI CONCIERGE ═════════ */
-  function kb(){return PROPS.filter(p=>p.live).map(p=>p.rooms?`### ${p.name} (APPA Art Fest venue)\nLocation: ${p.loc}. Rooms (price per room per night for ${'2'} adults, weeknight / Fri-Sat${p.own?', 3 meals included':', plus a '+(p.feePct||3)+'% Calm Shade fee'}): ${p.rooms.map(r=>r.count+' x '+r.name+' (up to '+r.max+', '+inr(r.rate)+' / '+inr(r.rateWe)+(r.extra?', extra adult '+inr(r.extra):'')+')').join('; ')}. Amenities: ${p.amen}. About: ${p.desc}\nDuring APPA Art Fest (12 Feb - 19 Mar 2027) these rooms are only booked together with festival tickets, on the APPA page.`:`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${mealsIn(p)?inr(p.ppWith)+' with all three meals included (no without-meals option)':inr(p.ppWith)+' with all meals, '+inr(p.ppWithout)+' without (breakfast only)'}. Pets: ${p.pet?'yes':'no'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nBooked ${BM.name} ${BM.y} dates: ${Object.keys(CAL[p.id]||{}).length?Object.keys(CAL[p.id]).join(', ')+' '+BM.name:'none — '+BM.name+' open'}.`).join('\n\n');}
-  function sysPrompt(n){return `You are the Calm Shade concierge — the always-awake WhatsApp host for a collective of independent homestays. Today is ${new Date().toDateString()}; bookings are open for ${BM.name} ${BM.y}. The guest opened this chat from "${n}", so start in that stay's context; if they ask about another Calm Shade stay, switch naturally and keep the thread coherent.
+  /* nights already taken (booked or held) from today on, as short ranges, for one or more calendar keys */
+  function takenText(keys){const occ=CSB.occ||{},td=new Date().toISOString().slice(0,10),set={};
+    keys.filter(Boolean).forEach(k=>Object.keys(occ[k]||{}).forEach(d=>{if(d>=td&&(occ[k][d]==='bk'||occ[k][d]==='tn'))set[d]=1;}));
+    const ds=Object.keys(set).sort();if(!ds.length)return 'none in the calendar yet';
+    const t=csDates(ds);return t.length>700?t.slice(0,700)+' … (more later)':t;}
+  const fromOf=p=>Math.min(...p.rooms.map(r=>Math.min(roomPrice(p,r,'2027-01-04',r.base||2),roomPrice(p,r,'2027-01-08',r.base||2))));
+  function festRoomPrices(p,r){const wd='2027-01-04',we='2027-01-08',b=r.base||2,a=roomPrice(p,r,wd,b),c=roomPrice(p,r,we,b),xa=roomPrice(p,r,wd,b+1)-a,xc=roomPrice(p,r,we,b+1)-c;
+    return (a===c?inr(a)+' a night':inr(a)+' a night Sun–Thu, '+inr(c)+' Fri–Sat')+' for '+(b===1?'one guest':b+' guests')+(xa>0?', plus '+(xa===xc?inr(xa):inr(xa)+' (Sun–Thu) / '+inr(xc)+' (Fri–Sat)')+' per extra adult':'');}
+  function kb(){
+    const live=PROPS.filter(p=>p.live),venues=live.filter(p=>p.rooms),covered=new Set();
+    venues.forEach(v=>v.rooms.forEach(r=>{if(ROOM_CS[r.id])covered.add(ROOM_CS[r.id]);}));
+    const S=FX.S,fest=`APPA ART FEST 2027: ${fxFmt(S.firstNight)} to ${fxFmt(S.lastNight)} ${S.lastNight.slice(0,4)} (36 days, four 9-day chapters) around Kamshet, at six venues: Calmshet, Le Farm, Shambhala by the Lake, Theeya, The Company Theatre and Purrom. On festival nights the rooms at these places are sold only with festival tickets, on the APPA Art Fest page of this site (not as ordinary Calm Shade stays, and not through this chat). A festival night costs the place's own room price plus a festival ticket of ${inr(S.dayPass)} per guest per night (plus a ${FX.feePct}% Calm Shade fee at places that are not Karthik's), and the price rises up to ${S.surgeMax}% when a place is filling. Staying ${S.vipNights}+ nights inside the festival gives ${S.vipPct}% off the booking (VIP); ${S.vvipNights}+ nights (a full chapter) gives ${S.vvipPct}% off (VVIP). Day passes without a stay are ${inr(S.dayPass)} per person per day. Children under 10 are free. Unpaid room holds are kept for ${S.holdHours} hours.`;
+    const out=[fest];
+    venues.forEach(p=>{
+      const rows=p.rooms.map(r=>{const lg=P(ROOM_CS[r.id]);
+        const bd=lg?lg.cap.split('·').slice(1).join('·').trim():'';const det=lg?` ${/bed|bath/i.test(bd)?'Beds and bathrooms: '+bd+'. ':''}${lg.desc} Pets: ${lg.pet?'allowed':'not allowed'}.`:'';
+        const taken=takenText([r.id,lg&&lg.id]);
+        return `- ${r.name}${r.count>1?' (x'+r.count+')':''}: bookings allow up to ${r.max} guest${r.max>1?'s':''}; ${festRoomPrices(p,r)} on ordinary nights${p.own?' (three meals a day for everyone are included)':''}.${det} Nights already booked or held: ${taken}.`;}).join('\n');
+      out.push(`### ${p.name}${p.own?' (Karthik\'s own place, run by Calm Shade)':' (APPA Art Fest venue, listed on Calm Shade)'}\nLocation: ${p.loc}. ${p.cap}. ${p.own?'Karthik hosts directly.':'Meals and extra details are as the place lists them; the place can confirm.'}\nAmenities: ${p.amen}. About: ${p.desc}\nRooms:\n${rows}\n${p.own?'Closed to ordinary bookings on festival nights (those go through the APPA page). Appa Art House is closed to everyone for the whole festival. A single guest pays the room price for two.':'The ordinary-night prices above already include the '+(p.feePct||3)+'% Calm Shade fee.'}`);});
+    live.filter(p=>!p.rooms&&!covered.has(p.id)).forEach(p=>out.push(`### ${p.name} (host: ${O(p.owner).name})\nLocation: ${p.loc}. Capacity: ${p.cap}. Price/head/night: ${mealsIn(p)?inr(p.ppWith)+' with all three meals included (no without-meals option)':inr(p.ppWith)+' with all meals, '+inr(p.ppWithout)+' without (breakfast only)'}. Pets: ${p.pet?'allowed':'not allowed'}. Entire place: ${p.villa?'bookable':'rooms only'}. Amenities: ${p.amen}. About: ${p.desc}${p.faq&&p.faq.length?'\nHost answers for this property: '+p.faq.map(f=>'Q: '+f.q+' A: '+f.a).join(' | '):''}\nNights already booked or held: ${takenText([p.id])}.`));
+    return out.join('\n\n');}
+  function sysPrompt(n){return `You are the Calm Shade concierge, the always-awake WhatsApp host for Calm Shade homestays and the APPA Art Fest 2027 venues around Kamshet, Maharashtra. Today is ${new Date().toDateString()}. The guest opened this chat from "${n}", so start with that stay; if they ask about another stay, switch naturally and keep the thread coherent.
 
 STRICT RULES:
-- Answer ONLY from the knowledge base. Never invent prices, dates, menus or amenities. If unknown, say you'll check with the host and get back.
-- Tone: warm, concise, host-like. 2–4 sentence WhatsApp messages. No markdown or lists. At most one emoji.
-- Gently steer toward: dates + headcount + booking decision.
-- Shared facts: all stays serve home-cooked veg & non-veg food; meal plan = breakfast, lunch, evening tea, dinner. Check-in 1 PM, check-out 11 AM. Local cabs can be arranged at guest cost.
-- PAYMENT STEP: only once the guest confirms exact dates AND headcount AND clearly wants to book, compute total = price/head × heads × nights, state the total, then end with this hidden tag on its own line: [BOOKING]{"property":"<name>","dates":"<dates>","headcount":<n>,"amount":<total>}[/BOOKING]
-- Never emit the tag before all three are confirmed.
+- Answer ONLY from the knowledge base below. Never invent prices, dates, menus, distances, activities or amenities. If something is not in the knowledge base, say you will check with Karthik and get back, and give WhatsApp +91 87999 38193. A short honest "I'm not sure" is always better than a guess.
+- Tone: warm, brief, host-like. WhatsApp messages of 2 to 5 short sentences. No markdown, no bullet lists, no asterisks. At most one emoji.
+- Use exact rupee figures from the knowledge base. Show the sum when you total something (nights x price, plus extra adults). Never round or estimate prices.
+- Rooms are priced per room per night for the number of guests shown, plus a fixed price per extra adult. Respect each room's guest limit. For a bigger group, suggest a combination of rooms that fits, and add the prices up. Never say a room takes more people than "bookings allow". If the guest wants more people in one room than that limit, give the limit and say you will check with Karthik whether a bigger group can be arranged.
+- Availability: a night is free only if it is NOT in that room's "Nights already booked or held" list. Say which rooms are free for the guest's dates and which are not. If a night is festival-only (12 Feb to 19 Mar 2027 at the festival venues), say so and point to the APPA Art Fest page of this site. Remind the guest that holds are not confirmed until the hold is made on the site.
+- Pets: use each room's pets line. If the guest has a pet and a room does not allow pets, say so kindly and suggest a room that does. If the knowledge base does not say, say you will check.
+- Children and extra beds: the knowledge base only gives guest limits. Say each child counts toward the room's guest limit unless Karthik confirms otherwise, and offer to check. At the festival, children under 10 are free.
+- Meals: where the knowledge base says three meals are included, say so (breakfast, lunch, evening tea and dinner). Do not offer a without-meals price unless the knowledge base has one.
+- Activities: only mention what the knowledge base lists (for example pool, lake, guided hikes, bonfire on request, kayaking, paragliding, jeep rides and treks through the festival adventures). Never promise a time or price for an activity that is not listed.
+- Check-in 1 PM, check-out 11 AM. Local cabs can be arranged at the guest's cost. There is no mobile network at Calmshet.
+- To book: tell the guest to pick their nights on the calendar of the stay page and tap "Hold my nights". The hold is made on the site, never in this chat. Do not say you have booked or held anything yourself. Never output any special tags.
+- Gently steer toward dates and number of guests, then toward the Hold button.
 
 KNOWLEDGE BASE:
 ${kb()}`;}
@@ -1228,20 +1254,14 @@ ${kb()}`;}
       chatHistory.push({role:'assistant',content:x});return x;
     }catch(e){
       const p=P(chat.propId);
-      const f=`Happy to help with ${p.name}! It takes ${p.cap.toLowerCase()} at ${inr(p.ppWith)} per head${mealsIn(p)?', all meals included':' with all meals ('+inr(p.ppWithout)+' without)'}. Which dates and how many guests?`;
+      const f=p.rooms?`Happy to help with ${p.name}! ${p.cap}, from ${inr(fromOf(p))} a night${p.own?', with three home-cooked meals a day':''}. Which dates and how many guests? I'll point you to the right room.`:`Happy to help with ${p.name}! It takes ${p.cap.toLowerCase()} at ${inr(p.ppWith)} per head${mealsIn(p)?', all meals included':' with all meals ('+inr(p.ppWithout)+' without)'}. Which dates and how many guests?`;
       chatHistory.push({role:'assistant',content:f});
-      return f+'\n\n(sample reply — live concierge unavailable right now)';
+      return f+'\n\n(Our concierge is busy right now. For a full answer, message us on WhatsApp +91 87999 38193.)';
     }
   }
   function handleReply(x){
-    const m=x.match(/\[BOOKING\]([\s\S]*?)\[\/BOOKING\]/);
-    chat.msgs.push({k:'in',t:x.replace(/\[BOOKING\][\s\S]*?\[\/BOOKING\]/,'').trim(),tm:now()});
-    if(m){let d=null;try{d=JSON.parse(m[1])}catch(e){}
-      const p=PROPS.find(q=>d&&q.name===d.property)||P(chat.propId);
-      chat.draft={prop:p.id,dates:(d&&d.dates)||'dates as discussed',head:(d&&d.headcount)||2,amt:(d&&d.amount)||p.ppWith*2};
-      chat.msgs.push({k:'pay',amt:chat.draft.amt,prop:p.name,propId:p.id,dates:chat.draft.dates,head:chat.draft.head});}
-    render();
-  }
+    chat.msgs.push({k:'in',t:x.replace(/\[BOOKING\][\s\S]*?\[\/BOOKING\]/g,'').trim(),tm:now()});
+    render();}
   async function guestSend(){
     const i=document.getElementById('wa-in');if(!i)return;
     const v=i.value.trim();if(!v||chat.busy)return;
@@ -1321,7 +1341,7 @@ ${kb()}`;}
   let TODAY=todayIn();
   const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const dowOf=d=>DOW[new Date(BM.y,BM.m,d).getDay()];
-  const capOf=p=>parseInt((String(p.cap).match(/\d+/)||[99])[0],10);
+  const capOf=p=>p.sleeps||parseInt((String(p.cap).match(/\d+/)||[99])[0],10);
   const freeOn=(p,d)=>!((CAL[p.id]||{})[d]);
   function tripDates(){if(!cur.start)return[];const e=cur.end||cur.start;const a=[];for(let d=cur.start;d<=e;d++)a.push(d);return a;}
   const trLabel=()=>cur.start?((cur.end&&cur.end!==cur.start?cur.start+'–'+cur.end:''+cur.start)+' '+BM.mon):'';
@@ -3349,15 +3369,21 @@ ${kb()}`;}
       const hasSel=bk.days.length>0&&activeProp===id&&!bk.sent;
       const n=bkNights(),lbl=bkLabel();
       const pre=hasSel
-        ?`Hi! I'd like ${p.name} for ${lbl}, ${bk.heads} guest${bk.heads>1?'s':''} (${n} night${n>1?'s':''}).`
+        ?`Hi! I'd like ${p.name}${p.rooms?' ('+bkRoom(p).name+')':''} for ${lbl}, ${bk.heads} guest${bk.heads>1?'s':''} (${n} night${n>1?'s':''}).`
         :`Hi, I'm interested in ${p.name}`;
       if(!chat||chat.propId!==id){
         chat={propId:id,msgs:[],busy:false,awaitShot:false,draft:null};chatHistory=[];
         chat.msgs.push({k:'sys',t:'Chatting with the Calm Shade concierge · prefer the app? WhatsApp +91 87999 38193'});
         chat.msgs.push({k:'out',t:pre,tm:now()});
         chatHistory.push({role:'user',content:pre});
-        const hello=hasSel
-          ?`Lovely — ${lbl} for ${bk.heads} at ${p.name} 🙏 That's ${n} night${n>1?'s':''} at ${inr(p.ppWith)} per head with all meals, ${inr(p.ppWith*bk.heads*n)} total. Say the word and I'll hold it and share the UPI details.`
+        const rr=p.rooms?bkRoom(p):null;
+                const rtot=rr?bk.days.reduce((t,d)=>t+roomPrice(p,rr,bmISO(d),Math.max(rr.base||2,bk.heads)),0):0;
+        const hello=rr
+          ?(hasSel
+            ?`Lovely, ${lbl} for ${bk.heads} guest${bk.heads>1?'s':''} in ${rr.name} at ${p.name} 🙏 That's ${n} night${n>1?'s':''}, ${inr(rtot)} in total${p.own?', with three home-cooked meals a day':''}. Tap Hold my nights on the page to keep it for you, or ask me anything first.`
+            :`Hello, and welcome to Calm Shade 🙏 I look after ${p.name}: ${p.cap}, from ${inr(fromOf(p))} a night for two${p.own?', with three home-cooked meals a day':''}. Which dates are you thinking of, and how many of you?`)
+          :hasSel
+          ?`Lovely — ${lbl} for ${bk.heads} at ${p.name} 🙏 That's ${n} night${n>1?'s':''} at ${inr(p.ppWith)} per head with all meals, ${inr(p.ppWith*bk.heads*n)} total. Tap Hold my nights on the page and the UPI details follow.`
           :`Hello, and welcome to Calm Shade 🙏 I look after ${p.name} for ${O(p.owner).name} — ${p.cap.toLowerCase()}, ${inr(p.ppWith)} per head with all home-cooked meals. Which dates are you thinking of, and how many of you?`;
         chat.msgs.push({k:'in',t:hello,tm:now()});
         chatHistory.push({role:'assistant',content:hello});

@@ -1480,11 +1480,14 @@ switch ($a) {
       if (!$rooms) continue;
       $sleeps = array_sum(array_map(fn($r)=>$r['count'] * $r['max'], $rooms)); $from = min(array_map(fn($r)=>min($r['rate'], $r['rateWe']), $rooms));
       $nr = array_sum(array_column($rooms, 'count'));
-      $kinds = count($rooms) > 2 ? $nr.' rooms' : implode(', ', array_map(fn($r)=>$r['count'].' '.strtolower($r['name']).($r['count'] > 1 ? 's' : ''), $rooms));
+      $mn = min(array_column($rooms, 'max')); $mx = max(array_column($rooms, 'max'));
+      $perRoom = $mx === 1 ? 'single beds' : ($mn === $mx ? 'each takes up to '.$mx.' guests' : $mn.' to '.$mx.' guests per room');
+      $plural = fn($r)=>$r['count'].' '.strtolower($r['name']).($r['count'] > 1 && substr($r['name'], -1) !== 's' ? 's' : '');
+      $kinds = count($rooms) > 3 ? $nr.' rooms · '.$perRoom : (count($rooms) === 1 ? $plural($rooms[0]).' · '.$perRoom : implode(', ', array_map($plural, $rooms)));
       if ($pl['own']) { $pl['area'] = $pl['area'] === 'Kamshet lake' ? 'Kamshet · Maharashtra' : $pl['area'];
         if ($pl['desc'] === '') $pl['desc'] = 'Calmshet, Karthik\'s lakeside forest property near Kamshet, and Appa, an artist\'s home nearby: pick a room, from a couple\'s room to the whole Appa Art House for twelve. Three home-cooked meals a day are included, the pool is a few steps away, and the lake is there for sunsets. There is no mobile network out here; the forest is the point.';
         if ($pl['amen'] === '') $pl['amen'] = 'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Bonfire on request'; }
-      $props[] = ['id'=>'v-'.$pl['id'],'owner'=>$pl['own'] ? 'o1' : 'v-'.$pl['id'],'own'=>$pl['own'],'name'=>$pl['name'],'loc'=>$pl['area'],'cat'=>$pl['cat'],'cap'=>'Up to '.$sleeps.' guests · '.$kinds,'sleeps'=>$sleeps,
+      $props[] = ['id'=>'v-'.$pl['id'],'owner'=>$pl['own'] ? 'o1' : 'v-'.$pl['id'],'own'=>$pl['own'],'name'=>$pl['name'],'loc'=>$pl['area'],'cat'=>$pl['cat'],'cap'=>$kinds,'sleeps'=>$sleeps,
         'ppWith'=>(int)ceil($from / 2),'ppWithout'=>(int)ceil($from / 2),'pet'=>false,'villa'=>false,'amen'=>$pl['amen'],'desc'=>$pl['desc'],'photos'=>$pl['photos'],'cover'=>0,'faq'=>[],'geo'=>null,
         'maps'=>'','website'=>$pl['web'],'link'=>'','live'=>true,'festival'=>true,'place'=>$pl['id'],'rooms'=>$rooms,'from'=>$from,'feePct'=>$pl['own'] ? 0 : FEE_PCT];
       if (!$pl['own']) $hosts[] = ['id'=>'v-'.$pl['id'],'name'=>$pl['name']];
