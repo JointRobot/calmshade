@@ -1198,6 +1198,7 @@ ${kb()}`;}
       const r=await fetch('fest.php?a=ai',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:'claude-haiku-5-5',max_tokens:1000,system:sysPrompt(P(chat.propId).name),messages:chatHistory})});
       const d=await r.json();
+      if(r.status===429&&d.error){chatHistory.push({role:'assistant',content:d.error});return d.error;}
       let x=(d.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
       if(!x)throw 0;
       chatHistory.push({role:'assistant',content:x});return x;

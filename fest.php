@@ -1417,14 +1417,23 @@ switch ($a) {
     $day = 'ai-'.gmdate('Ymd'); $row = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $row->execute([$day]); $n = (int)(($row->fetch() ?: ['v'=>0])['v']);
     if ($n >= (defined('AI_DAILY_CAP') ? AI_DAILY_CAP : 1500)) fail('The concierge has hit today\'s limit. Message us on WhatsApp.', 429);
     db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$day]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$day, (string)($n + 1)]);
-    $payload = json_encode(['model'=>defined('AI_MODEL') ? AI_MODEL : 'claude-haiku-5-5','max_tokens'=>min(800, max(50, (int)($b['max_tokens'] ?? 600))),'system'=>$sys,'messages'=>$clean]);
-    $ch = curl_init('https://api.anthropic.com/v1/messages');
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>$payload, CURLOPT_TIMEOUT=>45,
-      CURLOPT_HTTPHEADER=>['Content-Type: application/json','anthropic-version: 2023-06-01','x-api-key: '.$key]]);
-    $res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-    $j = json_decode((string)$res, true);
-    if ($code !== 200 || !is_array($j)) { error_log('fest ai: '.$code.' '.substr((string)$res, 0, 300)); fail('The concierge is unavailable right now.', 502); }
-    out(['content'=>array_values(array_filter($j['content'] ?? [], fn($c)=>($c['type'] ?? '') === 'text'))]);
+    /* The model can spend its whole token budget before writing any text (a 200-token test came back empty), so ask for
+       at least 800 and, if no text still comes back, try once more with more room. */
+    $texts = []; $code = 0; $j = null;
+    foreach ([max(800, min(1000, (int)($b['max_tokens'] ?? 800))), 1600] as $mt) {
+      $payload = json_encode(['model'=>defined('AI_MODEL') ? AI_MODEL : 'claude-haiku-5-5','max_tokens'=>$mt,'system'=>$sys,'messages'=>$clean]);
+      $ch = curl_init('https://api.anthropic.com/v1/messages');
+      curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>$payload, CURLOPT_TIMEOUT=>45,
+        CURLOPT_HTTPHEADER=>['Content-Type: application/json','anthropic-version: 2023-06-01','x-api-key: '.$key]]);
+      $res = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+      $j = json_decode((string)$res, true);
+      if ($code !== 200 || !is_array($j)) { error_log('fest ai: '.$code.' '.substr((string)$res, 0, 300)); fail('The concierge is unavailable right now.', 502); }
+      $texts = array_values(array_filter($j['content'] ?? [], fn($c)=>($c['type'] ?? '') === 'text' && trim((string)($c['text'] ?? '')) !== ''));
+      if ($texts) break;
+      error_log('fest ai: empty text, stop_reason='.($j['stop_reason'] ?? '?').' max_tokens='.$mt);
+    }
+    if (!$texts) fail('The concierge could not answer that one. Please try again.', 502);
+    out(['content'=>$texts]);
   }
 
 
