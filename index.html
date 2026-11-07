@@ -178,7 +178,7 @@ html,body{overflow-x:clip;}
 @media (max-width:900px){
   .bk-mtog{display:block; width:100%; text-align:left; border:1px dashed var(--line-2); border-radius:6px; padding:11px 13px; font-size:12.5px; font-weight:800; margin:12px 0 4px; background:var(--bg);}
   .bk-plan{display:none;}
-  .bk-plan.open{display:block; max-height:44vh; overflow:auto; padding-right:4px;}
+  .bk-plan.open{display:block;}
 }
 .wxrow{display:flex; gap:12px; overflow-x:auto; padding:4px 2px 10px; scrollbar-width:thin;}
 .wxd{flex:none; min-width:66px; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:13px 10px; text-align:center; transition:transform .3s var(--ease), box-shadow .3s;}
@@ -290,11 +290,12 @@ html,body{overflow-x:clip;}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(30,190,93,.5)} 60%{box-shadow:0 0 0 7px rgba(30,190,93,0)}}
 .wa-note{font-size:11px; color:var(--mute); margin-top:12px; line-height:1.65; text-align:center;}
 @media (max-width:900px){
-  .det-grid{grid-template-columns:1fr;}
-  .book-card{position:fixed; left:10px; right:10px; bottom:10px; top:auto; z-index:50; box-shadow:0 -6px 40px rgba(35,32,42,.22); padding:14px 16px; border-radius:var(--rad-lg);}
+  /* phone: one single scroll. Booking box sits in the page right under the photo + title (no floating panel over the visuals), then About, gallery, details */
+  .det-grid{display:flex; flex-direction:column; gap:0; margin-top:18px;}
+  .det-main{display:contents;}
+  .book-card{order:-1; position:static; max-height:none; overflow:visible; margin:0 0 26px; padding:16px; border-radius:var(--rad-lg); box-shadow:none;}
   .book-card .bk-rows{display:none;}
   .book-card .bk-price{margin-bottom:10px;}
-  .det{padding-bottom:150px;}
 }
 
 /* ── login ───────────────────────────── */
@@ -884,7 +885,7 @@ body{background:var(--bg);}
   #cs-app .fx-mast{padding-top:16px;}
   #cs-app .fx-trip-head h2{display:none;}
 }
-@media (max-width:900px){#cs-app .book-card{max-height:78vh; overflow:auto; overscroll-behavior:contain;}}
+@media (max-width:900px){#cs-app .book-card{max-height:none; overflow:visible;}}
 
 /* ═══ APPA Art Passport ═══ */
 #cs-app .pp-cover{background:linear-gradient(120deg,#2A2530,#1D1A21 70%); color:#F3EADB; border-radius:var(--rad-lg); padding:40px 44px; margin-top:22px; position:relative; overflow:hidden; box-shadow:var(--shadow-lift);}
@@ -1612,7 +1613,7 @@ ${kb()}`;}
         </div>
 
         <aside class="book-card">
-          ${p.rooms?`<div class="bk-price"><b>${inr(roomPrice(p,bkRoom(p),'2027-01-04',bkRoom(p).base))}</b><span>/room/night · ${esc(bkRoom(p).name)}</span></div>
+          ${p.rooms?`<div class="bk-price"><b>${inr(roomPrice(p,bkRoom(p),'2027-01-04',bkRoom(p).base))}</b><span>/room/night</span></div>
           <div class="fx-chips" style="margin:6px 0 10px">${p.rooms.map(r=>`<button class="fx-chip ${bkRoom(p).id===r.id?'on':''}" onclick="CS.bkRoom('${esc(r.id)}')">${esc(r.name)} · up to ${r.max}</button>`).join('')}</div>`:`<div class="bk-price"><b>${inr(mealsIn(p)?p.ppWith:p.ppWithout)}</b><span>/head/night · ${mealsIn(p)?'3 meals included':inr(p.ppWith)+' with meals'}</span></div>`}
           <button class="bk-mtog" onclick="CS.bkToggle()">📅 ${bk.days.length?bkLabel()+' · '+bk.heads+' guests':'Choose dates & guests (optional)'}</button>
           <div class="bk-plan${bkOpen?' open':''}">
