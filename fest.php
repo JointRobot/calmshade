@@ -175,7 +175,7 @@ function places() {
       $max = max(1, (int)($ro['max'] ?? $r['max']));
       $pl['rooms'][$rid] = ['id'=>$pid.'.'.$rid,'name'=>(string)($ro['name'] ?? $r['name']),'count'=>max(0, (int)($ro['count'] ?? $r['count'])),'max'=>$max,'base'=>min(2, $max),
         'rate'=>$v('rate','rate_'),'rateWe'=>$v('rateWe','rateWe_'),'extra'=>$v('extra','extra_'),'extraWe'=>$v('extraWe','extraWe_'),
-        'fest'=>!array_key_exists('fest', $r) || $r['fest'],'festBlock'=>!empty($r['festBlock']),'cs'=>$r['cs'] ?? null];
+        'fest'=>!array_key_exists('fest', $r) || $r['fest'],'festBlock'=>!empty($r['festBlock']),'cs'=>$r['cs'] ?? null,'photos'=>array_values((array)($ro['photos'] ?? []))];
     }
     $out[$pid] = $pl;
   }
@@ -862,7 +862,7 @@ function public_places() {
   $o = [];
   foreach (places() as $pid => $pl) { if ($pl['off']) continue;
     $o[] = ['id'=>$pid,'name'=>$pl['name'],'own'=>$pl['own'],'upiReady'=>$pl['upi'] !== '','cat'=>$pl['cat'],'area'=>$pl['area'],'web'=>$pl['web'],'blurb'=>$pl['blurb'],'desc'=>$pl['desc'],'amen'=>$pl['amen'],'photos'=>$pl['photos'],
-      'rooms'=>array_values(array_map(fn($r)=>['id'=>$r['id'],'name'=>$r['name'],'count'=>$r['count'],'max'=>$r['max'],'base'=>$r['base'],'rate'=>$r['rate'],'rateWe'=>$r['rateWe'],'extra'=>$r['extra'],'extraWe'=>$r['extraWe'],'fest'=>$r['fest'],'festBlock'=>$r['festBlock'],'cs'=>$r['cs']], $pl['rooms']))]; }
+      'rooms'=>array_values(array_map(fn($r)=>['id'=>$r['id'],'name'=>$r['name'],'count'=>$r['count'],'max'=>$r['max'],'base'=>$r['base'],'rate'=>$r['rate'],'rateWe'=>$r['rateWe'],'extra'=>$r['extra'],'extraWe'=>$r['extraWe'],'fest'=>$r['fest'],'festBlock'=>$r['festBlock'],'cs'=>$r['cs'],'photos'=>$r['photos']], $pl['rooms']))]; }
   return $o;
 }
 function pay_of($r) { $p = json_decode((string)($r['pay'] ?? ''), true); return is_array($p) ? $p : null; }
@@ -1217,6 +1217,7 @@ switch ($a) {
     foreach ((array)($in['rooms'] ?? []) as $rid => $r) { if (!isset(PLACES[$pid]['rooms'][$rid])) continue; $ro = $o['rooms'][$rid] ?? [];
       if (isset($r['name']) && clean($r['name'], 60) !== '') $ro['name'] = clean($r['name'], 60);
       foreach (['count'=>[0,200],'max'=>[1,30],'rate'=>[0,500000],'rateWe'=>[0,500000],'extra'=>[0,100000],'extraWe'=>[0,100000]] as $k => [$lo, $hi]) if (isset($r[$k]) && $r[$k] !== '') $ro[$k] = max($lo, min($hi, (int)$r[$k]));
+      if (array_key_exists('photos', $r)) { $ph = []; foreach (array_slice((array)$r['photos'], 0, 14) as $x) { $src = clean_photo(is_array($x) ? ($x['src'] ?? '') : $x); if ($src) $ph[] = ['src'=>$src,'cap'=>clean(is_array($x) ? ($x['cap'] ?? '') : '', 120)]; } $ro['photos'] = $ph; }
       $o['rooms'][$rid] = $ro; }
     $all[$pid] = $o; kv_set('places', json_encode($all));
     out(['ok'=>true]);
@@ -1231,16 +1232,18 @@ switch ($a) {
     if (!$links) { if (!$page) fail('This place has no website yet. Paste photo links, or add photos from your phone.'); $cands = page_images($page); }
     $cands = array_values(array_unique(array_merge($direct, $cands)));
     if (!$cands) fail('No photos found on '.($links ? 'those links' : $page).'. The site may build its photos with code we can\'t read; paste direct photo links instead, or add photos from your phone.', 404);
-    $o = places_over(); $cur = $o[$pid]['photos'] ?? []; $seen = []; $added = 0; $want = max(1, min(8, (int)($b['max'] ?? 6)));
+    $rk = (string)($b['room'] ?? ''); if ($rk !== '' && !isset(PLACES[$pid]['rooms'][$rk])) fail('Unknown room.', 404);
+    $o = places_over(); $cur = $rk !== '' ? ($o[$pid]['rooms'][$rk]['photos'] ?? []) : ($o[$pid]['photos'] ?? []); $seen = []; $added = 0; $want = max(1, min(12, (int)($b['max'] ?? 6)));
     foreach ($cands as $c) {
-      if ($added >= $want || count($cur) >= 12) break;
+      if ($added >= $want || count($cur) >= ($rk !== '' ? 14 : 12)) break;
       [$bin, $type] = web_get($c, 8 * 1024 * 1024); if (!$bin) continue;
       $h = md5($bin); if (isset($seen[$h])) continue; $seen[$h] = 1;
       $src = save_image($bin); if (!$src) continue;
       $cur[] = ['src'=>$src, 'cap'=>'', 'from'=>substr($c, 0, 300)]; $added++;
     }
     if (!$added) fail('Found '.count($cands).' pictures but none were usable photos (too small, or the site blocked us). Paste direct photo links, or add photos from your phone.', 404);
-    $o[$pid]['photos'] = $cur; kv_set('places', json_encode($o));
+    if ($rk !== '') $o[$pid]['rooms'][$rk]['photos'] = $cur; else $o[$pid]['photos'] = $cur;
+    kv_set('places', json_encode($o));
     out(['ok'=>true,'added'=>$added,'photos'=>$cur]);
   }
   case 'extras_set': {

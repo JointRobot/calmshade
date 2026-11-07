@@ -170,6 +170,17 @@ c,j=call('cs_props'); v=[p for p in j['props'] if p['id']=='v-shambhala']; check
 c,j=call('places_import',{'id':'theeya'},True); check('photo import: no website, clear message',c==400 and 'no website' in j['error'],(c,j))
 c,j=call('places_import',{'id':'lefarm','links':['http://127.0.0.1:8099/index.html']},True); check('photo import refuses local addresses',c==404,(c,j))
 c,j=call('places_import',{'id':'lefarm'}); check('photo import needs desk',c==403,(c,j))
+# per-room photos (copied from direct links, e.g. Airbnb's picture addresses)
+import io,base64
+from PIL import Image as _Im
+_b=io.BytesIO(); _Im.new('RGB',(800,500),(120,90,60)).save(_b,'JPEG'); _du='data:image/jpeg;base64,'+base64.b64encode(_b.getvalue()).decode()
+c,j=call('upload',{'data':_du},True); _src=j.get('src','')
+c,j=call('places_import',{'id':'calmshet','room':'room1','links':['http://127.0.0.1:8099/'+_src],'max':3},True); check('room photos: import adds one',c==200 and j['added']==1,(c,j))
+c,j=call('places_import',{'id':'calmshet','room':'nope','links':['http://127.0.0.1:8099/'+_src]},True); check('room photos: unknown room refused',c==404,(c,j))
+c,j=call('cs_props'); _v=[p for p in j['props'] if p['id']=='v-calmshet'][0]; _r={r['id']:r for r in _v['rooms']}
+check('room photos: shown on that room only',len(_r['calmshet.room1']['photos'])==1 and _r['calmshet.room2']['photos']==[],(_r['calmshet.room1'].get('photos'),_r['calmshet.room2'].get('photos')))
+c,j=call('places_set',{'id':'calmshet','place':{'rooms':{'room1':{'photos':[]}}}},True); c,j=call('cs_props'); _v=[p for p in j['props'] if p['id']=='v-calmshet'][0]
+check('room photos: can be cleared',[r for r in _v['rooms'] if r['id']=='calmshet.room1'][0]['photos']==[],j)
 # VIP / VVIP counts a guest's nights across all their live bookings (matched by phone)
 clear_hits(); VU='purrom.chickoo'
 c,a=call('book',{'stays':[st(VU,'2027-03-10',4,1,1)],'passes':[],'guest':g('9877700001')}); check('vip: first booking, 4 nights, no tier',c==200 and a['tier']=='',(c,a))
