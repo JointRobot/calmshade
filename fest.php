@@ -1417,10 +1417,10 @@ switch ($a) {
     $day = 'ai-'.gmdate('Ymd'); $row = db()->prepare('SELECT v FROM fest_kv WHERE k=?'); $row->execute([$day]); $n = (int)(($row->fetch() ?: ['v'=>0])['v']);
     if ($n >= (defined('AI_DAILY_CAP') ? AI_DAILY_CAP : 1500)) fail('The concierge has hit today\'s limit. Message us on WhatsApp.', 429);
     db()->prepare('DELETE FROM fest_kv WHERE k=?')->execute([$day]); db()->prepare('INSERT INTO fest_kv (k,v) VALUES (?,?)')->execute([$day, (string)($n + 1)]);
-    /* The model can spend its whole token budget before writing any text (a 200-token test came back empty), so ask for
-       at least 800 and, if no text still comes back, try once more with more room. */
+    /* The model can spend its token budget thinking, leaving no text (a 200-token test came back empty) or a sentence cut
+       off mid-word (8 Nov, a long question). So ask for 2000 and, if the text is missing or cut off, try again with 4000. */
     $texts = []; $code = 0; $j = null;
-    foreach ([max(800, min(1000, (int)($b['max_tokens'] ?? 800))), 1600] as $mt) {
+    foreach ([2000, 4000] as $mt) {
       $payload = json_encode(['model'=>defined('AI_MODEL') ? AI_MODEL : 'claude-haiku-5-5','max_tokens'=>$mt,'system'=>$sys,'messages'=>$clean]);
       $ch = curl_init('https://api.anthropic.com/v1/messages');
       curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>$payload, CURLOPT_TIMEOUT=>45,
@@ -1429,8 +1429,8 @@ switch ($a) {
       $j = json_decode((string)$res, true);
       if ($code !== 200 || !is_array($j)) { error_log('fest ai: '.$code.' '.substr((string)$res, 0, 300)); fail('The concierge is unavailable right now.', 502); }
       $texts = array_values(array_filter($j['content'] ?? [], fn($c)=>($c['type'] ?? '') === 'text' && trim((string)($c['text'] ?? '')) !== ''));
-      if ($texts) break;
-      error_log('fest ai: empty text, stop_reason='.($j['stop_reason'] ?? '?').' max_tokens='.$mt);
+      if ($texts && ($j['stop_reason'] ?? '') !== 'max_tokens') break; /* cut off mid-sentence = the model used its budget thinking: retry with more room */
+      error_log('fest ai: empty or cut-off text, stop_reason='.($j['stop_reason'] ?? '?').' max_tokens='.$mt);
     }
     if (!$texts) fail('The concierge could not answer that one. Please try again.', 502);
     out(['content'=>$texts]);
