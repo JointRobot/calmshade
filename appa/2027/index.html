@@ -24,7 +24,8 @@
   .pin .l { background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px 2px; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
   .areapin { margin: -17px 0 0 -17px; }
   .pin.flip { flex-direction: row-reverse; }
-  .pin.below { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .pin.below { flex-direction: column; align-items: center; gap: 4px; }
+  .pin.above { flex-direction: column-reverse; align-items: center; gap: 4px; }
   .areapin .l { font-family: var(--display), Georgia, serif; font-style: italic; font-size: 16px; }
   @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,210,120,0.7); } 70% { box-shadow: 0 0 0 12px rgba(255,210,120,0); } 100% { box-shadow: 0 0 0 0 rgba(255,210,120,0); } }
   header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: 12px 16px; pointer-events: none; flex-wrap: wrap; }
@@ -53,7 +54,6 @@
   .badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px 6px 8px; border: 1px solid var(--rule); border-radius: 999px; background: var(--card); font: 600 13px var(--font), sans-serif; color: var(--ink); }
   .badge .ic { font-size: 18px; line-height: 1; }
   #panel.hidden { display: none; }
-  .grab { display: none; }
   .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
   #panel h2 { font-family: var(--display), Georgia, serif; font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.1; margin: 6px 0 10px; }
   #panel h3 { font-family: var(--display), Georgia, serif; font-style: italic; font-weight: 500; font-size: 22px; margin: 4px 0 10px; }
@@ -104,14 +104,10 @@
   body.touring #panel, body.touring #pins { display: none; }
   @media (max-width: 700px) { body.touring #chips { display: none; } }
   @media (max-width: 900px) {
-    /* phones: a bottom sheet. By default only a small strip shows (the quote) so the whole map stays visible; tap or swipe it up for the rest, drag it down to tuck it away */
-    #panel { left: 8px; right: 8px; top: auto; bottom: 0; width: auto; height: 30vh; min-height: 250px; max-height: none; border-radius: 18px 18px 0 0; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
-    #panel.peek { transform: translateY(calc(100% - 112px)); overflow: hidden; touch-action: none; }
-    #panel.peek .pull cite { display: none; }
-    #panel .pull { margin: 0 0 14px; padding: 10px 14px 8px 16px; } #panel .pull p { font-size: 20px; }
-    .grab { display: flex; position: sticky; top: 0; z-index: 2; justify-content: center; align-items: center; height: 26px; margin: 0 -16px; background: var(--card); cursor: grab; touch-action: none; border-radius: 18px 18px 0 0; }
-    .grab i { width: 42px; height: 5px; border-radius: 3px; background: var(--rule); }
-    #panel h2 { font-size: 22px; } .pin .l { display: none; } .areapin .l { display: inline; font-size: 15px; } .pin .n { min-width: 36px; height: 36px; font-size: 17px; } .areapin { margin: -18px 0 0 -18px; }
+    /* phones: the panel is a fixed strip on the bottom 30% of the screen; it never slides, its content scrolls inside it. The whole map fits in the space above it (app.js fitPhone) */
+    #panel { left: 8px; right: 8px; top: auto; bottom: 0; width: auto; height: 30vh; min-height: 250px; max-height: none; border-radius: 18px 18px 0 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    #panel .pull { margin: 0 0 14px; padding: 10px 14px 8px 16px; } #panel .pull p { font-size: 19px; }
+    #panel h2 { font-size: 22px; } .pin .l { display: none; } .areapin .l { display: inline-block; font-size: 14px; line-height: 1.15; white-space: normal; max-width: 118px; padding: 3px 9px 2px; border-radius: 12px; } .pin.flip .l { text-align: right; } .pin.below .l, .pin.above .l { text-align: center; } .areapin .dot + .l { display: none; } .areapin:has(.n) { z-index: 2; } /* phones: only the numbered venues carry a name on the map; the other places are tappable gold dots */ .pin .n { min-width: 36px; height: 36px; font-size: 17px; } .areapin { margin: -18px 0 0 -18px; }
     header { padding: 8px; gap: 6px; } #brand { font-size: 18px; }
     /* keep APPA + Tickets + Guided tour together on the header's first row; the venue-number chips drop to their own row below, since all three plus six chips don't fit one line on a phone */
     #chips { order: 3; flex-basis: 100%; margin-top: 2px; } .seg button { font-size: 13px; padding: 6px 8px; }
@@ -135,7 +131,7 @@
   <button id="ticketsbtn">🎟 Tickets</button>
   <button id="tourbtn">Guided tour</button>
 </header>
-<aside id="panel"><div class="grab" aria-hidden="true"><i></i></div><div id="pbody"></div></aside>
+<aside id="panel"><div id="pbody"></div></aside>
 <div id="intro"><div class="introbox">
   <div class="eyebrow" id="i-eyebrow"></div>
   <h1 id="i-h1"></h1>

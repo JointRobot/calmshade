@@ -59,34 +59,57 @@ function shadowCheck() { let sg = 0; for (let i = 0; i < CASTERS.length; i++) { 
 // ---- camera (screen-space target px, py and zoom S in CSS pixels per metre)
 const cam = { px: 0, py: 0, S: 8 }, camT = { px: 0, py: 0, S: 8 };
 const scr = (x, y, z = 0) => [(x - y) * C30, (x + y) / 2 - z];
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const mob = () => VW < 900; let sheet = 'peek'; // phones: the panel is a bottom sheet, 'peek' (a small strip) or 'open'
-const side = () => (mob() ? (sheet === 'peek' ? { w: VW, h: VH - 200, dx: 0, dy: 0 } : { w: VW, h: VH * 0.7 - 100, dx: 0, dy: VH * 0.15 - 50 }) : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
+const mob = () => VW < 900;
+// phones: the panel is a fixed strip on the bottom 30% of the screen (at least 250px) (it scrolls inside, it never slides); the map lives in the space between the header and the panel
+const PANEL_H = 0.3; const mapBox = () => { const hd = document.querySelector('header'); const top = (hd ? hd.getBoundingClientRect().bottom : 90) + 4, bot = VH - Math.max(VH * PANEL_H, 250) - 4; return { top, bot }; };
+const side = () => { if (mob()) { const { top, bot } = mapBox(); return { w: VW, h: bot - top, dx: 0, dy: VH / 2 - (top + bot) / 2 }; } return { w: VW - 420, h: VH - 70, dx: 200, dy: 0 }; };
 const [BX0, BY0, BX1, BY1] = SITE.bounds;
-const sweep = { amp: 0, px: 0, py: 0, t0: 0 }; // phone overview: the camera drifts slowly from one side of the lake to the other
+// phones: fit the whole map AND every place label (badge + full name) inside the map space, nothing cut at any edge. Each label picks the side of its badge
+// (right 'n', left 'f', below 'b', above 'a') where it does not cover another label or badge; the zoom is the largest one where that works
+function pinSizes(p) { const el = p.el, l = el.querySelector('.l'), bd = el.querySelector('.n, .dot'); const was = el.classList.contains('hidden'); el.classList.remove('hidden', 'flip', 'below', 'above'); if (l) l.style.transform = '';
+  const m = parseFloat(getComputedStyle(el).marginLeft) || 0, mt = parseFloat(getComputedStyle(el).marginTop) || 0, w = el.offsetWidth, h = el.offsetHeight, bw = bd ? bd.offsetWidth : 0, bh = bd ? bd.offsetHeight : 0, lw = l ? l.offsetWidth : 0, lh = l ? l.offsetHeight : 0;
+  if (was) el.classList.add('hidden'); const cy = mt + bh / 2; // badge centre (the pin's anchor point)
+  const cw = Math.max(bw, lw), cx = m + bw / 2; p.lw = lw; p.lh = lh; p.cw = cw; p.bw = bw; p.m = m;
+  return { badge: [m, m + bw, mt, mt + bh], n: [m, m + w, cy - h / 2, cy + h / 2], f: [m - lw - 6, m + bw, cy - h / 2, cy + h / 2], b: [cx - cw / 2, cx + cw / 2, mt, mt + bh + 4 + lh], a: [cx - cw / 2, cx + cw / 2, mt - 4 - lh, mt + bh] }; }
+function fitPhone(pts, f) {
+  const onMap = pins.filter(p => p.areaPin && shownArea(SITE.areas.find(x => x.id === p.area))); for (const p of onMap) { p.sz = pinSizes(p); p.iso = scr(...p.pos); }
+  const named = p => { const l = p.el.querySelector('.l'); return l && getComputedStyle(l).display !== 'none'; }, ps = onMap.filter(named), dots = onMap.filter(p => !named(p)); // gold dots carry no name but labels must not cover them
+  ps.sort((a, b) => (COPY.areas[a.area].n ? 0 : 1) - (COPY.areas[b.area].n ? 0 : 1)); // numbered venues choose first
+  const PAD = 4, MD = ['n', 'f', 'b', 'a'], ovl = (a, b) => Math.max(0, Math.min(a[1], b[1]) + PAD - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) + PAD - Math.max(a[2], b[2]));
+  const W = f.w - 16, H = f.h - 12;
+  // every combination of label sides is tried (4^7 for seven venues, pruned); cost = overlap with other labels and badges + anything outside the map space
+  const lay = S2 => { let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; for (const [x, y] of pts) { x0 = Math.min(x0, x * S2); x1 = Math.max(x1, x * S2); y0 = Math.min(y0, y * S2); y1 = Math.max(y1, y * S2); }
+    if (x1 - x0 > W || y1 - y0 > H) return null; const fx0 = (x0 + x1 - W) / 2, fx1 = (x0 + x1 + W) / 2, fy0 = (y0 + y1 - H) / 2, fy1 = (y0 + y1 + H) / 2; // the frame, centred on the map
+    const n = ps.length, R = ps.map(p => MD.map(md => { const r = p.sz[md]; return [p.iso[0] * S2 + r[0], p.iso[0] * S2 + r[1], p.iso[1] * S2 + r[2], p.iso[1] * S2 + r[3]]; })), Bd = [...ps, ...dots].map(p => { const r = p.sz.badge; return [p.iso[0] * S2 + r[0], p.iso[0] * S2 + r[1], p.iso[1] * S2 + r[2], p.iso[1] * S2 + r[3]]; });
+    const own = R.map((rs, i) => rs.map((r, k) => { let c = (Math.max(0, fx0 - r[0]) + Math.max(0, r[1] - fx1) + Math.max(0, fy0 - r[2]) + Math.max(0, r[3] - fy1)) * 400 + k; for (let j = 0; j < Bd.length; j++) if (j !== i) c += ovl(r, Bd[j]) * (j < n ? 1 : 0.15); return c; }));
+    let best = Infinity, bestSel = null; const sel = new Array(n);
+    const go = (i, c) => { if (c >= best) return; if (i === n) { best = c; bestSel = sel.slice(); return; } for (let k = 0; k < 4; k++) { let cc = c + own[i][k]; if (cc >= best) continue; for (let j = 0; j < i; j++) { cc += ovl(R[i][k], R[j][sel[j]]); if (cc >= best) break; } sel[i] = k; go(i + 1, cc); } };
+    go(0, 0); const modes = new Map(); let e = [x0, x1, y0, y1]; ps.forEach((p, i) => { modes.set(p, MD[bestSel[i]]); const r = R[i][bestSel[i]]; e = [Math.min(e[0], r[0]), Math.max(e[1], r[1]), Math.min(e[2], r[2]), Math.max(e[3], r[3])]; });
+    return { bad: best - bestSel.reduce((a, k) => a + k, 0), modes, ext: e, S: S2 }; };
+  let pick = null, clearest = null; for (let S2 = 120; S2 > 0.5; S2 *= 0.98) { const L = lay(S2); if (!L) continue; if (L.bad < 1) { pick = L; break; } if (!clearest || L.bad < clearest.bad) clearest = L; } // the biggest map where every name is clear
+  if (!pick) pick = clearest || Object.assign(lay(0.5) || { bad: 0, modes: new Map(), ext: [0, 1, 0, 1] }, { S: 0.5 }); window.__fit = { S: +pick.S.toFixed(3), bad: Math.round(pick.bad) };
+  for (const p of ps) { p.pref = pick.modes.get(p); p.mw = null; }
+  const [x0, x1, y0, y1] = pick.ext, S2 = pick.S; return { px: (x0 + x1) / 2 / S2 + f.dx / S2, py: (y0 + y1) / 2 / S2 + f.dy / S2, S: S2 }; }
 function fitOverview() { const f = side(); const o = SITE.view && SITE.view.overview;
+  if (mob()) { const pts = []; const rects = o && o.fit ? SITE.areas.filter(a => o.fit.includes(a.id)).map(a => a.rect) : [[BX0, BY0, BX1, BY1]]; for (const [x0, y0, x1, y1] of rects) for (const [x, y] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) pts.push(scr(x, y, 0)); return fitPhone(pts, f); }
   // optional: frame just the listed areas (their rect corners, projected to the screen) instead of the whole board
   if (o && o.fit) { const pts = []; for (const a of SITE.areas) if (o.fit.includes(a.id)) { const [x0, y0, x1, y1] = a.rect; for (const [x, y] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) pts.push(scr(x, y, 0)); }
-    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys) + 8; const S1 = Math.min(f.w / w, f.h / h) * 0.97; let S2 = S1; const pk = mob() && sheet === 'peek';
-    if (pk) S2 = Math.min(S1 * 2.1, (f.h / h) * 1.02); // phone: scaled up to fill the screen, the sweep below shows the rest
-    const bx = (Math.max(...xs) + Math.min(...xs)) / 2 + f.dx / S2, by = (Math.max(...ys) + Math.min(...ys)) / 2 - 3 + f.dy / S2;
-    sweep.amp = pk ? Math.max(0, (w - f.w / S2) / 2 * 0.94) : 0; sweep.px = bx; sweep.py = by; sweep.t0 = performance.now();
-    return { px: bx, py: by, S: S2 }; } const [px, py] = scr((BX0 + BX1) / 2, (BY0 + BY1) / 2, 2); const dw = (BX1 - BX0 + BY1 - BY0) * C30, dh = (BX1 - BX0 + BY1 - BY0) / 2 + 14; const S2 = Math.min(f.w / dw, f.h / dh) * 0.98; return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys) + 8; const S2 = Math.min(f.w / w, f.h / h) * 0.97;
+    return { px: (Math.max(...xs) + Math.min(...xs)) / 2 + f.dx / S2, py: (Math.max(...ys) + Math.min(...ys)) / 2 - 3 + f.dy / S2, S: S2 }; } const [px, py] = scr((BX0 + BX1) / 2, (BY0 + BY1) / 2, 2); const dw = (BX1 - BX0 + BY1 - BY0) * C30, dh = (BX1 - BX0 + BY1 - BY0) / 2 + 14; const S2 = Math.min(f.w / dw, f.h / dh) * 0.98; return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function areaView(id) { const a = SITE.areas.find(x => x.id === id); const f = side(); const [x0, y0, x1, y1] = a.rect; const [px, py] = scr((x0 + x1) / 2, (y0 + y1) / 2, 2); const size = Math.max(x1 - x0, y1 - y0); const S2 = Math.min(f.w / (size * 1.75), f.h / (size * 1.05)); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function spotView(key) { const sp = COPY.spots[key]; const f = side(); const c = sp.cam || sp.pos; const [px, py] = scr(c[0], c[1], c[2] || 0); const S2 = Math.min(f.w / 30, f.h / 19) * (sp.zoom || 1); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 const setCamT = v => Object.assign(camT, v);
-Object.assign(cam, fitOverview()); setCamT(fitOverview());
 
 // ---- navigation state
 const moonEl = document.getElementById('moon');
 const A = { visited: new Set(), revealed: new Set(), area: null, spot: null, tickets: false, join: null };
 const areaList = SITE.areas.filter(a => COPY.areas[a.id]);
 const shownArea = a => !a.hidden || A.revealed.has(a.id);
-function goOverview() { sheet = 'peek'; A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(fitOverview()); renderPanel(); }
-function goArea(id) { sheet = 'open'; A.area = id; A.spot = null; A.tickets = false; A.join = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
-function goSpot(key) { sheet = 'open'; const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; A.join = null; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
-function goTickets() { sheet = 'open'; A.tickets = true; A.join = null; renderPanel(); panel.scrollTop = 0; }
-function goJoin(key) { sheet = 'open'; A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
+function goOverview() { A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(fitOverview()); renderPanel(); }
+function goArea(id) { A.area = id; A.spot = null; A.tickets = false; A.join = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
+function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; A.join = null; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
+function goTickets() { A.tickets = true; A.join = null; renderPanel(); panel.scrollTop = 0; }
+function goJoin(key) { A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
 function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.set, a.arg, a.value); if (a.pulse) S.pulse(a.pulse, a.arg, a.dur || 8, a.peak || 1); if (a.reveal) { A.revealed.add(a.reveal); buildChips(); } if (a.say && out) out.textContent = a.say;
   if (a.go) { const [k, v] = a.go.split(':'); if (k === 'area') goArea(v); else if (k === 'spot') goSpot(v); else if (k === 'tickets') goTickets(); else goOverview(); } } }
 
@@ -94,39 +117,31 @@ function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.
 const pinLayer = $('#pins'); const pins = [];
 for (const a of areaList) { const c = COPY.areas[a.id]; const b = document.createElement('button'); b.className = 'pin areapin'; b.innerHTML = `${c.n ? `<span class="n">${c.n}</span>` : '<span class="dot"></span>'}<span class="l">${c.name}</span>`; b.onclick = e => { e.stopPropagation(); goArea(a.id); }; pinLayer.appendChild(b); pins.push({ el: b, pos: [a.center[0], a.center[1], 4], area: a.id, areaPin: true }); }
 for (const key in COPY.spots) { const sp = COPY.spots[key]; const b = document.createElement('button'); b.className = 'pin'; b.innerHTML = `<span class="dot"></span><span class="l">${sp.title}</span>`; b.onclick = e => { e.stopPropagation(); goSpot(key); }; pinLayer.appendChild(b); pins.push({ el: b, pos: sp.pos, key, area: sp.area }); }
+Object.assign(cam, fitOverview()); setCamT(fitOverview());
 function placePins() {
   for (const p of pins) {
     const a = p.area && SITE.areas.find(x => x.id === p.area);
     const show = tour ? false : p.areaPin ? (!A.area && !A.spot && shownArea(a)) : p.area === null ? (!A.area && A.spot !== p.key) : (A.area === p.area && A.spot !== p.key);
     p.el.classList.toggle('hidden', !show); if (!show) continue;
-    let [x, y] = world.screen(...p.pos);
+    let [x, y] = world.screen(...p.pos); const ax = x, ay = y;
     if (mob()) { // phones: a label never leaves the screen: flip it to the other side of its badge near the right edge, and fade pins as they drift off any edge
       const l = p.lab || (p.lab = p.el.querySelector('.l'));
       if (l && getComputedStyle(l).display !== 'none') {
-        if (p.mw !== VW) { p.el.classList.remove('flip', 'below'); p.mode = 'n'; l.style.transform = ''; p.mw = VW; p.m = parseFloat(getComputedStyle(p.el).marginLeft) || 0; p.oL = l.offsetLeft; p.lw = l.offsetWidth; }
-        const nr = x + p.m + p.oL + p.lw, fl = x + p.m - p.lw - 6; let md = p.mode || 'n'; // n: label beside the badge; f: flipped to its left; b: tucked under the badge
-        if (md === 'n') { if (nr > VW - 6) md = fl >= 6 ? 'f' : 'b'; } else if (nr < VW - 50) md = 'n'; else if (md === 'f' && fl < 6) md = 'b'; else if (md === 'b' && fl >= 6) md = 'f';
-        if (md !== p.mode) { p.mode = md; p.el.classList.toggle('flip', md === 'f'); p.el.classList.toggle('below', md === 'b'); if (md !== 'b') l.style.transform = ''; }
-        p.flip = md === 'f'; if (md === 'f') x -= p.lw + 6;
-        if (md === 'b') l.style.transform = `translateX(${Math.max(6 - (x + p.m), Math.min(0, VW - 6 - (x + p.m + p.lw)))}px)`;
+        if (p.mw !== VW || !p.sz) { p.sz = pinSizes(p); p.mw = VW; p.mode = null; }
+        const inX = md => x + p.sz[md][0] >= 6 && x + p.sz[md][1] <= VW - 6; let md = p.pref || 'n';
+        if (!inX(md)) md = ['n', 'f', 'b', 'a'].find(inX) || 'b';
+        if (md !== p.mode) { p.mode = md; p.el.classList.toggle('flip', md === 'f'); p.el.classList.toggle('below', md === 'b'); p.el.classList.toggle('above', md === 'a'); if (md !== 'b' && md !== 'a') l.style.transform = ''; }
+        p.flip = md === 'f'; if (md === 'f') x -= p.lw + 6; if (md === 'a' || md === 'b') x -= (p.cw - p.bw) / 2; if (md === 'a') y -= p.lh + 4; // left / above / below: shift the element so the badge stays on its spot
+        if (md === 'b' || md === 'a') l.style.transform = `translateX(${Math.max(6 - (x + p.m), Math.min(0, VW - 6 - (x + p.m + p.cw)))}px)`;
       }
-      const e = Math.min(x + (p.flip ? p.lw + 6 : 0) + 4, VW - (x + (p.flip ? p.lw + 6 : 0)) - 4, y - 92, VH - (sheet === 'peek' ? 118 : Math.max(VH * 0.3, 250) + 24) - y), o = Math.max(0, Math.min(1, e / 34)); p.el.style.opacity = o; p.el.style.pointerEvents = o < 0.35 ? 'none' : '';
-    } else if (p.el.style.opacity) { p.el.style.opacity = ''; p.el.style.pointerEvents = ''; p.el.classList.remove('flip', 'below'); p.flip = false; p.mode = 'n'; p.mw = null; }
+      const mb = mapBox(), e = Math.min(ax + 4, VW - ax + 4, ay - mb.top + 14, mb.bot + 10 - ay), o = Math.max(0, Math.min(1, e / 34)); p.el.style.opacity = o; p.el.style.pointerEvents = o < 0.35 ? 'none' : '';
+    } else if (p.el.style.opacity) { p.el.style.opacity = ''; p.el.style.pointerEvents = ''; p.el.classList.remove('flip', 'below', 'above'); p.flip = false; p.mode = null; p.mw = null; }
     p.el.style.transform = `translate(${x}px, ${y}px)`;
   }
 }
 
 // ---- panel
 const panel = $('#panel'), pBody = $('#pbody');
-// ---- phone bottom sheet: tap or swipe the small strip up to open it, drag the handle (or tap it) down to tuck it away and see the whole map
-function setSheet(v) { sheet = v; panel.classList.toggle('peek', mob() && v === 'peek'); if (mob() && !tour) { if (A.spot) setCamT(spotView(A.spot)); else if (A.area) setCamT(areaView(A.area)); else if (!A.join && !A.tickets) setCamT(fitOverview()); } }
-let dg = null; const PEEK = 112;
-panel.addEventListener('pointerdown', e => { if (!mob() || tour) return; const g = e.target.closest('.grab'); if (!g && sheet !== 'peek') return; if (!g && e.target.closest('a, button')) return;
-  dg = { y: e.clientY, t: performance.now(), moved: 0, base: Math.max(0, panel.offsetHeight - PEEK), id: e.pointerId }; panel.style.transition = 'none'; });
-addEventListener('pointermove', e => { if (!dg || e.pointerId !== dg.id) return; const dy = e.clientY - dg.y; dg.moved = Math.max(dg.moved, Math.abs(dy)); const from = sheet === 'peek' ? dg.base : 0; panel.style.transform = `translateY(${Math.max(0, Math.min(dg.base, from + dy))}px)`; });
-const endDrag = e => { if (!dg) return; const d = dg; dg = null; panel.style.transition = ''; panel.style.transform = ''; const dy = e.clientY - d.y, v = dy / Math.max(1, performance.now() - d.t);
-  let to = sheet; if (d.moved < 8) to = sheet === 'peek' ? 'open' : 'peek'; else if (dy < -40 || v < -0.4) to = 'open'; else if (dy > 40 || v > 0.4) to = 'peek'; setSheet(to); };
-addEventListener('pointerup', endDrag); addEventListener('pointercancel', endDrag);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const btn = (label, fn, cls = '') => { const b = el('button', 'cbtn ' + cls, label); b.onclick = fn; return b; };
 // a venue's own site: opens in a new tab (noopener) so this app keeps running behind it, never navigates away from it
@@ -145,7 +160,7 @@ function controls(list = [], box) {
 }
 let soon = 0; const renderPanelSoon = () => { clearTimeout(soon); soon = setTimeout(renderPanel, 60); };
 function renderPanel() {
-  panel.classList.toggle('peek', mob() && sheet === 'peek'); pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
+  pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
   if (A.join) { const J = COPY.join[A.join];
     pBody.append(el('div', 'eyebrow', J.eyebrow), el('h2', '', J.title), el('p', 'note', J.intro));
     for (const b of J.blocks || []) { pBody.appendChild(el('div', 'label', b.h)); const ul = el('ul', 'offer'); b.bullets.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); }
@@ -177,7 +192,7 @@ function renderPanel() {
     pBody.appendChild(row(btn('← The map', goOverview, 'ghost'))); return; }
   if (!A.area && !A.spot) { const o = COPY.overview;
     const q = o.quote && el('blockquote', 'pull'); if (q) q.append(el('p', '', o.quote.text), el('cite', '', '— ' + o.quote.by));
-    if (q && mob()) pBody.appendChild(q); // on a phone the quote leads: it is the small strip that shows when the sheet is tucked down
+    if (q && mob()) pBody.appendChild(q); // on a phone the quote leads the panel
     pBody.append(el('div', 'eyebrow', o.eyebrow), el('h2', '', o.h2), el('p', 'note', o.text));
     if (q && !mob()) pBody.appendChild(q);
     if (o.badges) { const r = el('div', 'badges'); for (const b of o.badges) { const x = el('span', 'badge'); x.title = b.note ? `${b.label} · ${b.note}` : b.label; x.append(el('span', 'ic', b.icon), el('span', '', b.label)); r.appendChild(x); } pBody.appendChild(r); }
@@ -220,10 +235,13 @@ function stopTour(then) { if (autoSound && SFX.isOn()) showSound(SFX.setOn(false
 let drag = null; const touches = new Map();
 canvas.addEventListener('pointerdown', e => { if (tour) return; touches.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); drag = { moved: 0 }; });
 canvas.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; const prev = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
-  if (touches.size === 2) { const [a, b] = [...touches.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (drag.pinch) { camT.S = clamp(camT.S * d / drag.pinch, 3, 160); cam.S = camT.S; } drag.pinch = d; return; }
+  if (touches.size === 2) { const [a, b] = [...touches.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    if (drag.pinch) { const S0 = cam.S, S1 = clamp(S0 * d / drag.pinch, 3, 160); zoomAt(drag.mx, drag.my, S0, S1); camT.px -= (mx - drag.mx) / S1; camT.py -= (my - drag.my) / S1; cam.px = camT.px; cam.py = camT.py; } drag.pinch = d; drag.mx = mx; drag.my = my; drag.moved += 99; return; }
   const dx = e.clientX - prev[0], dy = e.clientY - prev[1]; drag.moved += Math.abs(dx) + Math.abs(dy); camT.px -= dx / cam.S; camT.py -= dy / cam.S; cam.px = camT.px; cam.py = camT.py; });
-canvas.addEventListener('pointerup', e => { touches.delete(e.pointerId); if (touches.size < 2 && drag) drag.pinch = 0; });
-canvas.addEventListener('wheel', e => { e.preventDefault(); if (tour) return; camT.S = clamp(camT.S * Math.exp(-e.deltaY * 0.0015), 3, 160); }, { passive: false });
+const lift = e => { touches.delete(e.pointerId); if (touches.size < 2 && drag) drag.pinch = 0; }; canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);
+// zoom keeping the map point under (sx, sy) still, so a pinch or wheel zooms into what is under the fingers / cursor
+function zoomAt(sx, sy, S0, S1) { const ix = cam.px + (sx - VW / 2) / S0, iy = cam.py + (sy - VH / 2) / S0; cam.S = camT.S = S1; cam.px = camT.px = ix - (sx - VW / 2) / S1; cam.py = camT.py = iy - (sy - VH / 2) / S1; }
+canvas.addEventListener('wheel', e => { e.preventDefault(); if (tour) return; zoomAt(e.clientX, e.clientY, cam.S, clamp(cam.S * Math.exp(-e.deltaY * 0.0015), 3, 160)); }, { passive: false });
 
 // ---- resize, adaptive sharpness (never while moving or touring)
 function resize() { VW = innerWidth; VH = innerHeight; const r = prCur; world.resize(VW, VH, r); ov2.width = VW * r; ov2.height = VH * r; ov2.style.width = VW + 'px'; ov2.style.height = VH + 'px'; if (!A.area) setCamT(fitOverview()); else if (A.spot) setCamT(spotView(A.spot)); else setCamT(areaView(A.area)); }
@@ -243,7 +261,6 @@ function tick(now) {
   let t;
   if (tour) { if (window.__tourAt != null) t = window.__tourAt; else { const rr = (now - tourT0) / 1000; t = rr < CUT_AT ? rr : rr + CUT_D; } if (t > TOUR_LENGTH) { stopTour(); requestAnimationFrame(tick); return; } { const ci = TOURM.TOUR.captions.findIndex(c => t >= c[0] && t < c[1]); if (ci !== lastCap) { lastCap = ci; if (ci >= 0) SFX.bell(ci); } if (t > TOUR_LENGTH - 2.2 && !endWh) { endWh = true; SFX.whoosh(); } } const c = (VH > VW * 1.1 ? TOURM.camAtPortrait : TOURM.camAt)(t); cam.px = c[0]; cam.py = c[1]; cam.S = c[2] * VW / 1920; }
   else { S.step(dt); t = S.clock;
-    if (mob() && sheet === 'peek' && sweep.amp > 0 && !A.area && !A.spot && !A.tickets && !A.join && !dg && !reduceMotion) { const ph = (now - sweep.t0) / 1000 * 2 * Math.PI / 44 - Math.PI / 2; camT.px = sweep.px + sweep.amp * Math.sin(ph); camT.py = sweep.py + 1.4 * Math.sin(ph * 1.7); } // one side to the other, about 22 s each way
     const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
   world.setCamIso(cam.px, cam.py, cam.S);
   if (SFX.isOn()) { const [gx, gy] = scr(84, 114); SFX.zone(Math.max(0, 1 - Math.hypot(cam.px - gx, cam.py - gy) / 16) * Math.max(0.15, Math.min(1, (cam.S - 8) / 14))); }  // the Green Corner's sounds fade in as the camera nears it
@@ -269,6 +286,7 @@ try { await Promise.race([Promise.all([`italic 500 30px ${U.display}`, `italic 5
   A.area = null; A.spot = null; A.visited.clear(); renderPanel(); void pBody.offsetHeight; placePins(); }
 { S.mode = 'film'; for (let tt = 0; tt < TOUR_LENGTH; tt += 3) { O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); TOURM.overlay(O, tt + 1, ov2.width, ov2.height); } O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); S.mode = 'app'; }
 BOOT.fonts = performance.now();
+if (mob()) { for (const p of pins) p.mw = null; if (!A.area && !A.spot) { setCamT(fitOverview()); Object.assign(cam, camT); } } // phones: measure the venue labels again now the fonts are in, and refit
 if (world.gpuTiming && !q.has('pr')) {
   const frameP = () => new Promise(r => requestAnimationFrame(r)); S.mode = 'film';
   for (let tt = 8; tt < TOUR_LENGTH; tt += 7) { const c = TOURM.camAt(tt); world.setCamIso(c[0], c[1], c[2] * VW / 1920); site.update(tt); crowd.update(tt, () => true); world.gpuTag = null; world.render(); await frameP(); world.gpuTag = 'b'; world.render(); world.gpuTag = null; await frameP(); }
