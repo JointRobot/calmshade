@@ -105,7 +105,7 @@
   @media (max-width: 700px) { body.touring #chips { display: none; } }
   @media (max-width: 900px) {
     /* phones: a bottom sheet. By default only a small strip shows (the quote) so the whole map stays visible; tap or swipe it up for the rest, drag it down to tuck it away */
-    #panel { left: 8px; right: 8px; top: auto; bottom: 0; width: auto; height: 62vh; max-height: none; border-radius: 18px 18px 0 0; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
+    #panel { left: 8px; right: 8px; top: auto; bottom: 0; width: auto; height: 30vh; min-height: 250px; max-height: none; border-radius: 18px 18px 0 0; padding: 0 16px calc(16px + env(safe-area-inset-bottom)); transition: transform .28s cubic-bezier(.2,.8,.2,1); will-change: transform; }
     #panel.peek { transform: translateY(calc(100% - 112px)); overflow: hidden; touch-action: none; }
     #panel.peek .pull cite { display: none; }
     #panel .pull { margin: 0 0 14px; padding: 10px 14px 8px 16px; } #panel .pull p { font-size: 20px; }

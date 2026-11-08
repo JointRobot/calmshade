@@ -61,7 +61,7 @@ const cam = { px: 0, py: 0, S: 8 }, camT = { px: 0, py: 0, S: 8 };
 const scr = (x, y, z = 0) => [(x - y) * C30, (x + y) / 2 - z];
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mob = () => VW < 900; let sheet = 'peek'; // phones: the panel is a bottom sheet, 'peek' (a small strip) or 'open'
-const side = () => (mob() ? (sheet === 'peek' ? { w: VW, h: VH - 200, dx: 0, dy: 0 } : { w: VW, h: VH * 0.5, dx: 0, dy: VH * 0.22 }) : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
+const side = () => (mob() ? (sheet === 'peek' ? { w: VW, h: VH - 200, dx: 0, dy: 0 } : { w: VW, h: VH * 0.7 - 100, dx: 0, dy: VH * 0.15 - 50 }) : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
 const [BX0, BY0, BX1, BY1] = SITE.bounds;
 const sweep = { amp: 0, px: 0, py: 0, t0: 0 }; // phone overview: the camera drifts slowly from one side of the lake to the other
 function fitOverview() { const f = side(); const o = SITE.view && SITE.view.overview;
@@ -110,7 +110,7 @@ function placePins() {
         p.flip = md === 'f'; if (md === 'f') x -= p.lw + 6;
         if (md === 'b') l.style.transform = `translateX(${Math.max(6 - (x + p.m), Math.min(0, VW - 6 - (x + p.m + p.lw)))}px)`;
       }
-      const e = Math.min(x + (p.flip ? p.lw + 6 : 0) + 4, VW - (x + (p.flip ? p.lw + 6 : 0)) - 4, y - 92, VH - 118 - y), o = Math.max(0, Math.min(1, e / 34)); p.el.style.opacity = o; p.el.style.pointerEvents = o < 0.35 ? 'none' : '';
+      const e = Math.min(x + (p.flip ? p.lw + 6 : 0) + 4, VW - (x + (p.flip ? p.lw + 6 : 0)) - 4, y - 92, VH - (sheet === 'peek' ? 118 : Math.max(VH * 0.3, 250) + 24) - y), o = Math.max(0, Math.min(1, e / 34)); p.el.style.opacity = o; p.el.style.pointerEvents = o < 0.35 ? 'none' : '';
     } else if (p.el.style.opacity) { p.el.style.opacity = ''; p.el.style.pointerEvents = ''; p.el.classList.remove('flip', 'below'); p.flip = false; p.mode = 'n'; p.mw = null; }
     p.el.style.transform = `translate(${x}px, ${y}px)`;
   }
