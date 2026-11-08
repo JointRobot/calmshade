@@ -1042,14 +1042,8 @@ body{background:var(--bg);}
   const SUPER={name:'Karthik', emails:['karthik@xtrathin.in'], phones:['9619176007'], ownerId:'o1'};
   const OWNERS=[
     {id:'o1', name:'Karthik', email:'karthik@xtrathin.in', phone:'9619176007', hue:'var(--r6)', invitedBy:null, rev:{good:41,bad:2,avg:4.8}, probation:null},
-    {id:'o2', name:'Mira S.', email:'mira@calmshade.demo', phone:'9000000001', hue:'var(--r8)', invitedBy:'o1', rev:{good:18,bad:1,avg:4.7}, probation:null},
-    {id:'o3', name:'Ravi K.', email:'ravi@calmshade.demo', phone:'9000000002', hue:'var(--r2)', invitedBy:'o1', rev:{good:6,bad:11,avg:2.9}, probation:null},
-    {id:'o4', name:'Anya D.', email:'anya@calmshade.demo', phone:'9000000003', hue:'var(--r4)', invitedBy:'o3', rev:{good:14,bad:0,avg:4.9}, probation:null},
   ];
   let INVITES=[
-    {code:'CS-LAKE-K1', fromProp:'p1', fromOwner:'o1', year:2026, used:'o2', severed:false},
-    {code:'CS-TRIA-K2', fromProp:'p4', fromOwner:'o1', year:2026, used:'o3', severed:false},
-    {code:'CS-MILL-R1', fromProp:'p8', fromOwner:'o3', year:2026, used:'o4', severed:false},
     {code:'CS-DEMO-2026', fromProp:'p1', fromOwner:'o1', year:2026, used:null, severed:false},
   ];
   const normPhone=s=>String(s).replace(/\D/g,'').slice(-10);
@@ -1076,16 +1070,10 @@ body{background:var(--bg);}
       desc:'A single room for a couple at Appa, an artist\'s home — the pool is 20 steps away, the lake about 200. The private bathroom has a tree growing inside it. Cold winters (bring layers), waterfalls in the monsoon, and very good stargazing. Three meals a day included.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Private bathroom'},
     {id:'p6', geo:[18.762,73.558], owner:'o1', name:'Appa Art House', link:'airbnb.co.in/h/appacommunity', loc:'Kamshet · Maharashtra', cat:'group', cap:'Up to 12 guests · 2 bedrooms + living room · 12 beds · 3 bathrooms', ppWith:4000, ppWithout:4000, pet:false, villa:true, revs:13, rate:4.92, sky:['#C2CEBC','#EDF1E7'], land:'#5A7048', live:true,
       desc:'An off-grid forest house for groups of 8 to 12 — two bedrooms plus a living room, twelve beds and three bathrooms. Good for families, friends, musicians and artists. Pool, lake sunsets, guided hikes, and three meals a day included.', amen:'Pool · Lake view · Garden · 3 meals a day included · Guided hikes · Wi-Fi · Workspace · 3 bathrooms'},
-    {id:'p7', geo:[18.518,73.856], owner:'o2', name:'The Quiet Courtyard', link:'', loc:'Old quarter · India', cat:'creative', cap:'Up to 5 guests · 2 rooms', ppWith:1600, ppWithout:1100, pet:true, villa:true, rate:4.91, sky:['#E3C9C9','#F5EDE9'], land:'#8A5A4A', live:false,
-      desc:'A friend-of-the-family heritage home around a plant-filled courtyard — the first stay to join the collective from outside Calmshet.', amen:'Courtyard · Library · Home food · Pet friendly'},
-    {id:'p8', geo:[18.61,73.71], owner:'o3', name:'The Old Millhouse', link:'', loc:'Riverside · India', cat:'creative', cap:'Up to 6 guests · 2 rooms', ppWith:1500, ppWithout:1000, pet:true, villa:true, rate:3.1, sky:['#CFC2B0','#EFEAE0'], land:'#6B5A3E', live:false,
-      desc:'A converted millhouse by the weir — currently paused while its host works back to quality.', amen:'River deck · Home food · Fireplace'},
-    {id:'p9', geo:[18.59,73.75], owner:'o4', name:"Anya's Terrace", link:'', loc:'Riverside · India', cat:'room', cap:'Up to 4 guests · rooftop room', ppWith:1300, ppWithout:900, pet:false, villa:false, rate:4.9, sky:['#C9D8E4','#EDF2F5'], land:'#4E6B7A', live:false,
-      desc:'A rooftop room above the river bend — invited into the collective by the Millhouse, and thriving.', amen:'Rooftop · River view · Breakfast'},
   ];
   const GLOBAL_FAQ=[['Availability','What dates are free between X and Y?'],['Pricing','Cost per head with / without meals?'],['Rooms','Do you have a room for 4 people?'],['Food','What is on the menu? Do you serve non-veg?'],['Activities','What can we do nearby?'],['Policies','Is it pet friendly? Check-in / check-out time?'],['Full property','Can we book the entire place?'],['Transport','Can you arrange a cab?'],['Weather','How is the weather this time of year?'],['Amenities','Is there AC / WiFi / hot water?']];
   const CS_BUILTIN_IDS=new Set(PROPS.map(p=>p.id)); // the original built-in listings — these can save their edits to the server (cs_builtin_save)
-  let CAL={p1:{},p2:{},p3:{},p4:{},p5:{},p6:{},p7:{},p8:{},p9:{}}; // filled from the booking server (csLoad)
+  let CAL={p1:{},p2:{},p3:{},p4:{},p5:{},p6:{}}; // filled from the booking server (csLoad)
   let BOOKINGS=[]; // filled from the booking server for the admin (csAdminLoad)
   let seq=1052, pseq=10, momSeq=2;
   let MOMENTS=[];
@@ -1334,7 +1322,7 @@ ${kb()}`;}
     try{const j=await lgCall('login_me',{},s.token);await lgApply(j,s.token,false);render();}catch(e){if(e.status===401)lgSet(null);}}
 
   /* ═════════ CURATED TRIP — date & availability aware ═════════ */
-  const MAPXY={p1:[140,118],p2:[186,152],p3:[214,104],p4:[112,176],p5:[318,214],p6:[362,182],p7:[432,118],p8:[292,132],p9:[336,96]};
+  const MAPXY={p1:[140,118],p2:[186,152],p3:[214,104],p4:[112,176],p5:[318,214],p6:[362,182]};
   function xyOf(id){if(MAPXY[id])return MAPXY[id];let h=0;for(const c of id)h=h*31+c.charCodeAt(0);return MAPXY[id]=[70+(h%400),70+((h*7)%200)];}
   function tripStops(){if(cur.plan){const s=[];cur.plan.forEach(d=>{if(!s.length||s[s.length-1]!==d.prop)s.push(d.prop);});return s;}return cur.route;}
   const todayIn=()=>new Date().getFullYear()===BM.y&&new Date().getMonth()===BM.m?new Date().getDate():1;
@@ -3203,7 +3191,7 @@ ${kb()}`;}
   }
   async function hsLoadProps(){try{const j=await fxCall('cs_props');const hosts={};(j.hosts||[]).forEach(h=>hosts[h.id]=h);
       (j.props||[]).forEach(x=>hsAddProp(x,hosts[x.owner]));csLoad();if(fxQuiet())render();}catch(e){}}
-  /* built-in listings (p1..p9): server-saved edits, laid over the defaults baked into PROPS above */
+  /* built-in listings (p1..p6): server-saved edits, laid over the defaults baked into PROPS above */
   async function csBuiltinLoad(){try{const j=await fxCall('cs_builtin_state');const ov=j.props||{};
       Object.keys(ov).forEach(id=>{const p=P(id);if(p)Object.assign(p,ov[id]);});
       if(fxQuiet())render();}catch(e){}}

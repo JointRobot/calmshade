@@ -535,9 +535,6 @@ const CS_PROPS = [
   'p1'=>['Calmshet Lakeview Cottage',8,4000,4000,true],   'p2'=>['Calmshet Lakeview Room 2',3,4000,4000,true],
   'p3'=>['Calmshet Lakeview Room 1',5,4000,4000,true],    'p4'=>['Calmshet Lakeview Triangle',6,4000,4000,true],
   'p5'=>['Appa Art Cottage',2,4000,4000,true],            'p6'=>['Appa Art House',12,4000,4000,true],
-  /* p7–p9 are the Grove's demo hosts (Mira, Ravi, Anya) — not real stays, never bookable by guests */
-  'p7'=>['The Quiet Courtyard',5,1600,1100,false],        'p8'=>['The Old Millhouse',6,1500,1000,false],
-  'p9'=>["Anya's Terrace",4,1300,900,false],
 ];
 const CS_COMM = 0.03;
 /* Built-in listing edits (dashboard → Save), keyed by CS_PROPS id. Only present fields override the default. */
