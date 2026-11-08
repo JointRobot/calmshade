@@ -59,7 +59,8 @@ function shadowCheck() { let sg = 0; for (let i = 0; i < CASTERS.length; i++) { 
 // ---- camera (screen-space target px, py and zoom S in CSS pixels per metre)
 const cam = { px: 0, py: 0, S: 8 }, camT = { px: 0, py: 0, S: 8 };
 const scr = (x, y, z = 0) => [(x - y) * C30, (x + y) / 2 - z];
-const side = () => (VW < 900 ? { w: VW, h: VH * 0.5, dx: 0, dy: VH * 0.22 } : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
+const mob = () => VW < 900; let sheet = 'peek'; // phones: the panel is a bottom sheet, 'peek' (a small strip) or 'open'
+const side = () => (mob() ? (sheet === 'peek' ? { w: VW, h: VH - 200, dx: 0, dy: 0 } : { w: VW, h: VH * 0.5, dx: 0, dy: VH * 0.22 }) : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
 const [BX0, BY0, BX1, BY1] = SITE.bounds;
 function fitOverview() { const f = side(); const o = SITE.view && SITE.view.overview;
   // optional: frame just the listed areas (their rect corners, projected to the screen) instead of the whole board
@@ -76,11 +77,11 @@ const moonEl = document.getElementById('moon');
 const A = { visited: new Set(), revealed: new Set(), area: null, spot: null, tickets: false, join: null };
 const areaList = SITE.areas.filter(a => COPY.areas[a.id]);
 const shownArea = a => !a.hidden || A.revealed.has(a.id);
-function goOverview() { A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(fitOverview()); renderPanel(); }
-function goArea(id) { A.area = id; A.spot = null; A.tickets = false; A.join = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
-function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; A.join = null; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
-function goTickets() { A.tickets = true; A.join = null; renderPanel(); panel.scrollTop = 0; }
-function goJoin(key) { A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
+function goOverview() { sheet = 'peek'; A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(fitOverview()); renderPanel(); }
+function goArea(id) { sheet = 'open'; A.area = id; A.spot = null; A.tickets = false; A.join = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
+function goSpot(key) { sheet = 'open'; const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; A.join = null; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
+function goTickets() { sheet = 'open'; A.tickets = true; A.join = null; renderPanel(); panel.scrollTop = 0; }
+function goJoin(key) { sheet = 'open'; A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
 function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.set, a.arg, a.value); if (a.pulse) S.pulse(a.pulse, a.arg, a.dur || 8, a.peak || 1); if (a.reveal) { A.revealed.add(a.reveal); buildChips(); } if (a.say && out) out.textContent = a.say;
   if (a.go) { const [k, v] = a.go.split(':'); if (k === 'area') goArea(v); else if (k === 'spot') goSpot(v); else if (k === 'tickets') goTickets(); else goOverview(); } } }
 
@@ -99,6 +100,15 @@ function placePins() {
 
 // ---- panel
 const panel = $('#panel'), pBody = $('#pbody');
+// ---- phone bottom sheet: tap or swipe the small strip up to open it, drag the handle (or tap it) down to tuck it away and see the whole map
+function setSheet(v) { sheet = v; panel.classList.toggle('peek', mob() && v === 'peek'); if (mob() && !tour) { if (A.spot) setCamT(spotView(A.spot)); else if (A.area) setCamT(areaView(A.area)); else if (!A.join && !A.tickets) setCamT(fitOverview()); } }
+let dg = null; const PEEK = 112;
+panel.addEventListener('pointerdown', e => { if (!mob() || tour) return; const g = e.target.closest('.grab'); if (!g && sheet !== 'peek') return; if (!g && e.target.closest('a, button')) return;
+  dg = { y: e.clientY, t: performance.now(), moved: 0, base: Math.max(0, panel.offsetHeight - PEEK), id: e.pointerId }; panel.style.transition = 'none'; });
+addEventListener('pointermove', e => { if (!dg || e.pointerId !== dg.id) return; const dy = e.clientY - dg.y; dg.moved = Math.max(dg.moved, Math.abs(dy)); const from = sheet === 'peek' ? dg.base : 0; panel.style.transform = `translateY(${Math.max(0, Math.min(dg.base, from + dy))}px)`; });
+const endDrag = e => { if (!dg) return; const d = dg; dg = null; panel.style.transition = ''; panel.style.transform = ''; const dy = e.clientY - d.y, v = dy / Math.max(1, performance.now() - d.t);
+  let to = sheet; if (d.moved < 8) to = sheet === 'peek' ? 'open' : 'peek'; else if (dy < -40 || v < -0.4) to = 'open'; else if (dy > 40 || v > 0.4) to = 'peek'; setSheet(to); };
+addEventListener('pointerup', endDrag); addEventListener('pointercancel', endDrag);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const btn = (label, fn, cls = '') => { const b = el('button', 'cbtn ' + cls, label); b.onclick = fn; return b; };
 // a venue's own site: opens in a new tab (noopener) so this app keeps running behind it, never navigates away from it
@@ -117,7 +127,7 @@ function controls(list = [], box) {
 }
 let soon = 0; const renderPanelSoon = () => { clearTimeout(soon); soon = setTimeout(renderPanel, 60); };
 function renderPanel() {
-  pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
+  panel.classList.toggle('peek', mob() && sheet === 'peek'); pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
   if (A.join) { const J = COPY.join[A.join];
     pBody.append(el('div', 'eyebrow', J.eyebrow), el('h2', '', J.title), el('p', 'note', J.intro));
     for (const b of J.blocks || []) { pBody.appendChild(el('div', 'label', b.h)); const ul = el('ul', 'offer'); b.bullets.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); }
@@ -148,8 +158,10 @@ function renderPanel() {
     if (T.contact) pBody.appendChild(el('p', 'small', T.contact));
     pBody.appendChild(row(btn('← The map', goOverview, 'ghost'))); return; }
   if (!A.area && !A.spot) { const o = COPY.overview;
+    const q = o.quote && el('blockquote', 'pull'); if (q) q.append(el('p', '', o.quote.text), el('cite', '', '— ' + o.quote.by));
+    if (q && mob()) pBody.appendChild(q); // on a phone the quote leads: it is the small strip that shows when the sheet is tucked down
     pBody.append(el('div', 'eyebrow', o.eyebrow), el('h2', '', o.h2), el('p', 'note', o.text));
-    if (o.quote) { const q = el('blockquote', 'pull'); q.append(el('p', '', o.quote.text), el('cite', '', '— ' + o.quote.by)); pBody.appendChild(q); }
+    if (q && !mob()) pBody.appendChild(q);
     if (o.badges) { const r = el('div', 'badges'); for (const b of o.badges) { const x = el('span', 'badge'); x.title = b.note ? `${b.label} · ${b.note}` : b.label; x.append(el('span', 'ic', b.icon), el('span', '', b.label)); r.appendChild(x); } pBody.appendChild(r); }
     const list = el('div', 'alist'); for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { if (!shownArea(a)) continue; const c = COPY.areas[a.id]; const b = el('button', 'abtn' + (A.visited.has(a.id) ? ' done' : '')); b.innerHTML = `<span class="n">${c.n || '•'}</span><span><b>${c.name}</b><br><i>${c.tagline}</i></span>`; b.onclick = () => goArea(a.id); list.appendChild(b); }
     pBody.appendChild(list); controls(o.controls, pBody);
