@@ -108,7 +108,7 @@ Don't run it with a real `fest-config.php` in the working tree (the script refus
 `--use-angle=swiftshader` on Linux).
 
 ## 8. Open items / ideas
-1. Change the desk key (Karthik). Optionally add `ANTHROPIC_KEY` to turn on the concierge.
+1. ~~Change the desk key; add `ANTHROPIC_KEY`~~ Both done by Karthik (desk key changed; concierge key added 8 Nov 2026). Nothing left here.
 2. MySQL switch + SQLite→MySQL migration script (only if needed; SQLite is fine at festival scale).
 3. ~~Built-in Calm Shade listing edits in the dashboard are still in-memory only.~~ Done 1 Oct 2026: edits to an
    existing built-in listing (name/price/location/category/pet/villa/amenities/description/bookable) now persist to
