@@ -59,14 +59,19 @@ function shadowCheck() { let sg = 0; for (let i = 0; i < CASTERS.length; i++) { 
 // ---- camera (screen-space target px, py and zoom S in CSS pixels per metre)
 const cam = { px: 0, py: 0, S: 8 }, camT = { px: 0, py: 0, S: 8 };
 const scr = (x, y, z = 0) => [(x - y) * C30, (x + y) / 2 - z];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mob = () => VW < 900; let sheet = 'peek'; // phones: the panel is a bottom sheet, 'peek' (a small strip) or 'open'
 const side = () => (mob() ? (sheet === 'peek' ? { w: VW, h: VH - 200, dx: 0, dy: 0 } : { w: VW, h: VH * 0.5, dx: 0, dy: VH * 0.22 }) : { w: VW - 420, h: VH - 70, dx: 200, dy: 0 });
 const [BX0, BY0, BX1, BY1] = SITE.bounds;
+const sweep = { amp: 0, px: 0, py: 0, t0: 0 }; // phone overview: the camera drifts slowly from one side of the lake to the other
 function fitOverview() { const f = side(); const o = SITE.view && SITE.view.overview;
   // optional: frame just the listed areas (their rect corners, projected to the screen) instead of the whole board
   if (o && o.fit) { const pts = []; for (const a of SITE.areas) if (o.fit.includes(a.id)) { const [x0, y0, x1, y1] = a.rect; for (const [x, y] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) pts.push(scr(x, y, 0)); }
-    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys) + 8; const S2 = Math.min(f.w / w, f.h / h) * 0.97;
-    return { px: (Math.max(...xs) + Math.min(...xs)) / 2 + f.dx / S2, py: (Math.max(...ys) + Math.min(...ys)) / 2 - 3 + f.dy / S2, S: S2 }; } const [px, py] = scr((BX0 + BX1) / 2, (BY0 + BY1) / 2, 2); const dw = (BX1 - BX0 + BY1 - BY0) * C30, dh = (BX1 - BX0 + BY1 - BY0) / 2 + 14; const S2 = Math.min(f.w / dw, f.h / dh) * 0.98; return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys) + 8; const S1 = Math.min(f.w / w, f.h / h) * 0.97; let S2 = S1; const pk = mob() && sheet === 'peek';
+    if (pk) S2 = Math.min(S1 * 2.1, (f.h / h) * 1.02); // phone: scaled up to fill the screen, the sweep below shows the rest
+    const bx = (Math.max(...xs) + Math.min(...xs)) / 2 + f.dx / S2, by = (Math.max(...ys) + Math.min(...ys)) / 2 - 3 + f.dy / S2;
+    sweep.amp = pk ? Math.max(0, (w - f.w / S2) / 2 * 0.94) : 0; sweep.px = bx; sweep.py = by; sweep.t0 = performance.now();
+    return { px: bx, py: by, S: S2 }; } const [px, py] = scr((BX0 + BX1) / 2, (BY0 + BY1) / 2, 2); const dw = (BX1 - BX0 + BY1 - BY0) * C30, dh = (BX1 - BX0 + BY1 - BY0) / 2 + 14; const S2 = Math.min(f.w / dw, f.h / dh) * 0.98; return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function areaView(id) { const a = SITE.areas.find(x => x.id === id); const f = side(); const [x0, y0, x1, y1] = a.rect; const [px, py] = scr((x0 + x1) / 2, (y0 + y1) / 2, 2); const size = Math.max(x1 - x0, y1 - y0); const S2 = Math.min(f.w / (size * 1.75), f.h / (size * 1.05)); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function spotView(key) { const sp = COPY.spots[key]; const f = side(); const c = sp.cam || sp.pos; const [px, py] = scr(c[0], c[1], c[2] || 0); const S2 = Math.min(f.w / 30, f.h / 19) * (sp.zoom || 1); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 const setCamT = v => Object.assign(camT, v);
@@ -94,7 +99,20 @@ function placePins() {
     const a = p.area && SITE.areas.find(x => x.id === p.area);
     const show = tour ? false : p.areaPin ? (!A.area && !A.spot && shownArea(a)) : p.area === null ? (!A.area && A.spot !== p.key) : (A.area === p.area && A.spot !== p.key);
     p.el.classList.toggle('hidden', !show); if (!show) continue;
-    const [x, y] = world.screen(...p.pos); p.el.style.transform = `translate(${x}px, ${y}px)`;
+    let [x, y] = world.screen(...p.pos);
+    if (mob()) { // phones: a label never leaves the screen: flip it to the other side of its badge near the right edge, and fade pins as they drift off any edge
+      const l = p.lab || (p.lab = p.el.querySelector('.l'));
+      if (l && getComputedStyle(l).display !== 'none') {
+        if (p.mw !== VW) { p.el.classList.remove('flip', 'below'); p.mode = 'n'; l.style.transform = ''; p.mw = VW; p.m = parseFloat(getComputedStyle(p.el).marginLeft) || 0; p.oL = l.offsetLeft; p.lw = l.offsetWidth; }
+        const nr = x + p.m + p.oL + p.lw, fl = x + p.m - p.lw - 6; let md = p.mode || 'n'; // n: label beside the badge; f: flipped to its left; b: tucked under the badge
+        if (md === 'n') { if (nr > VW - 6) md = fl >= 6 ? 'f' : 'b'; } else if (nr < VW - 50) md = 'n'; else if (md === 'f' && fl < 6) md = 'b'; else if (md === 'b' && fl >= 6) md = 'f';
+        if (md !== p.mode) { p.mode = md; p.el.classList.toggle('flip', md === 'f'); p.el.classList.toggle('below', md === 'b'); if (md !== 'b') l.style.transform = ''; }
+        p.flip = md === 'f'; if (md === 'f') x -= p.lw + 6;
+        if (md === 'b') l.style.transform = `translateX(${Math.max(6 - (x + p.m), Math.min(0, VW - 6 - (x + p.m + p.lw)))}px)`;
+      }
+      const e = Math.min(x + (p.flip ? p.lw + 6 : 0) + 4, VW - (x + (p.flip ? p.lw + 6 : 0)) - 4, y - 92, VH - 118 - y), o = Math.max(0, Math.min(1, e / 34)); p.el.style.opacity = o; p.el.style.pointerEvents = o < 0.35 ? 'none' : '';
+    } else if (p.el.style.opacity) { p.el.style.opacity = ''; p.el.style.pointerEvents = ''; p.el.classList.remove('flip', 'below'); p.flip = false; p.mode = 'n'; p.mw = null; }
+    p.el.style.transform = `translate(${x}px, ${y}px)`;
   }
 }
 
@@ -224,7 +242,9 @@ function tick(now) {
   const rawDt = (now - last) / 1000, dt = Math.min(0.1, rawDt); last = now; frames++; adapt(rawDt, now);
   let t;
   if (tour) { if (window.__tourAt != null) t = window.__tourAt; else { const rr = (now - tourT0) / 1000; t = rr < CUT_AT ? rr : rr + CUT_D; } if (t > TOUR_LENGTH) { stopTour(); requestAnimationFrame(tick); return; } { const ci = TOURM.TOUR.captions.findIndex(c => t >= c[0] && t < c[1]); if (ci !== lastCap) { lastCap = ci; if (ci >= 0) SFX.bell(ci); } if (t > TOUR_LENGTH - 2.2 && !endWh) { endWh = true; SFX.whoosh(); } } const c = (VH > VW * 1.1 ? TOURM.camAtPortrait : TOURM.camAt)(t); cam.px = c[0]; cam.py = c[1]; cam.S = c[2] * VW / 1920; }
-  else { S.step(dt); t = S.clock; const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
+  else { S.step(dt); t = S.clock;
+    if (mob() && sheet === 'peek' && sweep.amp > 0 && !A.area && !A.spot && !A.tickets && !A.join && !dg && !reduceMotion) { const ph = (now - sweep.t0) / 1000 * 2 * Math.PI / 44 - Math.PI / 2; camT.px = sweep.px + sweep.amp * Math.sin(ph); camT.py = sweep.py + 1.4 * Math.sin(ph * 1.7); } // one side to the other, about 22 s each way
+    const k = 1 - Math.exp(-dt * 3.2); cam.px += (camT.px - cam.px) * k; cam.py += (camT.py - cam.py) * k; cam.S = Math.exp(Math.log(cam.S) + (Math.log(camT.S) - Math.log(cam.S)) * k); }
   world.setCamIso(cam.px, cam.py, cam.S);
   if (SFX.isOn()) { const [gx, gy] = scr(84, 114); SFX.zone(Math.max(0, 1 - Math.hypot(cam.px - gx, cam.py - gy) / 16) * Math.max(0.15, Math.min(1, (cam.S - 8) / 14))); }  // the Green Corner's sounds fade in as the camera nears it
   const t0 = performance.now(); site.update(t); moonEl.style.opacity = tour ? Math.max(0, Math.min(1, (t - 19) / 2, (31.5 - t) / 2)) * Math.min(1, Math.max(0, (site.night - 0.25) / 0.5)) : 0; /* moon only during the Purrom and Theatre stretch of the tour */ const t1 = performance.now(); crowd.update(t, inView); placeBlobs(); shadowCheck(); const t2 = performance.now(); world.render(); const t3 = performance.now();
