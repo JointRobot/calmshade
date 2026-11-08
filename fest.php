@@ -86,7 +86,7 @@ const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partne
      Prices per person; capacities per slot (kayak count per 20-minute slot is a placeholder until confirmed). */
   'advDeposit'=>50,'adv_kayak'=>350,'advCap_kayak'=>6,'adv_paraglide'=>3500,'advCap_paraglide'=>200,'adv_jeep'=>1000,'advCap_jeep'=>5,
   /* Venue real rates (what the venue itself charges, per room per night incl. its taxes) — guests pay this
-     PLUS a festival ticket (dayPass) per guest per night; the venue is paid exactly this. Researched 14 Oct 2026:
+     PLUS one festival couple pass (dayPass) per room-night, +1 per guest beyond two; the venue is paid exactly this. Researched 14 Oct 2026:
      Shambhala = published tariff (₹6,200 wk / ₹7,200 wkend for 2, extra adult ₹1,900 / ₹2,400) + 5% GST.
      Le Farm = room rate from its 2019 villa rate (₹40k wk / ₹59k wkend, 12 adults) — CONFIRM (lefarm.in says 'call to enquire');
        extra adult from lefarm.in tariff today: ₹2,000 + 18% GST = 2,360; meals extra there.
@@ -301,7 +301,7 @@ function unit_night($u, $id, $d, $g, $occ, $S, $U) {
   $we = is_weekend_night($d); $rate = $we ? $u['rateWe'] : $u['rate']; $x = $we ? $u['extraWe'] : $u['extra'];
   $owner = $rate + max(0, $g - $u['base']) * $x;
   $surge = $u['kind'] === 'partner' ? 0 : r100($rate * ($S['surgeMax'] / 100) * place_fill($u, $d, $occ, $U));
-  $tickets = $u['kind'] === 'tent' ? 0 : ($u['kind'] === 'partner' ? $g * $S['partnerMarkup'] : max(1, $g - 1) * $S['dayPass']); /* a room-night carries ONE couple pass (2 guests) for the day-pass price; each guest beyond 2 adds one more pass (Karthik, 8 Nov 2026); solo = one pass */
+  $tickets = $u['kind'] === 'tent' ? 0 : max(1, $g - 1) * ($u['kind'] === 'partner' ? $S['partnerMarkup'] : $S['dayPass']); /* a room-night carries ONE couple pass (2 guests) for the day-pass price; each guest beyond 2 adds one more pass (Karthik, 8 Nov 2026); solo = one pass */
   $fee = $u['own'] ? 0 : (int)round($owner * FEE_PCT / 100);
   return ['price'=>$owner + $surge + $tickets + $fee,'owner'=>$owner,'surge'=>$surge,'tickets'=>$tickets,'fee'=>$fee];
 }

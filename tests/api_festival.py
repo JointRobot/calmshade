@@ -100,7 +100,7 @@ c,j=call('settings',{'settings':{'tents':25,'surgeMax':'15'}},True); check('sett
 c,j=call('list',{'property':{'name':'Pawna Camp','type':'Campsite','location':'Pawna','rooms':2,'maxGuests':3,'rate':4000},'contact':{'name':'Raj','phone':'9123456780'}}); lid=j.get('id'); check('listing',c==200,(c,j))
 c,j=call('book',{'stays':[st('L-'+str(lid),'2027-02-20',1)],'passes':[],'guest':g('9600000001')}); check('unapproved not bookable',c==409,(c,j))
 call('approve',{'id':lid,'status':'approved'},True)
-c,j=call('book',{'stays':[st('L-'+str(lid),'2027-02-20',1,1,3)],'passes':[],'guest':g('9600000001')}); check('partner price 4000+3%+3x2000 ticket',c==200 and j['total']==10120,(c,j))
+c,j=call('book',{'stays':[st('L-'+str(lid),'2027-02-20',1,1,3)],'passes':[],'guest':g('9600000001')}); check('partner price 4000+3%+2 couple passes',c==200 and j['total']==8120,(c,j))
 c,j=call('admin',None,True); check('admin lists',c==200 and len(j['bookings'])>10 and len(j['listings'])==1,c)
 c,j=call('nope'); check('unknown action',c==404,c)
 # adventures: ₹50 deposit per person now, balance at the venue; seats per slot; holds release like rooms
