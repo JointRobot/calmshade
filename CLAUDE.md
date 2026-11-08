@@ -79,6 +79,7 @@ this file is the current state and the rules. Read both before changing anything
   Sleeps/capacity has no editor field yet and still only lives in `CS_PROPS`. Needs the desk key entered in the
   dashboard (same key as the APPA Fest desk) for built-in edits to reach the server; without it, edits stay local-only
   exactly as before (graceful fallback, not an error).
+- **Package + weeknight discounts (8 Nov 2026, Karthik):** 3+ back-to-back nights in ONE place = `pkgPct` 5% off those nights (`pkgNights` 3); every Sun–Thu night = `weekdayPct` 7% off; a 2+1 split gets no package discount. They ADD to VIP/VVIP (6/9%), all come out of Calm Shade's part only (capped so owners keep their full price). Server `quote()` returns `discPkg/discWeek/discTier`; `fxTrip`/`cuQuote` mirror it; all three editable in the desk. Curate Our Stay starts at 3 nights: 3 = 1 place; 6 = 2 places (3+3) or up to 3 (2+2+2); 9 = 3 places (3+3+3) or up to 4 (3+2+2+2) (`cuMax`).
 - **One calendar per place**: an enrolled partner (`L-<id>`) booked whole-place on Calm Shade fills its festival rooms,
   and any festival room booked blocks that Calm Shade night.
 - Partner hosts: apply via festival page → List your stay; desk → **Approve & enroll** creates the host + listing and

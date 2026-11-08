@@ -79,7 +79,7 @@ const DEF = ['coupleNight'=>12000,'singleNight'=>6000,'extraGuest'=>2000,'partne
   'tentNight'=>9000,'tents'=>20,'dayPass'=>2000,'partnerMarkup'=>2000,'surgeMax'=>20,'vipNights'=>6,'vipPct'=>6,
   /* 3-6-9 (Karthik, 20 Oct 2026): festival 12 Feb – 19 Mar 2027 = 36 days in four 9-day chapters, no Encore.
      VIP = 6+ nights inside, 6% off; VVIP = 9+ nights (a full chapter), 9% off the whole booking. */
-  'vvipNights'=>9,'vvipPct'=>9,'holdHours'=>48,'firstNight'=>'2027-02-12','lastNight'=>'2027-03-19',
+  'vvipNights'=>9,'vvipPct'=>9,'pkgNights'=>3,'pkgPct'=>5,'weekdayPct'=>7,'holdHours'=>48,'firstNight'=>'2027-02-12','lastNight'=>'2027-03-19',
   'passLast'=>'2027-03-19','upi'=>'xtrathindesign@okicici','payee'=>'Karthikeyan Ramachandran',
   'contact'=>'karthik@xtrathin.in',
   /* Adventure add-ons (Karthik, 20 Oct 2026): book a slot with a small deposit per person now, pay the balance at the venue.
@@ -328,7 +328,7 @@ function quote($stays, $passes, $occ, $advs = [], $extras = [], $prior = []) {
   if (!is_array($stays) || !is_array($passes) || count($stays) + count($passes) + count($advs) + count($extras) === 0) return [null, ['Your trip is empty.']];
   if (count($stays) > 20 || count($passes) > 40 || count($advs) > 20 || count($extras) > 20) return [null, ['That trip has too many items.']];
   if (!$stays && !$passes && !$advs) return [null, ['Add a stay, a day pass or an adventure to go with your extras.']];
-  $sum = ['owner'=>0,'surge'=>0,'tickets'=>0,'fee'=>0];
+  $sum = ['owner'=>0,'surge'=>0,'tickets'=>0,'fee'=>0]; $dPkg = 0; $dWk = 0;
   foreach ($stays as $s) {
     $id = (string)($s['unit'] ?? ''); $u = $U[$id] ?? null;
     if (!$u) { $err[] = 'One of the stays in your trip is no longer available. Remove it and pick again.'; continue; }
@@ -338,7 +338,10 @@ function quote($stays, $passes, $occ, $advs = [], $extras = [], $prior = []) {
     $nights = []; for ($i = 0; $i < $n; $i++) $nights[] = addDays($from, $i);
     if ($nights[0] < $S['firstNight'] || end($nights) > $S['lastNight']) { $err[] = $u['name'].': those nights are outside the festival.'; continue; }
     $per = []; $part = ['owner'=>0,'surge'=>0,'tickets'=>0,'fee'=>0];
-    foreach ($nights as $d) { $x = unit_night($u,$id,$d,$g,$occ,$S,$U); $per[] = $x['price']; foreach ($part as $k => $_) $part[$k] += $x[$k] * $rooms; $want[$id][$d] = ($want[$id][$d] ?? 0) + $rooms; }
+    /* 3-night package (one place, back to back) and weeknight (Sun-Thu night) discounts, Karthik 8 Nov 2026; they add to the VIP/VVIP one */
+    $pkg = count($nights) >= (int)$S['pkgNights'] ? (float)$S['pkgPct'] : 0;
+    foreach ($nights as $d) { $x = unit_night($u,$id,$d,$g,$occ,$S,$U); $per[] = $x['price'];
+      $dPkg += $x['price'] * $rooms * $pkg / 100; if ((int)gmdate('w', strtotime($d)) <= 4) $dWk += $x['price'] * $rooms * (float)$S['weekdayPct'] / 100; foreach ($part as $k => $_) $part[$k] += $x[$k] * $rooms; $want[$id][$d] = ($want[$id][$d] ?? 0) + $rooms; }
     if ($u['kind'] !== 'partner') foreach ($nights as $d) $prem[$d] = 1;
     foreach ($part as $k => $v) $sum[$k] += $v;
     $ownerBy[$u['place']] = ($ownerBy[$u['place']] ?? 0) + ($u['own'] ? 0 : $part['owner']);
@@ -378,9 +381,10 @@ function quote($stays, $passes, $occ, $advs = [], $extras = [], $prior = []) {
   $payout = array_sum($ownerBy);
   $pct = $tier === 'vvip' ? $S['vvipPct'] : ($tier === 'vip' ? $S['vipPct'] : 0);
   /* the VIP discount comes out of Calm Shade's part; owners always get their full price */
-  $disc = min((int)round(($stayT + $pt) * $pct / 100), max(0, $stayT + $pt - $payout));
+  $dTier = (int)round(($stayT + $pt) * $pct / 100); $dPkg = (int)round($dPkg); $dWk = (int)round($dWk);
+  $disc = min($dTier + $dPkg + $dWk, max(0, $stayT + $pt - $payout));
   $total = max(0,$stayT+$pt-$disc)+$at+$xt;
-  return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'advs'=>$at,'extras'=>$xt,'balance'=>array_sum(array_map(fn($l)=>$l['balance']??0, $lines)),'discount'=>$disc,'total'=>$total,'payout'=>$payout,
+  return [['items'=>$lines,'stays'=>$stayT,'passes'=>$pt,'advs'=>$at,'extras'=>$xt,'balance'=>array_sum(array_map(fn($l)=>$l['balance']??0, $lines)),'discount'=>$disc,'discTier'=>$dTier,'discPkg'=>$dPkg,'discWeek'=>$dWk,'total'=>$total,'payout'=>$payout,
     'owner'=>$sum['owner'],'fee'=>$sum['fee'],'tickets'=>$sum['tickets'],'surge'=>$sum['surge'],'tier'=>$tier,'premiumNights'=>$pn,'priorNights'=>$pnPrior,'pay'=>pay_split($ownerBy, $total)], array_values(array_unique($err))];
 }
 

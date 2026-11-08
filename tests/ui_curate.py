@@ -67,7 +67,7 @@ async def main():
         await pg.evaluate("CS.cu('clear')"); await pg.click('.fx-chip:has-text("Theeya")'); await pg.click('text=Curate my stay'); await pg.wait_for_timeout(300)
         t=await pg.inner_text('.fx-main'); check('full venue explained','full' in t.lower() or "can’t split" in t,t[-500:])
         # 6 VVIP preset
-        await pg.evaluate("CS.cu('clear')"); await pg.click('text=A chapter · VVIP'); await pg.click('text=Curate my stay'); await pg.wait_for_timeout(500)
+        await pg.evaluate("CS.cu('clear')"); await pg.click('text=9 nights · 3–4 places · VVIP'); await pg.click('text=Curate my stay'); await pg.wait_for_timeout(500)
         t=await pg.inner_text('.fx-main'); check('vvip chapter','VVIP' in t and '9 nights' in t and '−₹' in t,t[-500:])
         # 7 home entry points
         await pg.goto(B+'?h=1'); await pg.wait_for_timeout(1500)

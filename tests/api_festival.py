@@ -22,6 +22,8 @@ c,j=call('state'); _srv={u['id']:(u['rooms'],u['cap'],u['rate'],u['rateWe'],u['e
 _pg={u['id']:(u['rooms'],u['cap'],u['rate'],u['rateWe'],u['extra']) for u in json.loads(_m.group(1))} if _m else {}
 check('page fallback rooms match fest.php (set before any desk edits)',set(_pg)==set(_srv),(sorted(set(_pg)^set(_srv))))
 c,j=call('state'); check('state',c==200 and j['ok'] and j['deskReady'],j)
+# the older checks below price without the 3-night and weeknight discounts; they are tested at the end
+call('settings',{'settings':{'pkgPct':0,'weekdayPct':0}},True)
 # validation
 for nm,b in [('unknown unit',{'stays':[st('nope','2027-02-16',1)],'passes':[]}),('zero rooms',{'stays':[st('calmshet.cottage','2027-02-16',1,0)],'passes':[]}),
   ('too long',{'stays':[st('calmshet.cottage','2027-02-16',50)],'passes':[]}),('before fest',{'stays':[st('calmshet.cottage','2027-02-10',2)],'passes':[]}),
@@ -189,4 +191,20 @@ c,q2=call('quote',{'stays':[st(VU,'2027-03-14',3,1,1)],'passes':[],'phone':'9877
 c,b=call('book',{'stays':[st(VU,'2027-03-14',3,1,1)],'passes':[],'guest':g('9877700001'),'expectTotal':q['quote']['total']}); check('vip: second booking priced with VIP',c==200 and b['tier']=='vip' and b['total']==q['quote']['total'],(c,b))
 c,q3=call('quote',{'stays':[st(VU,'2027-03-12',3,1,1)],'passes':[],'phone':'9877700001'}); check('vip: same nights are not counted twice',q3['quote']['priorNights']==4 and q3['quote']['premiumNights']==7,q3['quote'])
 c,x=call('cancel',{'ref':a['ref'],'token':a['token']}); c,q4=call('quote',{'stays':[st(VU,'2027-03-17',2,1,1)],'passes':[],'phone':'9877700001'}); check('vip: cancelled booking no longer counts',q4['quote']['priorNights']==3,q4['quote'])
+# 3-night package + weeknight discounts (8 Nov 2026): 5% / 7%, stack with each other and with VIP
+call('settings',{'settings':{'pkgPct':5,'weekdayPct':7}},True); clear_hits()
+def qq(stays): c,j=call('quote',{'stays':stays,'passes':[]}); return j['quote']
+x=qq([st('calmshet.room1','2027-02-15',3)])  # Mon-Wed nights, one place, 3 nights
+check('package: 3 nights in one place = 5% + 7% weeknight',x['discPkg']==round(x['stays']*5/100) and x['discWeek']==round(x['stays']*7/100) and x['discount']==x['discPkg']+x['discWeek'] and x['total']==x['stays']-x['discount'],x)
+x=qq([st('calmshet.room1','2027-02-15',2),st('calmshet.room2','2027-02-17',1)])  # 2 + 1 elsewhere
+check('package: a 2 + 1 split gets no package discount but keeps weeknight',x['discPkg']==0 and x['discWeek']>0,x)
+x=qq([st('calmshet.room1','2027-02-19',2)])  # Fri + Sat nights
+check('weekend nights get no weeknight discount',x['discWeek']==0 and x['discPkg']==0 and x['discount']==0,x)
+x=qq([st('calmshet.room1','2027-02-18',1)])  # Thu night counts as weekday
+check('Thursday night is a weeknight',x['discWeek']==round(x['stays']*7/100),x)
+x=qq([st('calmshet.room1','2027-03-08',3),st('calmshet.room2','2027-03-11',3)])  # 6 nights in two 3-night stops
+check('6 nights as 3 + 3 = package on both, plus VIP',x['tier']=='vip' and x['discPkg']>0 and x['discTier']==round(x['stays']*6/100),x)
+x=qq([st('calmshet.room1','2027-03-08',2),st('calmshet.room2','2027-03-10',2),st('calmshet.cottage','2027-03-12',2)])  # 2+2+2
+check('6 nights as 2 + 2 + 2 = VIP, no package discount',x['tier']=='vip' and x['discPkg']==0,x)
+call('settings',{'settings':{'pkgPct':5,'weekdayPct':7}},True)
 print(f'PASS {ok}  FAIL {len(bad)}'); [print(' -',b) for b in bad]
