@@ -54,15 +54,15 @@ c,j=call('quote',{'stays':[st('shambhala.bedroom','2027-02-11',1)],'passes':[]})
 c,j=call('quote',{'stays':[],'passes':[{'date':'2027-03-19','qty':1}]}); check('day pass on 19 Mar',j['ok'],j)
 c,j=call('quote',{'stays':[st('shambhala.dorm','2027-03-19',1,1,1)],'passes':[]}); check('19 Mar last night bookable',j['ok'],j)
 c,j=call('quote',{'stays':[st('shambhala.dorm','2027-03-19',2,1,1)],'passes':[]}); check('20 Mar outside festival',not j['ok'],j)
-# venue real rate + festival ticket per guest per night; venue paid exactly its real rate
+# venue real rate + ONE couple pass (2000) per room-night, +1 pass per guest beyond two (Karthik 8 Nov 2026); venue paid exactly its real rate
 q=lambda *a:call('quote',{'stays':[st(*a)],'passes':[]})[1]['quote']
 # each place's own price + 3% Calm Shade fee (partner venues) + a festival ticket per guest per night; owner paid exactly its price
-x=q('shambhala.bedroom','2027-02-16',1); check('shambhala weeknight 6510+3%+2x2000',x['total']==6510+195+4000 and x['payout']==6510 and x['fee']==195,x)
-x=q('shambhala.bedroom','2027-02-19',1); check('shambhala friday 7560+3%+2x2000',x['total']==7560+227+4000 and x['payout']==7560,x)
-x=q('shambhala.bedroom','2027-02-16',1,1,3); check('shambhala 3 adults +extra +3 tickets',x['total']==8505+255+3*2000 and x['payout']==8505,x)
+x=q('shambhala.bedroom','2027-02-16',1); check('shambhala weeknight 6510+3%+1 couple pass',x['total']==6510+195+2000 and x['payout']==6510 and x['fee']==195,x)
+x=q('shambhala.bedroom','2027-02-19',1); check('shambhala friday 7560+3%+2x2000',x['total']==7560+227+2000 and x['payout']==7560,x)
+x=q('shambhala.bedroom','2027-02-16',1,1,3); check('shambhala 3 adults +extra +2 passes',x['total']==8505+255+2*2000 and x['payout']==8505,x)
 x=q('purrom.mango','2027-02-16',1,1,1); check('purrom solo dome 4000+3%+1 ticket',x['total']==6120 and x['payout']==4000,x)
-x=q('calmshet.cottage','2027-02-16',1); check('calmshet (own place, no fee) 8000 + 2 tickets',x['total']==12000 and x['payout']==0 and x['fee']==0,x)
-x=q('calmshet.cottage','2027-02-16',1,1,3); check('calmshet 3 adults 8000+4000 + 3 tickets',x['total']==12000+6000,x)
+x=q('calmshet.cottage','2027-02-16',1); check('calmshet (own place, no fee) 8000 + couple pass',x['total']==10000 and x['payout']==0 and x['fee']==0,x)
+x=q('calmshet.cottage','2027-02-16',1,1,3); check('calmshet 3 adults 8000+4000 + 2 passes',x['total']==12000+4000,x)
 x=q('calmshet.room1','2027-02-16',1,1,1); check('calmshet room for one still pays the room for two',x['total']==8000+2000,x)
 c,j=call('quote',{'stays':[st('lefarm.bedroom','2027-02-15',9)],'passes':[]}); check('vvip quote: 9 nights, 9% off',j['quote']['tier']=='vvip' and j['quote']['discount']==round(j['quote']['stays']*9/100),j['quote'])
 # phone cap

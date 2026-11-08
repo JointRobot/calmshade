@@ -1201,7 +1201,7 @@ body{background:var(--bg);}
   function kb(){
     const live=PROPS.filter(p=>p.live),venues=live.filter(p=>p.rooms),covered=new Set();
     venues.forEach(v=>v.rooms.forEach(r=>{if(ROOM_CS[r.id])covered.add(ROOM_CS[r.id]);}));
-    const S=FX.S,fest=`APPA ART FEST 2027: ${fxFmt(S.firstNight)} to ${fxFmt(S.lastNight)} ${S.lastNight.slice(0,4)} (36 days, four 9-day chapters) around Kamshet, at six venues: Calmshet, Le Farm, Shambhala by the Lake, Theeya, The Company Theatre and Purrom. On festival nights the rooms at these places are sold only with festival tickets, on the APPA Art Fest page of this site (not as ordinary Calm Shade stays, and not through this chat). A festival night costs the place's own room price plus a festival ticket of ${inr(S.dayPass)} per guest per night (plus a ${FX.feePct}% Calm Shade fee at places that are not Karthik's), and the price rises up to ${S.surgeMax}% when a place is filling. Staying ${S.vipNights}+ nights inside the festival gives ${S.vipPct}% off the booking (VIP); ${S.vvipNights}+ nights (a full chapter) gives ${S.vvipPct}% off (VVIP). Day passes without a stay are ${inr(S.dayPass)} per person per day. Children under 10 are free. Unpaid room holds are kept for ${S.holdHours} hours.`;
+    const S=FX.S,fest=`APPA ART FEST 2027: ${fxFmt(S.firstNight)} to ${fxFmt(S.lastNight)} ${S.lastNight.slice(0,4)} (36 days, four 9-day chapters) around Kamshet, at six venues: Calmshet, Le Farm, Shambhala by the Lake, Theeya, The Company Theatre and Purrom. On festival nights the rooms at these places are sold only with festival tickets, on the APPA Art Fest page of this site (not as ordinary Calm Shade stays, and not through this chat). A festival night costs the place's own room price plus one couple pass of ${inr(S.dayPass)} per night covering two guests (${inr(S.dayPass)} more for each guest beyond two; a solo guest pays one pass; a day pass without a stay is ${inr(S.dayPass)} per person, so staying is the better deal) (plus a ${FX.feePct}% Calm Shade fee at places that are not Karthik's), and the price rises up to ${S.surgeMax}% when a place is filling. Staying ${S.vipNights}+ nights inside the festival gives ${S.vipPct}% off the booking (VIP); ${S.vvipNights}+ nights (a full chapter) gives ${S.vvipPct}% off (VVIP). Day passes without a stay are ${inr(S.dayPass)} per person per day. Children under 10 enter the festival free (room charges for a child vary by place). Unpaid room holds are kept for ${S.holdHours} hours.`;
     const out=[fest];
     venues.forEach(p=>{
       const rows=p.rooms.map(r=>{const lg=P(ROOM_CS[r.id]);
@@ -1220,7 +1220,7 @@ STRICT RULES:
 - Rooms are priced per room per night for the number of guests shown, plus a fixed price per extra adult. Respect each room's guest limit. For a bigger group, suggest a combination of rooms that fits, and add the prices up. Never say a room takes more people than "bookings allow". If the guest wants more people in one room than that limit, give the limit and say you will check with Karthik whether a bigger group can be arranged.
 - Availability: a night is free only if it is NOT in that room's "Nights already booked or held" list. Say which rooms are free for the guest's dates and which are not. If a night is festival-only (12 Feb to 19 Mar 2027 at the festival venues), say so and point to the APPA Art Fest page of this site. Remind the guest that holds are not confirmed until the hold is made on the site.
 - Pets: use each room's pets line. If the guest has a pet and a room does not allow pets, say so kindly and suggest a room that does. If the knowledge base does not say, say you will check.
-- Children and extra beds: the knowledge base only gives guest limits. Say each child counts toward the room's guest limit unless Karthik confirms otherwise, and offer to check. At the festival, children under 10 are free.
+- Children and extra beds: the knowledge base only gives guest limits. Say each child counts toward the room's guest limit unless Karthik confirms otherwise, and offer to check. Children under 10 enter the festival free, but what a child costs for the room depends on the place: Shambhala by the Lake charges ₹1,050 on weekdays and ₹1,260 on Fri-Sat nights for a child under 10 (meals included); for other places say you will check.
 - Meals: where the knowledge base says three meals are included, say so (breakfast, lunch, evening tea and dinner). Do not offer a without-meals price unless the knowledge base has one.
 - Activities: only mention what the knowledge base lists (for example pool, lake, guided hikes, bonfire on request, kayaking, paragliding, jeep rides and treks through the festival adventures). Never promise a time or price for an activity that is not listed.
 - Check-in 1 PM, check-out 11 AM. Local cabs can be arranged at the guest's cost. There is no mobile network at Calmshet.
@@ -1730,7 +1730,7 @@ ${kb()}`;}
         <div class="fld"><label>WhatsApp number</label><input id="in-ph" type="tel" inputmode="tel" placeholder="98XXXXXXXX" value="${esc(login.ph||'')}" oninput="CS.invF('ph',this.value)"></div>
         ${login.err?`<div class="lg-err">${esc(login.err)}</div>`:''}
         <button class="b-rb" onclick="CS.redeem()">Join the collective</button>
-        <div class="lg-alt">Demo invite code: <b>CS-DEMO-2026</b><br><button onclick="CS.backId()">Already a host? Sign in</button></div>
+        <div class="lg-alt"><button onclick="CS.backId()">Already a host? Sign in</button></div>
       </div></div>`;
     }
     return `<div class="page login"><div class="lg">
@@ -2202,12 +2202,12 @@ ${kb()}`;}
   function fxNight(u,d,g){const S=FX.S,we=fxWE(d),rate=we?u.rateWe:u.rate,x=we?u.extraWe:u.extra;
     const owner=rate+Math.max(0,g-u.base)*x;
     const surge=u.kind==='partner'?0:r100(rate*(+S.surgeMax/100)*fxFill(u,d));
-    const tickets=u.kind==='tent'?0:g*(u.kind==='partner'?+S.partnerMarkup:+S.dayPass);
+    const tickets=u.kind==='tent'?0:(u.kind==='partner'?g*+S.partnerMarkup:Math.max(1,g-1)*+S.dayPass);
     const fee=u.own?0:Math.round(owner*FX.feePct/100);
     return {price:owner+surge+tickets+fee,owner,surge,tickets,fee};}
   const fxPrice=(u,d,g)=>fxNight(u,d,g).price;
   const fxG=(u,g)=>u.cap===1?1:g;
-  const fxFrom=u=>{const r=Math.min(u.rate,u.rateWe);return r+(u.own?0:Math.round(r*FX.feePct/100))+(u.kind==='tent'?0:u.base*(u.kind==='partner'?+FX.S.partnerMarkup:+FX.S.dayPass));};
+  const fxFrom=u=>{const r=Math.min(u.rate,u.rateWe);return r+(u.own?0:Math.round(r*FX.feePct/100))+(u.kind==='tent'?0:(u.kind==='partner'?u.base*+FX.S.partnerMarkup:Math.max(1,u.base-1)*+FX.S.dayPass));};
   const fxRoomFrom=()=>{const r=fxRooms().filter(u=>u.base===2);return r.length?Math.min(...r.map(fxFrom)):0;};
   function fxPriceStay(s){const u=fxU(s.unit);if(!u)return null;const nights=fxRange(s.from,s.n);const parts=nights.map(d=>fxNight(u,d,s.guests));const per=parts.map(x=>x.price);
     const sum=k=>parts.reduce((a,x)=>a+x[k],0)*s.rooms;
@@ -2269,7 +2269,7 @@ ${kb()}`;}
       <header class="fx-mast"><div>
         <span class="fx-eyebrow">APPA Art Fest 2027 · VIP tier on Calm Shade</span>
         <h1>Stays <em>&amp;</em> passes</h1>
-        <p>12 February to 19 March 2027 around the lake at Kamshet: 36 days in four 9-day chapters. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 stay and enter free. <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
+        <p>12 February to 19 March 2027 around the lake at Kamshet: 36 days in four 9-day chapters. Sleep inside the festival in our VIP rooms and tents, or with partner hosts nearby. Every stay includes festival entry; kids under 10 enter free (what a child costs for the room depends on the place). <a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></p>
       </div><nav class="fx-tabs">${tabs.map(([k,l])=>`<button class="fx-tab ${FX.tab===k?'on':''}" onclick="CS.fx('tab','${k}')">${l}</button>`).join('')}<button class="fx-tab" style="border-color:var(--accent);color:var(--accent)" onclick="CS.go('passport')">My passport</button></nav></header>
       ${FX.offline?`<div class="fx-err" style="margin-top:16px">We can't reach the booking desk right now, so the room counts may be out of date and booking is paused. We'll keep trying. <button class="fx-x" onclick="CS.fx('retry')">Try again now</button></div>`:''}
       <div class="fx-layout"><div class="fx-main">${body}</div><aside class="fx-trip ${FX.tripOpen?'open':''}${FX.tab==='host'&&!FX.cart.stays.length&&!FX.cart.passes.length&&!FX.cart.advs.length&&!FX.last&&!FX.ticket?' quiet':''}" aria-label="Your trip">${fxTripHTML()}</aside></div>
@@ -2279,7 +2279,7 @@ ${kb()}`;}
     const enc=fxEncOpen();const nights=fxNights().filter(d=>enc||!fxEnc(d));
     const groups=[];const f=FX.filter;
     if(f==='all'||f==='rooms'){const pls=[];fxRooms().forEach(u=>{let g=pls.find(x=>x.id===u.place);if(!g)pls.push(g={id:u.place,name:u.placeName,blurb:u.blurb,us:[]});g.us.push(u);});
-      pls.forEach((g,i)=>groups.push([g.name,(i===0?'rooms inside the festival · each place\'s own price for two, plus festival tickets for every guest, every night · ':'')+(g.blurb||''),g.us]));}
+      pls.forEach((g,i)=>groups.push([g.name,(i===0?'rooms inside the festival · each place\'s own price for two, plus one ₹2,000 couple pass for the night · ':'')+(g.blurb||''),g.us]));}
     if(f==='all'||f==='tents')groups.push(['VIP tents','inside the festival grounds',[fxTent()]]);
     if(f==='all'||f==='partners')groups.push(['Partner stays','homestays and camps nearby · festival entry included',fxPartners()]);
     let head='<tr><th class="rowh">Night of</th>';
@@ -2308,7 +2308,7 @@ ${kb()}`;}
 
   function fxIncludedHTML(){const S=FX.S;
     const T=[['Day pass',inr(S.dayPass),'per person, per day','Entry to the festival for one day: every venue, every open show.',['Access to all open venues for the day','Exhibitions, art walks and open workshops','No stay included']],
-      ['A room for 2','from '+inr(fxRoomFrom()),'per room, per night','The place\'s own price for two, festival tickets for both, every night. Partner venues add a '+FX.feePct+'% Calm Shade fee.',['Rooms at Calmshet, Le Farm, Shambhala by the Lake, Theeya, The Company Theatre and Purrom','Festival tickets for every guest, every night you stay ('+inr(S.dayPass)+' each)','More than 2 in a room: the place\'s extra-adult price plus a ticket each','Each place sets its own price; Fri and Sat nights may cost more','Cycle or e-bike pickup at check-in','Kids under 10 free']],
+      ['A room for 2','from '+inr(fxRoomFrom()),'per room, per night','The place\'s own price for two, plus one couple pass (festival entry for both) for the same ₹2,000, every night. Partner venues add a '+FX.feePct+'% Calm Shade fee.',['Rooms at Calmshet, Le Farm, Shambhala by the Lake, Theeya, The Company Theatre and Purrom','One couple pass covers both of you, every night you stay ('+inr(S.dayPass)+' a night; a day trip costs '+inr(S.dayPass)+' per person)','More than 2 in a room: the place\'s extra-adult price plus a '+inr(S.dayPass)+' pass for each extra guest','Each place sets its own price; Fri and Sat nights may cost more','Cycle or e-bike pickup at check-in','Kids under 10 free']],
       ['VIP tent, for 2',inr(S.tentNight),'per couple, per night','A tent inside the festival grounds, festival tickets included.',['Festival tickets for 2 people, every night you stay','Cycle or e-bike pickup at check-in']],
       ['VIP · '+S.vipNights+'+ nights',S.vipPct+'% off','any '+S.vipNights+' or more nights inside the festival','Six nights or more at the festival, with full access to every show and experience.',['All shows and experiences for your nights','Priority entry at every venue','Mix venues night by night, or use Curate']],
       ['VVIP · '+S.vvipNights+'+ nights',S.vvipPct+'% off','a full 9-day chapter or more, stay + experience','A whole chapter of the festival or more: full access plus a few things nobody else gets.',['Priority seating on all 12 big nights (every 3rd, 6th and 9th day)','One artist studio visit per chapter','One free adventure slot','All access, every venue, for your nights']],
@@ -2328,7 +2328,7 @@ ${kb()}`;}
     const per=nights.map(d=>fxPrice(u,d,FX.guests));const grp={};per.forEach(p=>grp[p]=(grp[p]||0)+1);
     const sub=per.reduce((x,y)=>x+y,0)*FX.rooms;const word=u.kind==='tent'?'Tents':'Rooms';
     const bd=nights.map(d=>fxNight(u,d,FX.guests)).reduce((a,x)=>{['owner','surge','tickets','fee'].forEach(k=>a[k]+=x[k]*FX.rooms);return a;},{owner:0,surge:0,tickets:0,fee:0});
-    const inc=u.kind==='partner'?`Host rate ${inr(u.rate)} plus a festival ticket ${inr(FX.S.partnerMarkup)} per guest, per night, and a ${FX.feePct}% Calm Shade fee.`:u.kind==='tent'?`Includes festival entry for 2 each night. Extra adults ${inr(FX.S.extraGuest)} each per night. Kids under 10 free.`:`${esc(u.placeName)}'s own price for ${u.base===1?'one':'up to two'}${u.cap>u.base?', '+inr(u.extra)+' per extra adult':''} (Fri and Sat may cost more), plus a festival ticket of ${inr(FX.S.dayPass)} for every guest, every night${u.own?'':', plus a '+FX.feePct+'% Calm Shade fee'}. During the festival this room is only sold together with festival tickets. Kids under 10 free.`;
+    const inc=u.kind==='partner'?`Host rate ${inr(u.rate)} plus a festival ticket ${inr(FX.S.partnerMarkup)} per guest, per night, and a ${FX.feePct}% Calm Shade fee.`:u.kind==='tent'?`Includes festival entry for 2 each night. Extra adults ${inr(FX.S.extraGuest)} each per night. Kids under 10 free.`:`${esc(u.placeName)}'s own price for ${u.base===1?'one':'up to two'}${u.cap>u.base?', '+inr(u.extra)+' per extra adult':''} (Fri and Sat may cost more), plus one couple pass of ${inr(FX.S.dayPass)} per night covering two guests${u.base>1&&u.cap>u.base?' ('+inr(FX.S.dayPass)+' more for each extra guest)':''}${u.own?'':', plus a '+FX.feePct+'% Calm Shade fee'}. During the festival this room is only sold together with festival tickets. Kids under 10 free.`;
     const brk=u.kind==='tent'?'':`<div class="fx-lines" style="font-size:13px"><div><span>Room · paid to ${esc(u.own?'Calm Shade':u.placeName)}</span><b>${inr(bd.owner)}</b></div><div><span>Festival tickets</span><b>${inr(bd.tickets)}</b></div>${bd.surge?`<div><span>High-demand nights</span><b>${inr(bd.surge)}</b></div>`:''}${bd.fee?`<div><span>Calm Shade fee (${FX.feePct}%)</span><b>${inr(bd.fee)}</b></div>`:''}</div>`;
     const spots=FX.tentSpots||FX_SPOTS0;
     const spotSel=u.kind==='tent'?`<div class="fx-field"><label for="fx-spot">Where would you like your tent?</label><select id="fx-spot" onchange="CS.fx('spot',this.value)"><option value="">No preference</option>${Object.keys(spots).map(k=>`<option value="${esc(k)}" ${FX.spot===k?'selected':''}>${esc(spots[k])}</option>`).join('')}</select><span class="fx-note">We confirm your exact spot by email once the festival map is final.</span></div>`:'';
@@ -2358,7 +2358,7 @@ ${kb()}`;}
     for(let i=0;i<pad;i++)c+='<div class="fx-day blank"></div>';
     days.forEach(d=>{const dt=fxD(d);const on=FX.passDays.includes(d);c+=`<button class="fx-day ${on?'on':''}" onclick="CS.fx('passDay','${d}')" aria-pressed="${on}">${dt.getUTCDate()}<small>${FMON[dt.getUTCMonth()]}</small></button>`;});
     const n=FX.passDays.length;
-    return `<div><h2 class="fx-h2">Day passes</h2><p class="fx-sub">Open festival entry for one day, any day of the festival. No stay included. ${inr(FX.S.dayPass)} per person per day; kids under 10 enter free. Booking a stay? Your entry is already included. No rooms involved: you pay and get your ticket.</p></div>
+    return `<div><h2 class="fx-h2">Day passes</h2><p class="fx-sub">Open festival entry for one day, any day of the festival. No stay included. ${inr(FX.S.dayPass)} per person per day; kids under 10 enter free. Booking a stay? Your entry is already included, as one couple pass for two at the same price, so a night stay is the better deal. No rooms involved: you pay and get your ticket.</p></div>
       <div class="fx-panel"><div class="fx-cal">${c}</div>
         <div class="fx-row"><div class="fx-kv"><span>People 10 and over</span><div class="fx-step"><button onclick="CS.fx('passQty',-1)" ${FX.passQty<=1?'disabled':''} aria-label="Fewer">−</button><output>${FX.passQty}</output><button onclick="CS.fx('passQty',1)" ${FX.passQty>=20?'disabled':''} aria-label="More">+</button></div></div>
           <div class="fx-kv"><span>Days</span><b>${n}</b></div><div class="fx-kv"><span>Total</span><b class="fx-money">${inr(n*FX.passQty*FX.S.dayPass)}</b></div></div>

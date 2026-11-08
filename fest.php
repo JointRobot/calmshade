@@ -295,13 +295,13 @@ function place_fill($u, $d, $occ, $U) {
   return $tot <= 1 ? 0 : min(1, $used / ($tot - 1));
 }
 /* One room-night on the festival board, split into who gets what:
-   owner = the place's own price (paid to the owner), surge = high-demand add (Calm Shade), tickets = festival entry per guest
+   owner = the place's own price (paid to the owner), surge = high-demand add (Calm Shade), tickets = festival entry: one couple pass per room-night, +1 pass per guest beyond two
    (Calm Shade; tents include it), fee = 3% of the owner price for places that aren't Karthik's (Calm Shade). */
 function unit_night($u, $id, $d, $g, $occ, $S, $U) {
   $we = is_weekend_night($d); $rate = $we ? $u['rateWe'] : $u['rate']; $x = $we ? $u['extraWe'] : $u['extra'];
   $owner = $rate + max(0, $g - $u['base']) * $x;
   $surge = $u['kind'] === 'partner' ? 0 : r100($rate * ($S['surgeMax'] / 100) * place_fill($u, $d, $occ, $U));
-  $tickets = $u['kind'] === 'tent' ? 0 : $g * ($u['kind'] === 'partner' ? $S['partnerMarkup'] : $S['dayPass']);
+  $tickets = $u['kind'] === 'tent' ? 0 : ($u['kind'] === 'partner' ? $g * $S['partnerMarkup'] : max(1, $g - 1) * $S['dayPass']); /* a room-night carries ONE couple pass (2 guests) for the day-pass price; each guest beyond 2 adds one more pass (Karthik, 8 Nov 2026); solo = one pass */
   $fee = $u['own'] ? 0 : (int)round($owner * FEE_PCT / 100);
   return ['price'=>$owner + $surge + $tickets + $fee,'owner'=>$owner,'surge'=>$surge,'tickets'=>$tickets,'fee'=>$fee];
 }
