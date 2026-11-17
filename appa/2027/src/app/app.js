@@ -81,7 +81,7 @@ function fitPhone(pts, f) {
   const lay = S2 => { let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; for (const [x, y] of pts) { x0 = Math.min(x0, x * S2); x1 = Math.max(x1, x * S2); y0 = Math.min(y0, y * S2); y1 = Math.max(y1, y * S2); }
     if (x1 - x0 > W || y1 - y0 > H) return null; const fx0 = (x0 + x1 - W) / 2, fx1 = (x0 + x1 + W) / 2, fy0 = (y0 + y1 - H) / 2, fy1 = (y0 + y1 + H) / 2; // the frame, centred on the map
     const n = ps.length, R = ps.map(p => MD.map(md => { const r = p.sz[md]; return [p.iso[0] * S2 + r[0], p.iso[0] * S2 + r[1], p.iso[1] * S2 + r[2], p.iso[1] * S2 + r[3]]; })), Bd = [...ps, ...dots].map(p => { const r = p.sz.badge; return [p.iso[0] * S2 + r[0], p.iso[0] * S2 + r[1], p.iso[1] * S2 + r[2], p.iso[1] * S2 + r[3]]; });
-    const own = R.map((rs, i) => rs.map((r, k) => { let c = (Math.max(0, fx0 - r[0]) + Math.max(0, r[1] - fx1) + Math.max(0, fy0 - r[2]) + Math.max(0, r[3] - fy1)) * 400 + k; for (let j = 0; j < Bd.length; j++) if (j !== i) c += ovl(r, Bd[j]) * (j < n ? 1 : 0.15); return c; }));
+    const own = R.map((rs, i) => rs.map((r, k) => { let c = (Math.max(0, fx0 - r[0]) + Math.max(0, r[1] - fx1) + Math.max(0, fy0 - r[2]) + Math.max(0, r[3] - fy1)) * 400 + k; for (let j = 0; j < Bd.length; j++) if (j !== i) c += ovl(r, Bd[j]) * 1; return c; }));
     let best = Infinity, bestSel = null; const sel = new Array(n);
     const go = (i, c) => { if (c >= best) return; if (i === n) { best = c; bestSel = sel.slice(); return; } for (let k = 0; k < 4; k++) { let cc = c + own[i][k]; if (cc >= best) continue; for (let j = 0; j < i; j++) { cc += ovl(R[i][k], R[j][sel[j]]); if (cc >= best) break; } sel[i] = k; go(i + 1, cc); } };
     go(0, 0); const modes = new Map(); let e = [x0, x1, y0, y1]; ps.forEach((p, i) => { modes.set(p, MD[bestSel[i]]); const r = R[i][bestSel[i]]; e = [Math.min(e[0], r[0]), Math.max(e[1], r[1]), Math.min(e[2], r[2]), Math.max(e[3], r[3])]; });
@@ -115,7 +115,7 @@ function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.
 
 // ---- pins
 const pinLayer = $('#pins'); const pins = [];
-for (const a of areaList) { const c = COPY.areas[a.id]; const b = document.createElement('button'); b.className = 'pin areapin'; b.innerHTML = `${c.n ? `<span class="n">${c.n}</span>` : '<span class="dot"></span>'}<span class="l">${c.name}</span>`; b.onclick = e => { e.stopPropagation(); goArea(a.id); }; pinLayer.appendChild(b); pins.push({ el: b, pos: [a.center[0], a.center[1], 4], area: a.id, areaPin: true }); }
+for (const a of areaList) { const c = COPY.areas[a.id]; const b = document.createElement('button'); b.className = 'pin areapin'; b.innerHTML = `${c.n ? `<span class="n">${c.n}</span>` : '<span class="dot"></span>'}<span class="l">${c.short || c.name}</span>`; b.onclick = e => { e.stopPropagation(); goArea(a.id); }; pinLayer.appendChild(b); pins.push({ el: b, pos: [a.center[0], a.center[1], 4], area: a.id, areaPin: true }); }
 for (const key in COPY.spots) { const sp = COPY.spots[key]; const b = document.createElement('button'); b.className = 'pin'; b.innerHTML = `<span class="dot"></span><span class="l">${sp.title}</span>`; b.onclick = e => { e.stopPropagation(); goSpot(key); }; pinLayer.appendChild(b); pins.push({ el: b, pos: sp.pos, key, area: sp.area }); }
 Object.assign(cam, fitOverview()); setCamT(fitOverview());
 function placePins() {

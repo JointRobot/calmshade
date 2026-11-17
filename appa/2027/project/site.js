@@ -124,7 +124,7 @@ export const SITE = {
       A(0, 0, { type: 'fairy', pts: [[107.5, 36], [111, 42], [121.5, 42.5]] }) ] },
     // 7 · THEEYA CREATION VILLAGE: a red-walled house under a low dark roof, a timber pergola deck for long meals,
     // bougainvillea. Run by a singer, so a vocal stage under the trees.
-    { id: 'theeya', n: 4, name: 'Theeya Creation Village', center: C.theeya, rect: [100, 56, 126, 80], floor: '#CFB98C', structures: [
+    { id: 'theeya', n: 4, name: 'Theeya Creation Village', center: C.theeya, rect: [102, 55.5, 126, 77.5], floor: '#CFB98C', structures: [
       A(113, 61, { type: 'house', w: 8, d: 4.2, h: 2.8, pitch: 0.5, color: '#B8563A', roof: '#4A4A52' }),
       A(107, 70, { type: 'pergola', w: 7, d: 4, h: 2.4, tables: 3 }),
       A(119.5, 69, { type: 'stage', w: 6, d: 3.4, h: 0.8, truss: 4, glow: '#FFC08A', beam: '#FFE0B8' }),
