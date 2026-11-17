@@ -250,6 +250,7 @@ html,body{overflow-x:clip;}
 .foot{border-top:1px solid var(--line); background:var(--card); padding:22px; }
 .foot-in{max-width:1290px; margin:0 auto; display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--mute);}
 .foot-in .sp{flex:1;}
+.foot-in .soc a{font-weight:900; color:var(--ink); text-decoration:underline; text-underline-offset:2px;}
 .foot-in button{font-weight:900; color:var(--ink);}
 
 /* ── detail: editorial two-column ────── */
@@ -1576,6 +1577,7 @@ ${kb()}`;}
     <div class="sep rv sep-dusk right" aria-hidden="true" data-name="night"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M8 30 Q90 8 158 22 T230 18"/><path class="fl" d="M206 10 a8 8 0 1 0 8 11 a6.5 6.5 0 1 1 -8 -11z"/><circle class="ffd" cx="60" cy="18" r="2"/><circle class="ffd" cx="118" cy="26" r="2"/><circle class="ffd" cx="160" cy="12" r="2"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <footer class="foot"><div class="foot-in">
       <span>© ${new Date().getFullYear()} Calm Shade · a homestay collective</span><span class="sp"></span>
+      <span class="soc">Follow APPA Art Fest: <a href="https://www.facebook.com/appaartfest" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.instagram.com/appaartfest/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.youtube.com/results?search_query=Appa+Art+Fest" target="_blank" rel="noopener">YouTube</a></span>
       <button onclick="CS.go('login')">Sign in</button>
     </div></footer></div>`;
   }
