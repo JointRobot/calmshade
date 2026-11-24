@@ -65,6 +65,8 @@ html,body{overflow-x:clip;}
 .menu button:hover{background:var(--bg); color:var(--ink);}
 .menu button::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent); transform:scaleX(0); transition:transform .3s var(--ease);}
 .menu button:hover::after{transform:scaleX(1);}
+.menu .mn-a{display:flex;align-items:center;font-size:13px;font-weight:700;color:#4A4250;padding:0 15px;height:100%;border-right:1px solid var(--line);text-decoration:none;transition:background .2s,color .2s;}
+.menu .mn-a:hover{background:var(--bg);color:var(--ink);}
 .search{flex:1; max-width:300px; margin-left:auto; display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:4px; padding:6px 6px 6px 12px; background:var(--bg); transition:border-color .25s, background .25s;}
 .search:focus-within{border-color:var(--line-2); background:var(--card);}
 .search input{flex:1; border:none; font-size:12.5px; background:none; color:var(--ink);}
@@ -1492,7 +1494,7 @@ ${kb()}`;}
     const inDash=view==='dash';
     return `<nav class="nav"><div class="nav-in">
       <div class="logo" onclick="CS.go('home')"><span class="mark"></span><b>Calm Shade</b></div>
-      ${!inDash?`<div class="menu"><button class="fx-nav" onclick="CS.go('fest')">APPA Fest<span>VIP</span></button><button onclick="CS.jump('.grid')">Stays</button><button onclick="CS.jump('.curated')">Curated</button><button onclick="CS.jump('.moments')">Moments</button><button onclick="CS.jump('.becomehost')">Host with us</button></div>`:''}
+      ${!inDash?`<div class="menu"><button class="fx-nav" onclick="CS.go('fest')">APPA Fest<span>VIP</span></button><a class="mn-a" href="appa/2027/" target="_blank" rel="noopener">Festival site ↗</a><button onclick="CS.jump('.grid')">Stays</button><button onclick="CS.jump('.curated')">Curated</button><button onclick="CS.jump('.moments')">Moments</button><button onclick="CS.jump('.becomehost')">Host with us</button></div>`:''}
       ${!inDash?`<div class="search"><input placeholder="Search stays… anywhere" value="${esc(query)}" oninput="CS.q(this.value)"><span class="go">⌕</span></div>`:''}
       <div class="sp"></div>
       ${inDash
@@ -1577,7 +1579,7 @@ ${kb()}`;}
     <div class="sep rv sep-dusk right" aria-hidden="true" data-name="night"><svg class="separt" viewBox="0 0 236 44" aria-hidden="true"><path class="dr" d="M8 30 Q90 8 158 22 T230 18"/><path class="fl" d="M206 10 a8 8 0 1 0 8 11 a6.5 6.5 0 1 1 -8 -11z"/><circle class="ffd" cx="60" cy="18" r="2"/><circle class="ffd" cx="118" cy="26" r="2"/><circle class="ffd" cx="160" cy="12" r="2"/></svg><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <footer class="foot"><div class="foot-in">
       <span>© ${new Date().getFullYear()} Calm Shade · a homestay collective</span><span class="sp"></span>
-      <span class="soc">Follow APPA Art Fest: <a href="https://www.facebook.com/appaartfest" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.instagram.com/appaartfest/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.youtube.com/results?search_query=Appa+Art+Fest" target="_blank" rel="noopener">YouTube</a></span>
+      <span class="soc"><a href="appa/2027/" target="_blank" rel="noopener"><b>APPA Art Fest 2027 website ↗</b></a> · Follow: <a href="https://www.facebook.com/appaartfest" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.instagram.com/appaartfest/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.youtube.com/results?search_query=Appa+Art+Fest" target="_blank" rel="noopener">YouTube</a></span>
       <button onclick="CS.go('login')">Sign in</button>
     </div></footer></div>`;
   }
@@ -2260,7 +2262,7 @@ ${kb()}`;}
         <span class="fx-eyebrow">VIP tier · 12 Feb – 19 Mar 2027 · Kamshet</span>
         <h2>Stay <em>inside</em> APPA Art Fest</h2>
         <p>${total} rooms and a tent village inside the festival, plus partner homestays and camps nearby. Every night includes festival entry for two. Mix venues night by night: three nights at Le Farm, three at Calmshet, two at Theeya.</p>
-        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP stay</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-btn ghost" href="appa/timetable/" style="text-decoration:none">📅 Timetable</a><a class="fx-link" href="appa/2027/" target="_blank" rel="noopener">Explore the festival map ↗</a></div>
+        <div class="fx-band-cta"><button class="fx-btn" onclick="CS.go('fest')">Book festival stays</button><button class="fx-btn ghost" onclick="CS.fx('openCurate')">Curate a VIP stay</button><button class="fx-btn ghost" onclick="CS.fx('openPasses')">Day passes</button><a class="fx-btn ghost" href="appa/timetable/" style="text-decoration:none">📅 Timetable</a><a class="fx-btn ghost" href="appa/2027/" target="_blank" rel="noopener" style="text-decoration:none">🎪 APPA Art Fest website ↗</a></div>
       </div>
       <div class="fx-venues">${Object.values(byPlace).map(b=>`<div class="fx-venue"><b>${esc(b.name)}</b><span>${b.rooms} room${b.rooms>1?'s':''} · from ${inr(b.from)}</span></div>`).join('')}
         <div class="fx-venue tent"><b>VIP Tent Village</b><span>Tents inside the grounds, as many as are booked · from ${inr(FX.S.tentNight)}</span></div></div>
