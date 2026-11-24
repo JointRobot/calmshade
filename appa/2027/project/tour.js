@@ -72,7 +72,7 @@ const TOUR0 = {
     // the four 9-day chapters, recapped over a wide hold, then the 3-6-9 rhythm
     [76.3, 79, 'Chapter 1 · 12 to 20 Feb', 'Roots & Raga', 'Classical, Maharashtra culture, fusion, desi cool and global artists'],
     [79.2, 81.9, 'Chapter 2 · 21 Feb to 1 Mar', 'Keeping it Real', 'Hip-hop, rap, spoken word, poetry, rock and youth culture'],
-    [82.1, 84.8, 'Chapter 3 · 2 to 10 Mar', 'Tech, Electronica & AI', 'Electronic music, digital art, AI and immersive installations'],
+    [82.1, 84.8, 'Chapter 3 · 2 to 10 Mar', 'Art & New Technology', 'Digital art, AI and immersive installations that carry heritage forward'],
     [85, 87.7, 'Chapter 4 · 11 to 19 Mar', 'All Forms, Together', 'A grand culmination: music, art, workshops and community creations'],
     [88.5, 94.5, '36 days · 3 · 6 · 9', 'A big night every third day', 'Intimate on day 3, something different on day 6, the big one on day 9']
   ],

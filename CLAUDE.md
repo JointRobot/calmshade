@@ -53,7 +53,7 @@ this file is the current state and the rules. Read both before changing anything
   rate derived from its 2019 villa rate (6,700 / 9,800) — **confirm**; extra adult 2,360 = lefarm.in tariff ₹2,000 + 18% GST
   (lefarm.in shows no base rate: "call to enquire", StayVista +91 9137023866; meals extra). Theeya = ₹4,000/head (Karthik, 14 Oct; extra adult 4,000).
   Chapters (PP_WEEKS / copy.js / tour.js / appa/timetable): 1 Roots & Raga 12–20 Feb, 2 Keeping it Real 21 Feb–1 Mar,
-  3 Tech, Electronica & AI 2–10 Mar, 4 All Forms, Together 11–19 Mar. Last night 19 Mar; day passes every festival day.
+  3 Art & New Technology 2–10 Mar (renamed 24 Nov 2026 by Karthik: no electronic-music framing; government deck stresses art of all forms), 4 All Forms, Together 11–19 Mar. Last night 19 Mar; day passes every festival day.
   The Company Theatre (thecompanytheatre.net: no stay info) (8,000) and Purrom (purrom.com: 5 stays, 3 veg meals
   included, prices by WhatsApp +91 98200 24049 only) (4,000) — stand-ins reproducing the old ₹12,000 / ₹6,000. `coupleNight/singleNight/partnerShare*` are no longer used.
   VIP Tent Village 20 tents at ₹9,000 (placeholder, unconfirmed). Extra adult ₹2,000/night. Kids under 10 free.
