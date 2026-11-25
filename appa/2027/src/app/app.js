@@ -99,30 +99,35 @@ function fitOverview() { const f = side(); const o = SITE.view && SITE.view.over
 function areaView(id) { const a = SITE.areas.find(x => x.id === id); const f = side(); const [x0, y0, x1, y1] = a.rect; const [px, py] = scr((x0 + x1) / 2, (y0 + y1) / 2, 2); const size = Math.max(x1 - x0, y1 - y0); const S2 = Math.min(f.w / (size * 1.75), f.h / (size * 1.05)); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 function spotView(key) { const sp = COPY.spots[key]; const f = side(); const c = sp.cam || sp.pos; const [px, py] = scr(c[0], c[1], c[2] || 0); const S2 = Math.min(f.w / 30, f.h / 19) * (sp.zoom || 1); return { px: px + f.dx / S2, py: py + f.dy / S2, S: S2 }; }
 const setCamT = v => Object.assign(camT, v);
+let OV = null; const ovCam = () => (OV = fitOverview()); // the full-map camera, kept so "zoomed in" can be told from "the whole map"
+const zmin = () => Math.min(3, (OV ? OV.S : 3) * 0.85);
 
 // ---- navigation state
 const moonEl = document.getElementById('moon');
 const A = { visited: new Set(), revealed: new Set(), area: null, spot: null, tickets: false, join: null };
 const areaList = SITE.areas.filter(a => COPY.areas[a.id]);
 const shownArea = a => !a.hidden || A.revealed.has(a.id);
-function goOverview() { A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(fitOverview()); renderPanel(); }
+function goOverview() { A.area = null; A.spot = null; A.tickets = false; A.join = null; setCamT(ovCam()); renderPanel(); }
 function goArea(id) { A.area = id; A.spot = null; A.tickets = false; A.join = null; A.visited.add(id); setCamT(areaView(id)); renderPanel(); }
 function goSpot(key) { const sp = COPY.spots[key]; A.area = sp.area; A.spot = key; A.tickets = false; A.join = null; if (sp.area) A.visited.add(sp.area); setCamT(spotView(key)); renderPanel(); }
 function goTickets() { A.tickets = true; A.join = null; renderPanel(); panel.scrollTop = 0; }
-function goJoin(key) { A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(fitOverview()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
+function goJoin(key) { A.join = key; A.tickets = false; A.area = null; A.spot = null; setCamT(ovCam()); renderPanel(); panel.scrollTop = 0; pBody.scrollTop = 0; }
 function run(actions = [], out) { for (const a of actions) { if (a.set) S.set(a.set, a.arg, a.value); if (a.pulse) S.pulse(a.pulse, a.arg, a.dur || 8, a.peak || 1); if (a.reveal) { A.revealed.add(a.reveal); buildChips(); } if (a.say && out) out.textContent = a.say;
   if (a.go) { const [k, v] = a.go.split(':'); if (k === 'area') goArea(v); else if (k === 'spot') goSpot(v); else if (k === 'tickets') goTickets(); else goOverview(); } } }
 
 // ---- pins
 const pinLayer = $('#pins'); const pins = [];
 for (const a of areaList) { const c = COPY.areas[a.id]; const b = document.createElement('button'); b.className = 'pin areapin'; b.innerHTML = `${c.n ? `<span class="n">${c.n}</span>` : '<span class="dot"></span>'}<span class="l">${c.short || c.name}</span>`; b.onclick = e => { e.stopPropagation(); goArea(a.id); }; pinLayer.appendChild(b); pins.push({ el: b, pos: [a.center[0], a.center[1], 4], area: a.id, areaPin: true }); }
-for (const key in COPY.spots) { const sp = COPY.spots[key]; const b = document.createElement('button'); b.className = 'pin'; b.innerHTML = `<span class="dot"></span><span class="l">${sp.title}</span>`; b.onclick = e => { e.stopPropagation(); goSpot(key); }; pinLayer.appendChild(b); pins.push({ el: b, pos: sp.pos, key, area: sp.area }); }
-Object.assign(cam, fitOverview()); setCamT(fitOverview());
+for (const key in COPY.spots) { const sp = COPY.spots[key]; const b = document.createElement('button'); b.className = 'pin'; b.title = sp.title; b.innerHTML = `<span class="dot"></span><span class="l">${sp.title}</span>`; b.onclick = e => { e.stopPropagation(); goSpot(key); }; pinLayer.appendChild(b); pins.push({ el: b, pos: sp.pos, key, area: sp.area }); }
+Object.assign(cam, ovCam()); setCamT(OV);
 function placePins() {
+  const zoomed = OV && cam.S > OV.S * 1.25; // zoomed in from the full map: every activity of every place is shown and tappable
   for (const p of pins) {
     const a = p.area && SITE.areas.find(x => x.id === p.area);
-    const show = tour ? false : p.areaPin ? (!A.area && !A.spot && shownArea(a)) : p.area === null ? (!A.area && A.spot !== p.key) : (A.area === p.area && A.spot !== p.key);
+    // every venue pin stays on the map (except the one you are already in); activity pins show in their venue, or anywhere once you zoom in
+    const show = tour ? false : p.areaPin ? (shownArea(a) && A.area !== p.area) : (p.area === null || A.area === p.area || zoomed) && A.spot !== p.key;
     p.el.classList.toggle('hidden', !show); if (!show) continue;
+    p.el.classList.toggle('bare', !p.areaPin && !!p.area && A.area !== p.area);
     let [x, y] = world.screen(...p.pos); const ax = x, ay = y;
     if (mob()) { // phones: a label never leaves the screen: flip it to the other side of its badge near the right edge, and fade pins as they drift off any edge
       const l = p.lab || (p.lab = p.el.querySelector('.l'));
@@ -159,7 +164,11 @@ function controls(list = [], box) {
   let out = null;
 }
 let soon = 0; const renderPanelSoon = () => { clearTimeout(soon); soon = setTimeout(renderPanel, 60); };
+// "Go to another place": every venue one tap away from inside a venue or an activity, without going back to the map first
+function placesNav(cur) { const l = el('div', 'alist'); for (const a of [...areaList].sort((x, y) => (COPY.areas[x.id].n || 99) - (COPY.areas[y.id].n || 99))) { if (!shownArea(a) || a.id === cur) continue; const c = COPY.areas[a.id]; l.appendChild(btn((c.n ? c.n + ' · ' : '') + (c.short || c.name), () => goArea(a.id))); }
+  if (l.children.length) { pBody.appendChild(el('div', 'label', 'Go to another place')); pBody.appendChild(l); } }
 function renderPanel() {
+  $('#back').classList.toggle('hidden', tour || !(A.area || A.spot || A.tickets || A.join));
   pBody.innerHTML = ''; if (tour) { panel.classList.add('hidden'); return; } panel.classList.remove('hidden');
   if (A.join) { const J = COPY.join[A.join];
     pBody.append(el('div', 'eyebrow', J.eyebrow), el('h2', '', J.title), el('p', 'note', J.intro));
@@ -205,7 +214,8 @@ function renderPanel() {
     return; }
   if (A.spot) { const sp = COPY.spots[A.spot]; const a = sp.area ? COPY.areas[sp.area] : null;
     pBody.append(el('div', 'eyebrow', a ? a.name : COPY.title), el('h2', '', sp.title), el('p', 'note', sp.text)); if (sp.programme) { pBody.appendChild(el('div', 'label', 'On the programme here')); const ul = el('ul', 'offer'); sp.programme.forEach(s => ul.appendChild(el('li', '', s))); pBody.appendChild(ul); } controls(sp.controls, pBody);
-    pBody.appendChild(row(btn('← ' + (a ? a.name : 'The map'), () => (sp.area ? goArea(sp.area) : goOverview()), 'ghost'))); return; }
+    if (a) pBody.appendChild(row(btn('About ' + (COPY.areas[sp.area].short || a.name), () => goArea(sp.area))));
+    placesNav(sp.area); pBody.appendChild(row(btn('← The map', goOverview, 'ghost'))); return; }
   const c = COPY.areas[A.area]; pBody.append(el('div', 'eyebrow', c.n ? `Venue ${c.n}` : 'Around the festival'), el('h2', '', c.name), el('p', 'tag', c.tagline));
   if (c.text) pBody.appendChild(el('p', 'note', c.text));
   if (c.offerings) { pBody.appendChild(el('div', 'label', 'What happens here')); const ul = el('ul', 'offer'); c.offerings.forEach(s => { const [txt, key] = Array.isArray(s) ? s : [s]; const li = el('li', key ? 'go' : '', txt); if (key && COPY.spots[key]) { li.tabIndex = 0; li.title = 'Show it on the map'; li.onclick = () => goSpot(key); li.onkeydown = e => { if (e.key === 'Enter') goSpot(key); }; } ul.appendChild(li); }); pBody.appendChild(ul); }
@@ -213,7 +223,7 @@ function renderPanel() {
   if (COPY.weeks) { const w = COPY.weeks[Math.round(S.value('week'))]; if (w) { pBody.appendChild(el('div', 'label', 'This chapter')); pBody.appendChild(el('div', 'readout', `${w.dates} · ${w.label}`)); } }
   const spots = Object.keys(COPY.spots).filter(k => COPY.spots[k].area === A.area);
   if (spots.length) { pBody.appendChild(el('div', 'label', 'Try it')); const list = el('div', 'alist'); for (const k of spots) list.appendChild(btn(COPY.spots[k].title, () => goSpot(k))); pBody.appendChild(list); }
-  pBody.appendChild(row(btn('← The map', goOverview, 'ghost')));
+  placesNav(A.area); pBody.appendChild(row(btn('← The map', goOverview, 'ghost')));
 }
 
 // ---- header chips
@@ -236,15 +246,21 @@ let drag = null; const touches = new Map();
 canvas.addEventListener('pointerdown', e => { if (tour) return; touches.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); drag = { moved: 0 }; });
 canvas.addEventListener('pointermove', e => { if (!touches.has(e.pointerId)) return; const prev = touches.get(e.pointerId); touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 2) { const [a, b] = [...touches.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-    if (drag.pinch) { const S0 = cam.S, S1 = clamp(S0 * d / drag.pinch, 3, 160); zoomAt(drag.mx, drag.my, S0, S1); camT.px -= (mx - drag.mx) / S1; camT.py -= (my - drag.my) / S1; cam.px = camT.px; cam.py = camT.py; } drag.pinch = d; drag.mx = mx; drag.my = my; drag.moved += 99; return; }
+    if (drag.pinch) { const S0 = cam.S, S1 = clamp(S0 * d / drag.pinch, zmin(), 160); zoomAt(drag.mx, drag.my, S0, S1); camT.px -= (mx - drag.mx) / S1; camT.py -= (my - drag.my) / S1; cam.px = camT.px; cam.py = camT.py; } drag.pinch = d; drag.mx = mx; drag.my = my; drag.moved += 99; return; }
   const dx = e.clientX - prev[0], dy = e.clientY - prev[1]; drag.moved += Math.abs(dx) + Math.abs(dy); camT.px -= dx / cam.S; camT.py -= dy / cam.S; cam.px = camT.px; cam.py = camT.py; });
 const lift = e => { touches.delete(e.pointerId); if (touches.size < 2 && drag) drag.pinch = 0; }; canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);
 // zoom keeping the map point under (sx, sy) still, so a pinch or wheel zooms into what is under the fingers / cursor
 function zoomAt(sx, sy, S0, S1) { const ix = cam.px + (sx - VW / 2) / S0, iy = cam.py + (sy - VH / 2) / S0; cam.S = camT.S = S1; cam.px = camT.px = ix - (sx - VW / 2) / S1; cam.py = camT.py = iy - (sy - VH / 2) / S1; }
-canvas.addEventListener('wheel', e => { e.preventDefault(); if (tour) return; zoomAt(e.clientX, e.clientY, cam.S, clamp(cam.S * Math.exp(-e.deltaY * 0.0015), 3, 160)); }, { passive: false });
+canvas.addEventListener('wheel', e => { e.preventDefault(); if (tour) return; zoomAt(e.clientX, e.clientY, cam.S, clamp(cam.S * Math.exp(-e.deltaY * 0.0015), zmin(), 160)); }, { passive: false });
+// + / − buttons zoom about the middle of the visible map; the Back button and Escape return to the full map from anywhere
+const zoomBtn = f => { if (tour) return; camT.S = clamp(camT.S * f, zmin(), 160); };
+$('#zin').onclick = () => zoomBtn(1.5); $('#zout').onclick = () => zoomBtn(1 / 1.5);
+$('#back').onclick = () => (tour ? stopTour() : goOverview());
+addEventListener('keydown', e => { if (e.key === 'Escape' && !tour && (A.area || A.spot || A.tickets || A.join)) goOverview(); });
+function placeCtl() { const c = $('#mapctl'); c.style.top = mob() ? (mapBox().top + 6) + 'px' : ''; c.style.left = mob() ? '8px' : ''; }
 
 // ---- resize, adaptive sharpness (never while moving or touring)
-function resize() { VW = innerWidth; VH = innerHeight; const r = prCur; world.resize(VW, VH, r); ov2.width = VW * r; ov2.height = VH * r; ov2.style.width = VW + 'px'; ov2.style.height = VH + 'px'; if (!A.area) setCamT(fitOverview()); else if (A.spot) setCamT(spotView(A.spot)); else setCamT(areaView(A.area)); }
+function resize() { VW = innerWidth; VH = innerHeight; const r = prCur; world.resize(VW, VH, r); ov2.width = VW * r; ov2.height = VH * r; ov2.style.width = VW + 'px'; ov2.style.height = VH + 'px'; placeCtl(); ovCam(); if (!A.area) setCamT(OV); else if (A.spot) setCamT(spotView(A.spot)); else setCamT(areaView(A.area)); }
 addEventListener('resize', resize);
 let prCur = Math.min(PR, 1.5), prCool = 0, prTourCap = prCur; const PR_MIN = Math.min(1, PR), PR_MAX = PR, GPU_BUDGET = 10.5; const ftBuf = [];
 function setPR(v, now = performance.now()) { prCur = v; world.resize(VW, VH, prCur); ov2.width = VW * prCur; ov2.height = VH * prCur; ftBuf.length = 0; prCool = now + 3000; }
@@ -286,7 +302,7 @@ try { await Promise.race([Promise.all([`italic 500 30px ${U.display}`, `italic 5
   A.area = null; A.spot = null; A.visited.clear(); renderPanel(); void pBody.offsetHeight; placePins(); }
 { S.mode = 'film'; for (let tt = 0; tt < TOUR_LENGTH; tt += 3) { O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); TOURM.overlay(O, tt + 1, ov2.width, ov2.height); } O.setTransform(1, 0, 0, 1, 0, 0); O.clearRect(0, 0, ov2.width, ov2.height); S.mode = 'app'; }
 BOOT.fonts = performance.now();
-if (mob()) { for (const p of pins) p.mw = null; if (!A.area && !A.spot) { setCamT(fitOverview()); Object.assign(cam, camT); } } // phones: measure the venue labels again now the fonts are in, and refit
+if (mob()) { for (const p of pins) p.mw = null; placeCtl(); if (!A.area && !A.spot) { setCamT(ovCam()); Object.assign(cam, camT); } else ovCam(); } // phones: measure the venue labels again now the fonts are in, and refit
 if (world.gpuTiming && !q.has('pr')) {
   const frameP = () => new Promise(r => requestAnimationFrame(r)); S.mode = 'film';
   for (let tt = 8; tt < TOUR_LENGTH; tt += 7) { const c = TOURM.camAt(tt); world.setCamIso(c[0], c[1], c[2] * VW / 1920); site.update(tt); crowd.update(tt, () => true); world.gpuTag = null; world.render(); await frameP(); world.gpuTag = 'b'; world.render(); world.gpuTag = null; await frameP(); }

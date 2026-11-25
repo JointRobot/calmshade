@@ -19,6 +19,8 @@
   #pins { position: fixed; inset: 0; pointer-events: none; }
   .pin { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--ink); display: flex; align-items: center; gap: 6px; margin: -14px 0 0 -14px; }
   .pin.hidden { display: none; }
+  /* activities of other places: a gold dot only (name on hover), so the map stays readable while every one is still tappable */
+  .pin.bare .l { display: none; } .pin.bare:hover .l, .pin.bare:focus-visible .l { display: block; position: absolute; left: 34px; top: 0; z-index: 4; } .pin.bare:hover { z-index: 4; }
   .pin .dot { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle, #FFF1C2 0 30%, var(--gold) 32% 55%, rgba(226,163,58,0.35) 57%); animation: pulse 2s infinite; flex: none; }
   .pin .n { min-width: 34px; height: 34px; border-radius: 17px; padding: 0 8px; background: var(--accent); color: #FFF6EA; font-weight: 600; font-size: 16px; display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.25); flex: none; }
   .pin .l { background: var(--card); border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px 2px; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
@@ -101,7 +103,15 @@
   .introbox h1 { font-family: var(--font), sans-serif; font-weight: 700; font-size: 64px; margin: 4px 0 0; color: var(--ink); line-height: 1; }
   .introbox .tagline { font-family: var(--display), Georgia, serif; font-style: italic; font-size: 26px; color: var(--accent); margin: 6px 0 12px; }
   .introbox p { font-size: 18px; color: #3A3A48; line-height: 1.45; }
-  body.touring #panel, body.touring #pins { display: none; }
+  /* map controls: one Back-to-map button (shown whenever a venue, activity, tickets or join page is open) and zoom in / out */
+  #mapctl { position: fixed; left: 16px; top: 72px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; z-index: 5; pointer-events: none; }
+  #mapctl > * { pointer-events: auto; }
+  #back { background: var(--ink); color: var(--paper); border: 0; border-radius: 10px; font: 600 15px var(--font), sans-serif; padding: 8px 14px; min-height: 40px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
+  #back.hidden { display: none; }
+  #zoomctl { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  #zoomctl button { border: 0; background: none; font: 600 22px var(--font), sans-serif; width: 40px; height: 38px; cursor: pointer; color: var(--ink); line-height: 1; }
+  #zoomctl button + button { border-top: 1px solid var(--rule); }
+  body.touring #panel, body.touring #pins, body.touring #mapctl { display: none; }
   @media (max-width: 700px) { body.touring #chips { display: none; } }
   @media (max-width: 900px) {
     /* phones: the panel is a fixed strip on the bottom 30% of the screen; it never slides, its content scrolls inside it. The whole map fits in the space above it (app.js fitPhone) */
@@ -131,6 +141,7 @@
   <button id="ticketsbtn">🎟 Tickets</button>
   <button id="tourbtn">Guided tour</button>
 </header>
+<div id="mapctl"><button id="back" class="hidden" title="Back to the full map">← Map</button><div id="zoomctl"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div></div>
 <aside id="panel"><div id="pbody"></div></aside>
 <div id="intro"><div class="introbox">
   <div class="eyebrow" id="i-eyebrow"></div>
