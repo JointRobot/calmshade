@@ -65,7 +65,9 @@ html,body{overflow-x:clip;}
 .menu button:hover{background:var(--bg); color:var(--ink);}
 .menu button::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent); transform:scaleX(0); transition:transform .3s var(--ease);}
 .menu button:hover::after{transform:scaleX(1);}
-.menu .mn-a{display:flex;align-items:center;font-size:13px;font-weight:700;color:#4A4250;padding:0 15px;height:100%;border-right:1px solid var(--line);text-decoration:none;transition:background .2s,color .2s;}
+.menu .mn-a{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--accent);padding:0 15px;height:100%;border-right:1px solid var(--line);text-decoration:none;transition:background .2s,color .2s;}
+.chips .chip.fx-chip{color:var(--accent) !important;border:1px solid var(--accent) !important;font-weight:800;}
+.chips .chip.fx-chip:hover{background:var(--accent);color:#fff !important;}
 .menu .mn-a:hover{background:var(--bg);color:var(--ink);}
 .search{flex:1; max-width:300px; margin-left:auto; display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:4px; padding:6px 6px 6px 12px; background:var(--bg); transition:border-color .25s, background .25s;}
 .search:focus-within{border-color:var(--line-2); background:var(--card);}
@@ -1494,7 +1496,7 @@ ${kb()}`;}
     const inDash=view==='dash';
     return `<nav class="nav"><div class="nav-in">
       <div class="logo" onclick="CS.go('home')"><span class="mark"></span><b>Calm Shade</b></div>
-      ${!inDash?`<div class="menu"><button class="fx-nav" onclick="CS.go('fest')">APPA Fest<span>VIP</span></button><a class="mn-a" href="appa/2027/" target="_blank" rel="noopener">Festival site ↗</a><button onclick="CS.jump('.grid')">Stays</button><button onclick="CS.jump('.curated')">Curated</button><button onclick="CS.jump('.moments')">Moments</button><button onclick="CS.jump('.becomehost')">Host with us</button></div>`:''}
+      ${!inDash?`<div class="menu"><a class="mn-a" href="appa/2027/" target="_blank" rel="noopener">APPA ART FEST ↗</a><button onclick="CS.jump('.grid')">Stays</button><button onclick="CS.jump('.curated')">Curated</button><button onclick="CS.jump('.moments')">Moments</button><button onclick="CS.jump('.becomehost')">Host with us</button></div>`:''}
       ${!inDash?`<div class="search"><input placeholder="Search stays… anywhere" value="${esc(query)}" oninput="CS.q(this.value)"><span class="go">⌕</span></div>`:''}
       <div class="sp"></div>
       ${inDash
@@ -1508,6 +1510,7 @@ ${kb()}`;}
   function chipsRow(){
     return `<div class="chips">
       <button class="chip ${filterCat==='all'?'on':''}" style="${filterCat==='all'?'background:var(--ink)':''}" onclick="CS.cat('all')"><i style="background:conic-gradient(var(--r1),var(--r3),var(--r4),var(--r6),var(--r7),var(--r1))"></i>All stays</button>
+      <button class="chip fx-chip" onclick="CS.go('fest')"><i style="background:var(--accent)"></i>APPA VIP stays</button>
       ${CATS.map(c=>`<button class="chip ${filterCat===c.id?'on':''}" style="${filterCat===c.id?'background:'+c.hue:''}" onclick="CS.cat('${c.id}')"><i style="background:${c.hue}"></i>${c.label}</button>`).join('')}
       <button class="chip ${filterCat==='pet'?'on':''}" style="${filterCat==='pet'?'background:var(--r5)':''}" onclick="CS.cat('pet')"><i style="background:var(--r5)"></i>Pet friendly</button>
     </div>`;
